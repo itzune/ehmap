@@ -359,26 +359,40 @@ FLOW_BINS = [-50, -25, -10]   # % change of the July-September flow; above −10
 
 
 def map_flow(b: Base):
-    """The catchments of the near-natural gauges, coloured by the change of their summer flow."""
+    """The rivers above the near-natural gauges, coloured by the change of their summer flow."""
     fig, ax = b.figure()
     card = np.broadcast_to(np.array(to_rgb(PAL["card"])), b.dem.shape + (3,))
     b.background(ax, card, relief=0.75)
+    streams = gpd.read_file(DIST / "elevation" / "streams_dem.gpkg").to_crs(CRS)
+    widths = {1: 1.3, 2: 2.0, 3: 2.8, 4: 3.6, 5: 4.4, 6: 5.2}
+    # all other rivers, quietly
+    for order in (3, 4, 5, 6):
+        streams[streams.strahler == order].plot(ax=ax, color=PAL["water"], linewidth=widths[order] * 0.25,
+                                                 alpha=0.35, zorder=3)
     sheds = gpd.read_file(DIST / "rivers" / "river_gauges.gpkg", layer="catchments").to_crs(CRS)
     sheds = sheds[sheds.core.astype(bool)]
-    colors = [PAL["dry"][2], PAL["dry"][1], PAL["dry"][0], PAL["neutral"]]   # most loss first
-    sheds["color"] = [colors[int(np.digitize(v, FLOW_BINS))] for v in sheds.jas_change_1991_2020_pct]
-    sheds.plot(ax=ax, color=sheds.color, alpha=0.85, linewidth=0, zorder=2)
-    sheds.boundary.plot(ax=ax, color=PAL["paper"], linewidth=0.8, zorder=3)
-    streams = gpd.read_file(DIST / "elevation" / "streams_dem.gpkg").to_crs(CRS)
-    for order, w in ((4, 0.5), (5, 0.8), (6, 1.2)):
-        streams[streams.strahler == order].plot(ax=ax, color=PAL["water"], linewidth=w, alpha=0.6, zorder=4)
-    b.ter.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.5, alpha=0.45, zorder=5)
-    b.outline.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.9, alpha=0.8, zorder=5)
+    gauges = gpd.read_file(DIST / "rivers" / "river_gauges.gpkg", layer="river_gauges").to_crs(CRS).set_index("key")
+    # most loss first; "little change" is a darker grey than the palette's neutral, as thin lines
+    # in the neutral would vanish into the relief
+    colors = [PAL["dry"][2], PAL["dry"][1], PAL["dry"][0], "#9A9284"]
+    sheds.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.4, alpha=0.3, linestyle=(0, (2, 2)), zorder=4)
+    b.ter.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.5, alpha=0.35, zorder=4)
+    b.outline.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.9, alpha=0.8, zorder=4)
     for r in sheds.itertuples():
-        p = r.geometry.representative_point()
-        ax.text(p.x, p.y, f"{r.river.split(' / ')[0]}\n{r.jas_change_1991_2020_pct:+.0f}%".replace("-", "−"),
-                ha="center", va="center", fontsize=6.6, fontfamily=b.fonts["sans-semi"], color=PAL["ink"],
-                path_effects=b.halo(2.4), zorder=9)
+        c = colors[int(np.digitize(r.jas_change_1991_2020_pct, FLOW_BINS))]
+        mine = streams[streams.intersects(r.geometry)].copy()
+        mine["geometry"] = mine.intersection(r.geometry)
+        for order, w in widths.items():
+            sel = mine[mine.strahler == order]
+            if len(sel):
+                # a paper casing under the colour keeps light colours readable on the relief
+                sel.plot(ax=ax, color=PAL["paper"], linewidth=w + 1.6, zorder=5)
+                sel.plot(ax=ax, color=c, linewidth=w, zorder=6, capstyle="round")
+        g = gauges.loc[r.key].geometry
+        ax.plot(g.x, g.y, marker="o", ms=5.5, color=PAL["ink"], mec=PAL["paper"], mew=1, zorder=8)
+        label = f"{r.river.split(' / ')[0]} {r.jas_change_1991_2020_pct:+.0f}%".replace("-", "−")
+        ax.text(g.x + 2200, g.y - 2200, label, fontsize=6.8, fontfamily=b.fonts["sans-semi"], color=PAL["ink"],
+                va="top", path_effects=b.halo(2.4), zorder=9)
     b.save(fig, "ibaiak-emaria", f"{BOUNDS_CREDIT} · Emaria: Hub'Eau (OFB, Licence Ouverte); "
            "Anuario de Aforos, © Ministerio para la Transición Ecológica y el Reto Demográfico")
 
