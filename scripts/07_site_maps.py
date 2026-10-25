@@ -355,6 +355,34 @@ def map_heat(b: Base):
 HEAT_BINS = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]   # °C; the site legend uses the same classes
 
 
+FLOW_BINS = [-50, -25, -10]   # % change of the July-September flow; above −10% is drawn neutral
+
+
+def map_flow(b: Base):
+    """The catchments of the near-natural gauges, coloured by the change of their summer flow."""
+    fig, ax = b.figure()
+    card = np.broadcast_to(np.array(to_rgb(PAL["card"])), b.dem.shape + (3,))
+    b.background(ax, card, relief=0.75)
+    sheds = gpd.read_file(DIST / "rivers" / "river_gauges.gpkg", layer="catchments").to_crs(CRS)
+    sheds = sheds[sheds.core.astype(bool)]
+    colors = [PAL["dry"][2], PAL["dry"][1], PAL["dry"][0], PAL["neutral"]]   # most loss first
+    sheds["color"] = [colors[int(np.digitize(v, FLOW_BINS))] for v in sheds.jas_change_1991_2020_pct]
+    sheds.plot(ax=ax, color=sheds.color, alpha=0.85, linewidth=0, zorder=2)
+    sheds.boundary.plot(ax=ax, color=PAL["paper"], linewidth=0.8, zorder=3)
+    streams = gpd.read_file(DIST / "elevation" / "streams_dem.gpkg").to_crs(CRS)
+    for order, w in ((4, 0.5), (5, 0.8), (6, 1.2)):
+        streams[streams.strahler == order].plot(ax=ax, color=PAL["water"], linewidth=w, alpha=0.6, zorder=4)
+    b.ter.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.5, alpha=0.45, zorder=5)
+    b.outline.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.9, alpha=0.8, zorder=5)
+    for r in sheds.itertuples():
+        p = r.geometry.representative_point()
+        ax.text(p.x, p.y, f"{r.river.split(' / ')[0]}\n{r.jas_change_1991_2020_pct:+.0f}%".replace("-", "−"),
+                ha="center", va="center", fontsize=6.6, fontfamily=b.fonts["sans-semi"], color=PAL["ink"],
+                path_effects=b.halo(2.4), zorder=9)
+    b.save(fig, "ibaiak-emaria", f"{BOUNDS_CREDIT} · Emaria: Hub'Eau (OFB, Licence Ouverte); "
+           "Anuario de Aforos, © Ministerio para la Transición Ecológica y el Reto Demográfico")
+
+
 def stripes():
     """site/data/stripes.json: yearly temperature anomalies vs 1961-1990 for the stripes chart."""
     import pandas as pd
@@ -372,18 +400,13 @@ def stripes():
     path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
     print(path.relative_to(ROOT))
 
-    # rain and evaporative demand: 10-year means of a typical station, for the "Ur gutxiago" chart
-    wb = pd.read_csv(DIST / "climate" / "water_balance.csv").set_index("year")
-    ref = wb.loc[1961:1990, ["rain_mm", "et0_mm"]].mean()
-    tens = wb.dropna(subset=["rain_10y_mm", "et0_10y_mm"])
-    water = {"reference": "1961–1990", "window": 10, "stations": int(wb.stations.max()),
-             "ref_rain_mm": round(ref.rain_mm), "ref_et0_mm": round(ref.et0_mm),
-             "end": tens.index.tolist(),
-             "rain_mm": tens.rain_10y_mm.round().astype(int).tolist(),
-             "et0_mm": tens.et0_10y_mm.round().astype(int).tolist()}
-    path = ROOT / "site" / "data" / "water.json"
-    path.write_text(json.dumps(water, separators=(",", ":")))
+    # marine heatwave days per year, for the sea chart
+    sea = pd.read_csv(DIST / "sea" / "sea_annual.csv").query("year >= 1982")
+    path = ROOT / "site" / "data" / "sea.json"
+    path.write_text(json.dumps({"years": sea.year.tolist(), "heatwave_days": sea.heatwave_days.astype(int).tolist(),
+                                "base": "1982–2011"}, separators=(",", ":")))
     print(path.relative_to(ROOT))
+
 
 
 
@@ -391,7 +414,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         fonts = load_fonts(Path(tmp))
         b = Base(fonts)
-        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat)
+        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat, map_flow)
         only = sys.argv[1:]  # e.g. "heat people" renders only those
         for f in maps:
             if not only or f.__name__.removeprefix("map_") in only:

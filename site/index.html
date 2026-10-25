@@ -305,34 +305,70 @@
       <p class="dl"><a href="https://github.com/itzune/ehmap/releases/latest/download/climate_annual.csv">Urteko datuak (CSV)</a></p>
     </figure>
 
-    <div class="rain">
-      <figure class="water" aria-labelledby="h-ur">
-        <div class="water-chart" data-src="data/water.json" role="img"
-             aria-label="Euria eta lurrunketa-eskaria, hamar urteko batez bestekoak 1961etik 2025era, 1961–1990ekoaren ehunekoan: euria %94 eta %105 artean dabil joerarik gabe; lurrunketa-eskaria %97tik %106ra igotzen da etengabe."></div>
-        <ul class="legend water-legend">
-          <li><span class="sw line c-rain"></span>Euria</li>
-          <li><span class="sw line c-et0"></span>Lurrunketa-eskaria (ET₀)</li>
-        </ul>
-        <figcaption>Hamar urteko batez bestekoak, 1961–1990ekoaren ehunekoan, ingurukoekiko jauzirik gabeko 15 estaziotan.
-          Prezipitazioa eta tenperatura: © AEMET; © Météo-France (Licence Ouverte 2.0); © Gobierno de Navarra.</figcaption>
+    <div class="felt" aria-labelledby="h-beroa">
+      <h3 id="h-beroa">Beroa egunerokoan</h3>
+      <p>Estazioetan neurtua, 1961–1990etik 2016–2025era:</p>
+      <div class="stats three">
+        <div><b>×2</b><span><strong>egun bero</strong> (30 °C edo gehiago): urtean 13tik 24ra</span></div>
+        <div><b>×5</b><span><strong>gau tropikal</strong> (20 °C edo gehiago): urtean 2tik 10era</span></div>
+        <div><b>−%50</b><span><strong>izotz-egun</strong>: urtean 24tik 12ra</span></div>
+      </div>
+      <p class="note">Hamar estazioren mediana (gau tropikaletan, zortzi), ingurukoekiko jauzirik gabekoak: AEMET,
+        Météo-France, Gobierno de Navarra. Egun beroak 10etik 9tan igo dira, gau tropikalak 8tik 7tan, eta
+        izotz-egunak 10etan jaitsi.</p>
+    </div>
+
+    <div class="duo">
+      <figure class="map">
+        <button type="button" data-full="maps/ibaiak-emaria.webp" aria-label="Mapa handitu: ibaien uda-emaria">
+          <img src="maps/ibaiak-emaria-1200.webp" srcset="maps/ibaiak-emaria-1200.webp 1200w, maps/ibaiak-emaria.webp 2400w"
+               sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+               alt="Ibaien arroen mapa, udako emariaren aldaketarekin: Errobi eta Bidouze ia aldaketarik gabe; Ultzama −%44 eta Ayuda −%64, Ebro aldean.">
+        </button>
+        <figcaption>Gizakiak gutxi aldatutako arroak. Emaria: Hub'Eau (OFB, Licence Ouverte); Anuario de Aforos,
+          © Ministerio para la Transición Ecológica y el Reto Demográfico.</figcaption>
       </figure>
       <div class="text">
-        <h3 id="h-ur">Ur gutxiago</h3>
-        <p>Euri bera egiten du: 1961–1990ean bezainbeste. Baina beroagoa denez, aireak ur gehiago
-          eskatzen du: <strong>lurrunketa-eskaria %6 igo da</strong>, urtean 59 litro metro karratuko.
-          Lurrarentzat eta ibaientzat geratzen den ura gutxitu egin da.</p>
+        <h3 id="h-ibaiak2">Ibaiek ur gutxiago</h3>
+        <p>Euri bera egin arren, ibaiek ur gutxiago daramate, batez ere udan. <strong>Ebro aldean
+          askoz gehiago</strong> Bizkaiko golkora doazen ibaietan baino.</p>
         <div class="stats">
-          <div><b>+59 mm</b><span>lurrunketa-eskaria urtean, 2016–2025, 1961–1990ekin alderatuta</span></div>
-          <div><b>−%1</b><span>euria, aldi berean: aldaketarik ez</span></div>
+          <div><b>−%24</b><span>udako emaria, 1991–2020an, 1971–1990ekin alderatuta</span></div>
+          <div><b>−%58</b><span>Ebro aldeko arroetan, 2016–2022an</span></div>
         </div>
-        <p class="note">Lurrunketa-eskaria (ET₀) Hargreaves metodoaz kalkulatua, estazioetako tenperatura maximo
-          eta minimoetatik: aireak har lezakeen ura, ez benetan lurruntzen dena. Euria estazioetan neurtua dago:
-          ERA5-Land ereduaren euria ez da fidagarria hemen (2023a urterik lehorrena zela zioen, eta estazio guztiek
-          urte arrunta edo euritsua neurtu zuten). Euria hamarkadaz hamarkada %20–30 aldatzen da, baina 1960tik
-          ez du joerarik, ez urtean ez urtaroetan.</p>
+        <ul class="legend">
+          <li><span class="sw" style="background:#D8D2C6"></span>aldaketa txikia (±%10)</li>
+          <li><span class="sw" style="background:#CC9967"></span>−%10 eta −%25 artean</li>
+          <li><span class="sw" style="background:#A9733A"></span>−%25 eta −%50 artean</li>
+          <li><span class="sw" style="background:#80521F"></span>−%50 baino gehiago</li>
+        </ul>
+        <p class="note">Uztaila–iraileko batez besteko emaria. Beroak ur gehiago lurruntzen du, baina ez da
+          arrazoi bakarra: baso gehiago dago lehengo larre eta soroetan, eta ur-hartuneak ere badira.</p>
+        <p class="dl"><a href="https://github.com/itzune/ehmap/releases/latest/download/river_gauges.gpkg">Aforoak eta arroak (GeoPackage)</a></p>
+      </div>
+    </div>
+
+    <div class="duo">
+      <figure class="sea">
+        <div class="sea-chart" data-src="data/sea.json" role="img"
+             aria-label="Itsas bero-boladen egunak urtez urte, 1982tik 2025era: 1980ko hamarkadan urtean 20 inguru; 2016tik aurrera 100etik gora, eta 2023an 258."></div>
+        <figcaption>Itsas bero-boladako egunak urtean, Euskal Herriko kostaldearen aurrean (43,25–44° N, 3,5–1,25° W).
+          Bero-bolada: 5 egun edo gehiago, urteko egun horretarako ohikoa (1982–2011) baino nabarmen beroago.
+          Datuak: NOAA OISST v2.1.</figcaption>
+      </figure>
+      <div class="text">
+        <h3 id="h-itsasoa">Itsasoa berotzen</h3>
+        <p>Bizkaiko golkoa gure inguruan <strong>1,0 °C beroago</strong> dago orain 1980ko hamarkadan baino,
+          eta udan 1,2 °C. Bero-boladak ia egunerokoak dira: 2023an, urteko 258 egun.</p>
+        <div class="stats">
+          <div><b>×7</b><span>itsas bero-boladako egunak: urtean 18tik 127ra</span></div>
+          <div><b>+3 mm</b><span>itsas maila urtean, 1993tik (Bilbo, Santander, Bokale)</span></div>
+        </div>
+        <p class="note">Itsas maila lurrarekiko neurtzen da, eta kostaldeko lurra urtean 1 mm inguru hondoratzen ari da:
+          igoeraren zati bat hori da. Mareografoak: PSMSL.</p>
         <p class="dl">
-          <a href="https://github.com/itzune/ehmap/releases/latest/download/water_balance.csv">Datuak (CSV)</a>
-          <a href="https://github.com/itzune/ehmap/releases/latest/download/rain_stations.gpkg">Estazioak (GeoPackage)</a>
+          <a href="https://github.com/itzune/ehmap/releases/latest/download/sea_annual.csv">Itsasoa urtez urte (CSV)</a>
+          <a href="https://github.com/itzune/ehmap/releases/latest/download/tide_gauges.gpkg">Mareografoak (GeoPackage)</a>
         </p>
       </div>
     </div>

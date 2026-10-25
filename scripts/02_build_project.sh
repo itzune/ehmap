@@ -32,6 +32,10 @@ sleep 1
 #   Basoa           % tree cover per 100 m cell, WorldCover 2021 (hidden by default)
 #   Klima aldaketa  group, ERA5-Land change 1961-1990 → 1991-2020 (layers hidden by default):
 #     Tenperatura     °C
+#     Egun beroak (estazioak)  hot days, tropical nights, frost days per station, then and now
+#     Ibaien arroak (uda-emaria), Aforoak  river gauges and their catchments (09_rivers.py)
+#     Mareografoak    tide gauges and their sea-level trends (10_sea.py)
+#   tables: Itsasoa urtez urte (sea temperature, heatwave days), Ur-balantzea (yearly rain and ET0 of a typical station), Tenperatura urtez urte
 #     Prezipitazioak  rainfall change 1961-1990 → 1991-2020 at the long, quality-checked stations, %
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
 # The density, grid, relief, drainage, forest and warming views are also print layouts with legends.
@@ -163,7 +167,28 @@ rustgis-cli run \
   --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Klima aldaketa: tenperatura","title":"Klima aldatzen ari da","subtitle":"Euskal Herria: tenperaturaren igoera, 1961–1990etik 1991–2020ra (°C)","sources":["Tenperatura: Copernicus Climate Change Service, ERA5-Land (doi:10.24381/cds.68d2bb30, CC BY 4.0)","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
   --cmd 'layout.export={"layout":"Klima aldaketa: tenperatura","path":"docs/climate.png","dpi":120}' \
   --cmd 'layer.visibility={"layer":"Tenperatura","visible":false}' \
-  --cmd 'group.add={"name":"Klima aldaketa","layers":["Tenperatura","Prezipitazioak"]}' \
+  --cmd 'layer.addData={"path":"dist/climate/heat_stations.gpkg","layer":"heat_stations","name":"Egun beroak (estazioak)"}' \
+  --cmd 'layer.symbology={"layer":"Egun beroak (estazioak)","type":"graduated","field":"hot_change","method":"manual","breaks":[0,5,10,15],"ramp":"Beroa"}' \
+  --cmd 'layer.marker={"layer":"Egun beroak (estazioak)","shape":"circle","size":11}' \
+  --cmd 'labels.field={"layer":"Egun beroak (estazioak)","field":"station"}' \
+  --cmd 'labels.enable={"layer":"Egun beroak (estazioak)","on":true}' \
+  --cmd 'layer.visibility={"layer":"Egun beroak (estazioak)","visible":false}' \
+  --cmd 'layer.addData={"path":"dist/rivers/river_gauges.gpkg","layer":"catchments","name":"Ibaien arroak (uda-emaria)"}' \
+  --cmd 'ramp.add={"text":"0% 128 82 31\n33% 169 115 58\n67% 204 153 103\n100% 216 210 198\n","format":"gdal","name":"Lehortzea","kind":"sequential"}' \
+  --cmd 'layer.symbology={"layer":"Ibaien arroak (uda-emaria)","type":"graduated","field":"jas_change_1991_2020_pct","method":"manual","breaks":[-50,-25,-10],"ramp":"Lehortzea"}' \
+  --cmd 'labels.field={"layer":"Ibaien arroak (uda-emaria)","field":"river"}' \
+  --cmd 'labels.enable={"layer":"Ibaien arroak (uda-emaria)","on":true}' \
+  --cmd 'layer.addData={"path":"dist/rivers/river_gauges.gpkg","layer":"river_gauges","name":"Aforoak"}' \
+  --cmd 'layer.marker={"layer":"Aforoak","shape":"triangle","size":8}' \
+  --cmd 'layer.addData={"path":"dist/sea/tide_gauges.gpkg","layer":"tide_gauges","name":"Mareografoak"}' \
+  --cmd 'layer.marker={"layer":"Mareografoak","shape":"square","size":9}' \
+  --cmd 'labels.field={"layer":"Mareografoak","field":"gauge"}' \
+  --cmd 'labels.enable={"layer":"Mareografoak","on":true}' \
+  --cmd 'layer.visibility={"layer":["Ibaien arroak (uda-emaria)","Aforoak","Mareografoak"],"visible":false}' \
+  --cmd 'group.add={"name":"Klima aldaketa","layers":["Tenperatura","Prezipitazioak","Egun beroak (estazioak)","Ibaien arroak (uda-emaria)","Aforoak","Mareografoak"]}' \
+  --cmd 'layer.addData={"path":"dist/sea/sea_annual.csv","name":"Itsasoa urtez urte"}' \
+  --cmd 'layer.addData={"path":"dist/climate/water_balance.csv","name":"Ur-balantzea (euria eta ET0)"}' \
+  --cmd 'layer.addData={"path":"dist/climate/climate_annual.csv","name":"Tenperatura urtez urte"}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":true}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
   --save ehmap.rgis

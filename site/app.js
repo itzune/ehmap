@@ -184,10 +184,9 @@
   });
 })();
 
-// "Ur gutxiago": rain and evaporative demand as 10-year means, % of 1961-1990, with a
-// crosshair and a tooltip in mm.
+// Marine heatwave days per year: one bar per year, a tooltip on hover.
 (() => {
-  const chart = document.querySelector(".water-chart");
+  const chart = document.querySelector(".sea-chart");
   if (!chart) return;
   const tip = document.getElementById("tip");
   const NS = "http://www.w3.org/2000/svg";
@@ -197,59 +196,34 @@
     parent?.append(e);
     return e;
   };
-  let d, draw;
-
-  fetch(chart.dataset.src).then((r) => r.json()).then((data) => {
-    d = data;
-    const rain = d.rain_mm.map((v) => (100 * v) / d.ref_rain_mm);
-    const et0 = d.et0_mm.map((v) => (100 * v) / d.ref_et0_mm);
-    const start = (end) => Math.max(1961, end - d.window + 1);
-    draw = () => {
+  fetch(chart.dataset.src).then((r) => r.json()).then((d) => {
+    const draw = () => {
       chart.replaceChildren();
-      const W = chart.clientWidth, small = W < 520, H = small ? 240 : 300, L = 40, R = small ? 74 : 130, T = 10, B = 26;
-      const lo = 90, hi = 110, n = d.end.length;
-      const x = (i) => L + (i / (n - 1)) * (W - L - R);
-      const y = (v) => T + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T - B);
+      const W = chart.clientWidth, H = W < 520 ? 220 : 280, L = 34, T = 8, B = 24, top = 300;
+      const n = d.years.length, bw = (W - L) / n;
+      const y = (v) => T + (1 - v / top) * (H - T - B);
       const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, height: H, "aria-hidden": "true" }, chart);
-      for (const t of [90, 95, 105, 110]) {
-        el("line", { class: "grid", x1: L, x2: W - R, y1: y(t), y2: y(t) }, svg);
+      for (const t of [0, 100, 200, 300]) {
+        el("line", { class: "grid", x1: L, x2: W, y1: y(t), y2: y(t) }, svg);
+        el("text", { class: "tick", x: L - 6, y: y(t) + 4, "text-anchor": "end" }, svg).textContent = t;
       }
-      el("line", { class: "base", x1: L, x2: W - R, y1: y(100), y2: y(100) }, svg);
-      for (const t of [90, 95, 100, 105, 110]) {
-        const tx = el("text", { class: "tick", x: L - 8, y: y(t) + 4, "text-anchor": "end" }, svg);
-        tx.textContent = `%${t}`;
-      }
-      d.end.forEach((e, i) => {
-        if (i !== n - 1 && (e % 10 !== 0 || d.end[n - 1] - e < 8)) return;   // keep the last year clear
-        const tx = el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": i === n - 1 ? "end" : "middle" }, svg);
-        tx.textContent = e;
+      d.years.forEach((yr, i) => {
+        const v = d.heatwave_days[i];
+        const r = el("rect", { x: L + i * bw + 1, y: y(v), width: Math.max(bw - 2, 1), height: y(0) - y(v), rx: 1.5 }, svg);
+        r.dataset.text = `<b>${yr}</b><br><span>${v} egun bero-boladan</span>`;
+        if (yr % 10 === 0 || i === 0 || i === n - 1) {
+          el("text", { class: "tick", x: L + (i + 0.5) * bw, y: H - 6, "text-anchor": "middle" }, svg).textContent = yr;
+        }
       });
-      for (const [vals, cls, name] of [[rain, "c-rain", "Euria"], [et0, "c-et0", small ? "ET₀" : "Lurrunketa"]]) {
-        const g = el("g", { class: cls }, svg);
-        el("path", { class: "series", d: vals.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join("") }, g);
-        const lb = el("text", { class: "lbl", x: x(n - 1) + 8, y: y(vals[n - 1]) + 4 }, g);
-        lb.textContent = `${name} %${Math.round(vals[n - 1])}`;
-        el("circle", { class: "dot", r: 4.5, cx: 0, cy: 0 }, g);
-      }
-      el("line", { class: "cross", x1: 0, x2: 0, y1: T, y2: H - B }, svg);
-      svg.addEventListener("pointermove", (ev) => {
-        const r = svg.getBoundingClientRect();
-        const i = Math.max(0, Math.min(n - 1, Math.round(((ev.clientX - r.left - L) / (W - L - R)) * (n - 1))));
-        chart.classList.add("hover");
-        const cx = x(i);
-        svg.querySelector(".cross").setAttribute("x1", cx);
-        svg.querySelector(".cross").setAttribute("x2", cx);
-        svg.querySelector(".c-rain .dot").setAttribute("cx", cx);
-        svg.querySelector(".c-rain .dot").setAttribute("cy", y(rain[i]));
-        svg.querySelector(".c-et0 .dot").setAttribute("cx", cx);
-        svg.querySelector(".c-et0 .dot").setAttribute("cy", y(et0[i]));
-        tip.innerHTML = `<b>${start(d.end[i])}–${d.end[i]}</b><br><span>Euria: ${d.rain_mm[i]} mm (%${Math.round(rain[i])})</span>` +
-          `<br><span>Lurrunketa-eskaria: ${d.et0_mm[i]} mm (%${Math.round(et0[i])})</span>`;
+      svg.addEventListener("pointermove", (e) => {
+        const r = e.target.closest("rect");
+        if (!r) { tip.hidden = true; return; }
+        tip.innerHTML = r.dataset.text;
         tip.hidden = false;
-        tip.style.left = `${Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8)}px`;
-        tip.style.top = `${ev.clientY - tip.offsetHeight - 12}px`;
+        tip.style.left = `${Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8)}px`;
+        tip.style.top = `${e.clientY - tip.offsetHeight - 12}px`;
       });
-      svg.addEventListener("pointerleave", () => { chart.classList.remove("hover"); tip.hidden = true; });
+      svg.addEventListener("pointerleave", () => { tip.hidden = true; });
     };
     draw();
     let t;

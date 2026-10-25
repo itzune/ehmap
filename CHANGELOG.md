@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.6.0 — 2026-10-26
+
+How climate change is felt: heat, rivers and the sea.
+
+- **Heat and frost** per station (`heat_stations.gpkg`): hot days ×2, tropical nights ×5,
+  frost days halved (1961-1990 → 2016-2025, 10 quality-checked stations).
+- **Rivers** (`scripts/09_rivers.py`, `dist/rivers/`): 15 gauges, their DEM-traced catchments
+  and flow indicators; summer flow −24% (1991-2020) and −48% (2016-2022/25) at the near-natural
+  gauges, much more on the Ebro side.
+- **Sea** (`scripts/10_sea.py`, `dist/sea/`): sea temperature +1.0 °C since the 1980s, marine
+  heatwave days 18 → 127 a year, sea level +3 mm a year since 1993.
+- **Website**: chapter 06 gains "Beroa egunerokoan", "Ibaiek ur gutxiago" (catchment map) and
+  "Itsasoa berotzen" (heatwave days chart); the rain chart moves to the data and the RustGIS
+  project.
+- **RustGIS project**: catchments, river gauges, tide gauges and heat stations in the "Klima
+  aldaketa" group; sea and water-balance tables.
+
+Assets added: `heat_stations.gpkg`, `river_gauges.gpkg`, `river_flow_yearly.csv`,
+`sea_annual.csv`, `marine_heatwaves.csv`, `tide_gauges.gpkg`.
+
 ## v0.5.3 — 2026-10-25
 
 "Ur gutxiago": same rain, more evaporation.

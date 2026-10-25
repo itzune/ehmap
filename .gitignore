@@ -12,3 +12,4 @@ out/
 # Large / binary outputs are published as GitHub Release assets (scripts/release.sh)
 ehmap.rgis
 dist/**/*.tif
+dist/sea/sea_level_annual.csv

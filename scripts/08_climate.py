@@ -29,6 +29,8 @@ Outputs (dist/climate/):
                                     season (© AEMET; © Météo-France, Licence Ouverte 2.0;
                                     Gobierno de Navarra)
   station_quality.csv               the neighbour test for sudden steps (rain, ET0); failures left out
+  heat_stations.gpkg                hot days, tropical nights and frost days per station,
+                                    1961-1990 and 2016-2025, with their trend
   water_balance.csv                 yearly rain and evaporative demand (Hargreaves ET0) of a typical
                                     station, 1961-2025, from the same stations every year
   rain_timeline.csv                 10-year rain per station and season, % of its 1996-2025 mean
@@ -75,6 +77,62 @@ def download() -> None:
             "year": [str(y) for y in YEARS], "month": [f"{m:02d}" for m in range(1, 13)],
             "time": ["00:00"], "area": AREA, "data_format": "netcdf", "download_format": "unarchived",
         }, str(out))
+
+
+DAILY = RAW / "daily"
+DAILY_YEARS = [*range(REF[0], REF[1] + 1), *range(2016, 2026)]   # the reference normal and the last decade
+
+
+def download_daily() -> None:
+    """ERA5-Land daily maximum and minimum temperature, one file each per year.
+
+    The hourly 2 m temperature is fetched in half-years (a whole year is over the Climate
+    Data Store's size limit) and reduced here to the maximum and minimum of each local day
+    (UTC+1). Only one request may be queued at a time per dataset and each waits about ten
+    minutes, so the 80 requests run one after another (about 15 hours); a rejected request
+    is retried after a pause, and files already on disk are skipped.
+    """
+    import time
+    import cdsapi
+    import requests
+    hourly = RAW / "hourly"
+    for d in (DAILY, hourly):
+        d.mkdir(parents=True, exist_ok=True)
+    client = cdsapi.Client(quiet=True, progress=False)
+
+    def half(job):
+        year, h = job
+        out = hourly / f"t2m_{year}_h{h}.nc"
+        if not out.exists():
+            part = out.with_suffix(".part")
+            for attempt in range(10):
+                try:
+                    client.retrieve("reanalysis-era5-land", {
+                        "variable": ["2m_temperature"], "year": str(year),
+                        "month": [f"{m:02d}" for m in (range(1, 7) if h == 1 else range(7, 13))],
+                        "day": [f"{d:02d}" for d in range(1, 32)], "time": [f"{t:02d}:00" for t in range(24)],
+                        "area": AREA, "data_format": "netcdf", "download_format": "unarchived"}, str(part))
+                    break
+                except requests.HTTPError as e:   # queue full or a transient failure
+                    print("retry", year, h, str(e).splitlines()[-1][:80], flush=True)
+                    time.sleep(120)
+            else:
+                raise RuntimeError(f"ERA5-Land {year} half {h} failed")
+            part.rename(out)
+        return out
+
+    def year_files(year):
+        if (DAILY / f"tmax_{year}.nc").exists() and (DAILY / f"tmin_{year}.nc").exists():
+            return
+        t = xr.concat([xr.open_dataset(half((year, h)))["t2m"] for h in (1, 2)], "valid_time").sortby("valid_time")
+        t = t.assign_coords(valid_time=t.valid_time + np.timedelta64(1, "h")) - 273.15   # local day
+        t = t.sel(valid_time=str(year))
+        for name, how in (("tmax", "max"), ("tmin", "min")):
+            getattr(t.resample(valid_time="1D"), how)().rename(name).to_netcdf(DAILY / f"{name}_{year}.nc")
+        print("daily", year, flush=True)
+
+    for year in DAILY_YEARS:
+        year_files(year)
 
 
 def annual_temperature() -> xr.DataArray:
@@ -254,15 +312,19 @@ def dms(v: str) -> float:
 
 def stations() -> pd.DataFrame:
     """Monthly station records: network, id, name, lat, lon, altitude_m, year, month,
-    t (mean temperature), tx and tn (means of the daily maxima and minima), p (rain, mm)."""
+    t (mean temperature), tx and tn (means of the daily maxima and minima), p (rain, mm),
+    hot (days with a maximum ≥ 30 °C), tropical (nights with a minimum ≥ 20 °C; not in AEMET's
+    monthly data) and frost (days with a minimum ≤ 0 °C)."""
     frames = []
     mf = ROOT / "data" / "raw" / "meteofrance"
-    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "TX", "TN", "RR"])
+    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "TX", "TN", "RR",
+                                         "NBJTX30", "NBJTNS20", "NBJGELEE"])
                   for p in sorted(mf.glob("MENSQ_64_*.csv.gz")))
     names = d.NUM_POSTE.map(STATIONS).fillna(d.NOM_USUEL.str.title())
     frames.append(pd.DataFrame({"network": "Météo-France", "id": d.NUM_POSTE.astype(str), "name": names,
                                 "lat": d.LAT, "lon": d.LON, "altitude_m": d.ALTI, "year": d.AAAAMM // 100,
-                                "month": d.AAAAMM % 100, "t": d.TM, "tx": d.TX, "tn": d.TN, "p": d.RR}))
+                                "month": d.AAAAMM % 100, "t": d.TM, "tx": d.TX, "tn": d.TN, "p": d.RR,
+                                "hot": d.NBJTX30, "tropical": d.NBJTNS20, "frost": d.NBJGELEE}))
     raw = ROOT / "data" / "raw" / "aemet"
     if (raw / "inventario.json").exists():
         inv = {i["indicativo"]: i for i in json.loads((raw / "inventario.json").read_text())}
@@ -279,6 +341,8 @@ def stations() -> pd.DataFrame:
                              "year": y, "month": m, "t": pd.to_numeric(r.get("tm_mes"), errors="coerce"),
                              "tx": pd.to_numeric(r.get("tm_max"), errors="coerce"),
                              "tn": pd.to_numeric(r.get("tm_min"), errors="coerce"),
+                             "hot": pd.to_numeric(r.get("nt_30"), errors="coerce"),
+                             "frost": pd.to_numeric(r.get("nt_00"), errors="coerce"),
                              # "Ip" is a trace of rain, under 0.1 mm
                              "p": 0.0 if p_ == "Ip" else pd.to_numeric(p_, errors="coerce")})
         frames.append(pd.DataFrame(rows))
@@ -292,7 +356,9 @@ def stations() -> pd.DataFrame:
                              for f in sorted(d.glob("*.csv")))
             days["date"] = pd.to_datetime(days.date.str[:10], format="%d/%m/%Y")
             days = days.set_index("date").apply(pd.to_numeric, errors="coerce")
-            m = days.resample("MS").agg({"tmax": ["mean", "count"], "tmin": ["mean", "count"], "p": ["sum", "count"]})
+            days["hot"], days["tropical"], days["frost"] = days.tmax >= 30, days.tmin >= 20, days.tmin <= 0
+            m = days.resample("MS").agg({"tmax": ["mean", "count"], "tmin": ["mean", "count"], "p": ["sum", "count"],
+                                          "hot": "sum", "tropical": "sum", "frost": "sum"})
             full_p = m[("p", "count")] == m.index.days_in_month          # every day measured
             full_t = ((m[("tmax", "count")] >= m.index.days_in_month - 2)   # at most 2 days missing
                       & (m[("tmin", "count")] >= m.index.days_in_month - 2))
@@ -302,6 +368,8 @@ def stations() -> pd.DataFrame:
                 "year": m.index.year, "month": m.index.month,
                 "t": ((m[("tmax", "mean")] + m[("tmin", "mean")]) / 2).where(full_t).values,
                 "tx": m[("tmax", "mean")].where(full_t).values, "tn": m[("tmin", "mean")].where(full_t).values,
+                "hot": m[("hot", "sum")].where(full_t).values, "tropical": m[("tropical", "sum")].where(full_t).values,
+                "frost": m[("frost", "sum")].where(full_t).values,
                 "p": m[("p", "sum")].where(full_p).values}))
     st = pd.concat(frames, ignore_index=True)
     # Navarre's manual stations include AEMET ones (e.g. Pamplona, 9262): keep Navarre's copy,
@@ -355,7 +423,7 @@ def yearly(st: pd.DataFrame, column: str) -> pd.DataFrame:
             .query("count == 12")["sum"].unstack([0, 1]).sort_index())
 
 
-def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float) -> pd.DataFrame:
+def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float, relative: bool = True) -> pd.DataFrame:
     """Look for a sudden step in each station's yearly series relative to its neighbours.
 
     A station move or a new instrument shifts one record but not its neighbours; a change of
@@ -364,7 +432,9 @@ def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float) -> pd.
     at the year that best separates two means (8+ years each side). `stat` is that
     difference in standard deviations, scaled by the sample sizes (a two-sample t, maximised
     over the split year). Stations with stat > 3.5 and a step of min_step % or more are left
-    out. Steps shared by the whole network cannot be found this way.
+    out. With relative=False (temperatures) the difference to the neighbours is used instead
+    of the ratio, and min_step is in the series' units. Steps shared by the whole network
+    cannot be found this way.
     """
     xy = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
     xy.index = places.index
@@ -377,7 +447,7 @@ def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float) -> pd.
         if len(near) < 3:
             continue
         ref = ann[near].median(axis=1)[ann[near].notna().sum(axis=1) >= 2]
-        q = (ann[k] / ref).dropna().loc[1950:2025]
+        q = (ann[k] / ref if relative else ann[k] - ref).dropna().loc[1950:2025]
         if len(q) < 30:
             continue
         stat, year, step = 0.0, None, None
@@ -385,7 +455,7 @@ def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float) -> pd.
             a, b = q.loc[:y - 1], q.loc[y:]
             t = abs(b.mean() - a.mean()) / q.std() * np.sqrt(len(a) * len(b) / len(q))
             if t > stat:
-                stat, year, step = t, y, 100 * (b.mean() / a.mean() - 1)
+                stat, year, step = t, y, 100 * (b.mean() / a.mean() - 1) if relative else b.mean() - a.mean()
         rows.append({"network": k[0], "id": k[1], "station": places.loc[k, "name"], "neighbours": len(near),
                      "years": len(q), "stat": round(stat, 2), "break_year": year, "step_pct": round(step, 1),
                      "excluded": stat > 3.5 and abs(step) >= min_step})
@@ -438,6 +508,46 @@ def water_balance(st: pd.DataFrame, places: pd.DataFrame) -> tuple[pd.DataFrame,
     for name in ("rain_mm", "et0_mm"):
         wb[name.replace("_mm", "_10y_mm")] = wb[name].rolling(10, min_periods=8).mean()
     return wb.round(1).reset_index(), quality
+
+
+HEAT = {"hot": "days with a maximum ≥ 30 °C", "tropical": "nights with a minimum ≥ 20 °C",
+        "frost": "days with a minimum ≤ 0 °C"}
+
+
+def heat_frost(st: pd.DataFrame, places: pd.DataFrame) -> tuple[gpd.GeoDataFrame, pd.DataFrame]:
+    """Hot days, tropical nights and frost days per station: 1961-1990 against 2016-2025.
+
+    Stations must pass the neighbour step test on their yearly mean maximum and minimum
+    temperature (0.5 °C) and have 20+ complete years in 1961-1990 and 7+ in 2016-2025 for
+    an index. The trend is Kendall's tau over the complete years of 1961-2025 (30+ needed).
+    """
+    from scipy.stats import kendalltau
+    full = st.dropna(subset=["tx", "tn"])
+    quality = pd.concat(homogeneity(full.groupby(["network", "id", "year"])[v].agg(["mean", "count"])
+                                    .query("count == 12")["mean"].unstack([0, 1]).sort_index(),
+                                    places, 0.5, relative=False).assign(variable=v) for v in ("tx", "tn"))
+    bad = set(zip(quality.network[quality.excluded], quality.id[quality.excluded]))
+    rows = []
+    for k, s in full.groupby(["network", "id"]):
+        if k in bad:
+            continue
+        r = {"network": k[0], "id": k[1], "station": places.loc[k, "name"], "altitude_m": places.loc[k, "altitude_m"],
+             "lon": places.loc[k, "lon"], "lat": places.loc[k, "lat"]}
+        for v in HEAT:
+            y = s.dropna(subset=[v]).groupby("year")[v].agg(["sum", "count"]).query("count == 12")["sum"]
+            a, b = y.loc[REF[0]:REF[1]], y.loc[2016:2025]
+            if len(a) < 20 or len(b) < 7:
+                continue
+            r[f"{v}_1961_1990"], r[f"{v}_2016_2025"] = round(a.mean(), 1), round(b.mean(), 1)
+            r[f"{v}_change"] = round(b.mean() - a.mean(), 1)
+            trend = y.loc[1961:2025]
+            if len(trend) >= 30:
+                tau, pv = kendalltau(trend.index, trend.values)
+                r[f"{v}_trend_tau"], r[f"{v}_trend_p"] = round(tau, 2), round(pv, 4)
+        if any(f"{v}_1961_1990" in r for v in HEAT):
+            rows.append(r)
+    t = pd.DataFrame(rows)
+    return gpd.GeoDataFrame(t.drop(columns=["lon", "lat"]), geometry=gpd.points_from_xy(t.lon, t.lat), crs=4326), quality
 
 
 TIMELINE_BASE = (1996, 2025)   # the reference every current station covers
@@ -508,13 +618,17 @@ def main() -> None:
     download_navarra()
     st = stations()
     places = st.drop_duplicates(["network", "id"]).set_index(["network", "id"])
+    st_all = st   # temperature has its own quality test, independent of the rain gauge's
     quality = homogeneity(yearly(st, "p"), places, 10).assign(variable="rain")
     bad = set(zip(quality.network[quality.excluded], quality.id[quality.excluded]))
     print("left out (step against neighbours):", sorted(quality.station[quality.excluded]))
     st = st[[k not in bad for k in zip(st.network, st.id)]]
     wb, quality_et0 = water_balance(add_et0(st), places)
     wb.to_csv(OUT / "water_balance.csv", index=False)
-    pd.concat([quality, quality_et0]).to_csv(OUT / "station_quality.csv", index=False)
+    heat, quality_t = heat_frost(st_all, places)
+    heat.to_file(OUT / "heat_stations.gpkg", layer="heat_stations", driver="GPKG")
+    pd.concat([quality, quality_et0, quality_t]).to_csv(OUT / "station_quality.csv", index=False)
+    print("heat and frost at", len(heat), "stations")
     print("water balance from", int(wb.stations.max()), "stations; ET0 left out:",
           sorted(quality_et0.station[quality_et0.excluded]))
     places = st.drop_duplicates(["network", "id"])[["network", "id", "name", "lat", "lon", "altitude_m"]]

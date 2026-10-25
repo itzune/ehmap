@@ -239,6 +239,55 @@ the long Météo-France and AEMET records ([`station_check.csv`](dist/climate/st
 the model is conservative on the coast: Socoa/Ziburu measured +1.11 °C where ERA5-Land has
 +0.69, Bilbao airport +0.90 vs +0.68.
 
+### Heat felt day to day
+
+At the 10 stations with long temperature records that pass the neighbour test (Navarre,
+AEMET, Météo-France), medians 1961-1990 → 2016-2025: **hot days** (maximum ≥ 30 °C) 13 → 24 a
+year, **tropical nights** (minimum ≥ 20 °C) 2 → 10, **frost days** 24 → 12. Hot days rose at 9
+of 10 stations, tropical nights at 7 of 8, and frost days fell at all 10. Per station:
+[`heat_stations.gpkg`](dist/climate/heat_stations.gpkg). A gridded version from ERA5-Land
+(daily maxima and minima) is in preparation.
+
+### Rivers: less water
+
+[`scripts/09_rivers.py`](scripts/09_rivers.py) analyses 15 river gauges with daily flows since
+the 1960s-70s (Hub'Eau for Iparralde; MITECO's Anuario de Aforos for Hegoalde, to September
+2022). On the 8 near-natural ones (forested headwaters, no large dam), against 1971-1990:
+
+| | 1991-2020 | 2016-2022/25 |
+|---|---|---|
+| Yearly flow | −16% | −18% |
+| **July-September flow** | **−24%** | **−48%** |
+| Lowest 7-day flow | −30% | −42% |
+| July-September, Bay of Biscay side (3 gauges) | −6% | −19% |
+| July-September, Ebro side (5 gauges) | −32% | −58% |
+
+All trends are significant (p < 0.001) except the Bay of Biscay side's yearly and summer flow.
+Rain has not changed and evaporative demand rose ~6%, which explains only part of this: more
+forest on former pasture and fields, and small abstractions, likely add to it. The
+catchment of each gauge was traced on the DEM with GeoLibre (`catchments` layer); traced
+areas match the official ones within ~5%. Gipuzkoa and Bizkaia have no long open records after
+~2010 (URA would need a data request).
+
+### The sea
+
+[`scripts/10_sea.py`](scripts/10_sea.py): NOAA OISST v2.1 daily sea surface temperature over
+the Basque coast (43.25-44.0 °N, 3.5-1.25 °W) and PSMSL tide gauges.
+
+- **Sea temperature:** 16.0 °C in 1982-1991 → 17.0 °C in 2016-2025 (+0.32 °C per decade,
+  p < 10⁻⁸); summer (July-September) +1.2 °C. Warmest years 2023, 2025, 2022.
+- **Marine heatwaves** (Hobday et al. 2016, 1982-2011 baseline): 18 → 127 days a year; 2023
+  had 258. With a fixed baseline a warmer sea counts more heatwave days, by definition.
+- **Sea level:** +3.6 mm a year at Bilbao and Santander since 1993, +3.2 at Boucau; about
+  +2 to +2.4 mm a year over the longer records (Santander since 1944). Tide gauges measure the
+  sea against the land, and the coast is sinking 0.4-1.2 mm a year (GNSS, Nevada Geodetic Lab).
+  PSMSL's yearly values are not redistributed here (no explicit licence); the trends are.
+
+Wildfires were also examined (EGIF, IDENA, EFFIS, MODIS, FIRMS): burnt area has fallen in
+Araba, Bizkaia and Gipuzkoa since 1987 and shows no trend elsewhere; most burnt area is winter
+pastoral burning in Nafarroa Beherea and Zuberoa. The signal is land use rather than climate,
+so it is not published yet.
+
 ### Water: same rain, more evaporation
 
 Rain has not changed, but a warmer air takes more of it back. The **evaporative demand**
@@ -338,6 +387,8 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/05_rivers.py            # -> dist/osm/rivers, dist/elevation/ drainage (needs GeoLibre)
 .venv/bin/python scripts/06_forest.py            # -> dist/forest/ (needs ~10 GB of RAM)
 .venv/bin/python scripts/08_climate.py           # -> dist/climate/ (needs Copernicus CDS and AEMET keys, see below)
+.venv/bin/python scripts/09_rivers.py            # -> dist/rivers/ (needs GeoLibre for the catchments)
+.venv/bin/python scripts/10_sea.py               # -> dist/sea/
 .venv/bin/python scripts/07_site_maps.py         # -> site/maps/, site/data/ (website maps)
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
