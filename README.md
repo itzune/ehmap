@@ -86,8 +86,6 @@ scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ preview 
 
 ## Licences
 
-- **Data** (`dist/`, `data/reference/`, the layers in `ehmap.rgis`):
+- **Data** (`dist/`, `data/reference/`, `docs/`, the layers in `ehmap.rgis`):
   [CC BY 4.0](LICENSE-DATA). Sources and how to credit them: [ATTRIBUTION.md](ATTRIBUTION.md).
-- **Preview images** (`docs/`) include the OpenStreetMap basemap:
-  map data © OpenStreetMap contributors ([ODbL](https://opendatacommons.org/licenses/odbl/)).
 - **Code** (`scripts/`): [MIT](LICENSE).
