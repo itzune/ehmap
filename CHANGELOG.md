@@ -12,7 +12,7 @@ Climate change.
 - **Station check** against Météo-France records (Socoa, Biarritz, Banca): the model is
   conservative on temperature; its precipitation decline is not confirmed on the coast.
 - **Website**: chapter 06, "Klima aldatzen ari da", with a warming map and warming stripes.
-- **RustGIS project**: `Klima aldaketa` layer and print layout.
+- **RustGIS project**: `Klima aldaketa` group with `Tenperatura` and `Prezipitazioak` layers, and a print layout.
 
 Assets added: `temperature_change.tif`, `precipitation_change.tif`, `climate_annual.csv`,
 `climate_by_municipality.csv`.

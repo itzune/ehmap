@@ -249,7 +249,7 @@ precipitation, evaporation, topsoil moisture and snow cover per territory, water
 all of Euskal Herria, with anomalies vs 1961-1990), `climate_by_municipality.csv` (both
 normals and the change), and as release assets `temperature_change.tif` and
 `precipitation_change.tif` (250 m, interpolated from the 9 km grid: smooth, not local
-detail). In `ehmap.rgis`: the `Klima aldaketa` layer (hidden by default) and print layout.
+detail). In `ehmap.rgis`: the `Klima aldaketa` group with the `Tenperatura` and `Prezipitazioak` layers (hidden by default; precipitation with the caveat above) and a temperature print layout.
 
 ## Decisions
 

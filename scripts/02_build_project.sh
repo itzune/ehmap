@@ -30,7 +30,9 @@ sleep 1
 #   Lurraldeak      translucent territory colours
 #   Lurzorua 2021   WorldCover land cover, 10 m, from 1:150,000 in (hidden by default)
 #   Basoa           % tree cover per 100 m cell, WorldCover 2021 (hidden by default)
-#   Klima aldaketa  temperature change 1961-1990 → 1991-2020, ERA5-Land (hidden by default)
+#   Klima aldaketa  group, ERA5-Land change 1961-1990 → 1991-2020 (layers hidden by default):
+#     Tenperatura     °C
+#     Prezipitazioak  % (not confirmed by the coastal stations: see README)
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
 # The density, grid, relief, drainage, forest and warming views are also print layouts with legends.
 # The OSM basemap is added after the exports, so the previews hold no OSM tiles.
@@ -39,9 +41,12 @@ rustgis-cli run \
   --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/elevation/copernicus_dem_50m.tif\",\"name\":\"Erliebea\",\"whole\":true}" \
   --cmd 'raster.symbology={"layer":"Erliebea","type":"shadedRelief"}' \
   --cmd 'raster.stretch={"layer":"Erliebea","type":"custom","min":0,"max":2000}' \
-  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/climate/temperature_change.tif\",\"name\":\"Klima aldaketa\",\"whole\":true}" \
+  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/climate/temperature_change.tif\",\"name\":\"Tenperatura\",\"whole\":true}" \
   --cmd 'ramp.add={"text":"0% 238 139 104\n25% 226 94 68\n50% 202 50 43\n75% 163 28 34\n100% 117 21 30\n","format":"gdal","name":"Beroa","kind":"sequential"}' \
-  --cmd 'raster.symbology={"layer":"Klima aldaketa","type":"classify","ramp":"Beroa","classes":5}' \
+  --cmd 'raster.symbology={"layer":"Tenperatura","type":"classify","ramp":"Beroa","classes":5}' \
+  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/climate/precipitation_change.tif\",\"name\":\"Prezipitazioak\",\"whole\":true}" \
+  --cmd 'ramp.add={"text":"0% 67 49 29\n25% 98 74 44\n50% 130 102 63\n75% 160 132 85\n100% 188 162 115\n","format":"gdal","name":"Lehorra","kind":"sequential"}' \
+  --cmd 'raster.symbology={"layer":"Prezipitazioak","type":"classify","ramp":"Lehorra","classes":5}' \
   --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/forest/forest_cover_100m.tif\",\"name\":\"Basoa\",\"whole\":true}" \
   --cmd 'raster.symbology={"layer":"Basoa","type":"stretch","ramp":"Forest"}' \
   --cmd 'raster.stretch={"layer":"Basoa","type":"custom","min":0,"max":100}' \
@@ -128,7 +133,7 @@ rustgis-cli run \
   --cmd 'labels.field={"layer":"Gailur nagusiak","field":"label"}' \
   --cmd 'labels.enable={"layer":"Gailur nagusiak","on":true}' \
   --cmd 'layer.zoomTo={"layer":"Lurraldeak"}' \
-  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak","Isurialdeak","Ibaiak","Banalerroa","Basoa","Lurzorua 2021","Klima aldaketa"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak","Isurialdeak","Ibaiak","Banalerroa","Basoa","Lurzorua 2021","Tenperatura","Prezipitazioak"],"visible":false}' \
   --cmd 'share.exportMap={"path":"docs/euskal_herria_territories.png","dpi":150}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":false}' \
   --cmd 'layer.visibility={"layer":"Dentsitatea","visible":true}' \
@@ -151,10 +156,11 @@ rustgis-cli run \
   --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Basoa","title":"Basoa 2021","subtitle":"Euskal Herria: zuhaitz-estalduraren ehunekoa (100 m-ko gelaxkak)","sources":["Basoa: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
   --cmd 'layout.export={"layout":"Basoa","path":"docs/forest.png","dpi":120}' \
   --cmd 'layer.visibility={"layer":"Basoa","visible":false}' \
-  --cmd 'layer.visibility={"layer":"Klima aldaketa","visible":true}' \
-  --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Klima aldaketa","title":"Klima aldatzen ari da","subtitle":"Euskal Herria: tenperaturaren igoera, 1961–1990etik 1991–2020ra (°C)","sources":["Tenperatura: Copernicus Climate Change Service, ERA5-Land (doi:10.24381/cds.68d2bb30, CC BY 4.0)","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
-  --cmd 'layout.export={"layout":"Klima aldaketa","path":"docs/climate.png","dpi":120}' \
-  --cmd 'layer.visibility={"layer":"Klima aldaketa","visible":false}' \
+  --cmd 'layer.visibility={"layer":"Tenperatura","visible":true}' \
+  --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Klima aldaketa: tenperatura","title":"Klima aldatzen ari da","subtitle":"Euskal Herria: tenperaturaren igoera, 1961–1990etik 1991–2020ra (°C)","sources":["Tenperatura: Copernicus Climate Change Service, ERA5-Land (doi:10.24381/cds.68d2bb30, CC BY 4.0)","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
+  --cmd 'layout.export={"layout":"Klima aldaketa: tenperatura","path":"docs/climate.png","dpi":120}' \
+  --cmd 'layer.visibility={"layer":"Tenperatura","visible":false}' \
+  --cmd 'group.add={"name":"Klima aldaketa","layers":["Tenperatura","Prezipitazioak"]}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":true}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
   --save ehmap.rgis
