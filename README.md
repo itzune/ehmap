@@ -239,39 +239,54 @@ the long Météo-France and AEMET records ([`station_check.csv`](dist/climate/st
 the model is conservative on the coast: Socoa/Ziburu measured +1.11 °C where ERA5-Land has
 +0.69, Bilbao airport +0.90 vs +0.68.
 
-### Rain: from the stations, not the model
+### Rain: ups and downs, no trend
 
-ERA5-Land's precipitation **failed the station check**, so it is not published. It puts 2023
-at about half the normal rain, the driest year since 1950, while all 10 long-record stations
-measured a normal or wet year (102-118%); and it shows summer drying that most stations do not.
-Rain is published as measured, at the 10 stations with records over both normals (complete
-years only, at least 25 per period): 4 AEMET stations in Hegoalde and 6 Météo-France stations
-in Iparralde.
+ERA5-Land's precipitation **failed the station check**, so it is not published: it puts 2023
+at about half the normal rain, the driest year since 1950, while every long-record station
+measured a normal or wet year (102-118%). Rain is published as measured, from three networks:
+AEMET (Hegoalde), Météo-France (Iparralde) and the Government of Navarre's manual stations.
 
-| Station | Network | Year | Winter | Spring | Summer | Autumn | 2023 measured | 2023 in ERA5-Land |
-|---|---|---|---|---|---|---|---|---|
-| Hondarribia | AEMET | −2% | −8% | −13% | +4% | +8% | 116% | 57% |
-| Donostia, Igeldo | AEMET | −1% | −7% | −11% | +4% | +10% | 106% | 57% |
-| Bilbao airport | AEMET | −5% | −1% | −16% | −21% | +5% | 106% | 58% |
-| Pamplona | AEMET | −1% | +2% | +2% | −16% | −3% | 106% | 49% |
-| Biarritz | Météo-France | −1% | −7% | −10% | +2% | +9% | 118% | 59% |
-| Socoa (Ziburu) | Météo-France | 0% | −6% | −9% | +4% | +8% | 105% | 55% |
-| Banca | Météo-France | −5% | −12% | −12% | +3% | +7% | 104% | 51% |
-| Larrau | Météo-France | +5% | −6% | −3% | +14% | +14% | 102% | 51% |
-| Licq-Athérey | Météo-France | +1% | −3% | −6% | +3% | +12% | 112% | 50% |
-| Trois-Villes | Météo-France | +4% | −3% | −4% | +7% | +17% | 108% | 49% |
+**Quality control.** Each station's yearly rain is compared with the median of its neighbours
+(within 35 km); a sudden step there means a station move or a new gauge, not climate. The 11
+stations with a clear step (10% or more) are left out — mostly Navarre manual stations around
+1988-1992, e.g. Yesa (−24% from 1990) and Altsasu (+29%). See
+[`station_quality.csv`](dist/climate/station_quality.csv). Navarre's Pamplona station is also
+AEMET's 9262: only one copy is kept.
 
-Change 1961-1990 → 1991-2020; 2023 as % of the 1991-2020 normal. **The yearly total has
-hardly changed (±5%); the seasons have**: drier winters and springs, wetter autumns, mixed
-summers (much drier in Bilbao and Pamplona, wetter in Zuberoa). There is no open station
-record over both normals in Araba (Vitoria's aerodrome closed in 1979 and Foronda, from 1974,
-gets 16% less rain, too different to join) or in the Ribera, so the south is not covered.
+**Result.** Rain varies a lot from decade to decade (10-year means swing ±20-30%), but there is
+**no trend since 1960**, neither in the year nor in any season: the median of the 11 stations
+with data since 1960 changes by less than ±1.5 points per decade. Comparing the two normals
+does show drier winters and springs and wetter autumns (below), but the timeline shows why:
+the springs of the 1970s-80s were unusually wet and the autumns of the 1980s unusually dry.
+Temperature, by contrast, rises steadily.
+
+| Station | Network | Year | Winter | Spring | Summer | Autumn |
+|---|---|---|---|---|---|---|
+| Hondarribia | AEMET | −2% | −10% | −13% | +4% | +8% |
+| Donostia, Igeldo | AEMET | −1% | −8% | −11% | +4% | +10% |
+| Bilbao airport | AEMET | −5% | −4% | −16% | −21% | +5% |
+| Iruña / Pamplona | Gobierno de Navarra | −1% | −4% | −2% | −14% | −2% |
+| Artikutza | Gobierno de Navarra | −8% | −12% | −17% | −9% | +3% |
+| Fitero | Gobierno de Navarra | 0% | −9% | +1% | −7% | +12% |
+| Monteagudo | Gobierno de Navarra | – | −19% | +6% | +4% | +14% |
+| Biarritz | Météo-France | −1% | −7% | −10% | +2% | +9% |
+| Banca | Météo-France | −5% | −12% | −12% | +3% | +7% |
+| Bidache | Météo-France | +9% | −2% | +2% | +6% | +23% |
+| Cambo-les-Bains | Météo-France | +2% | −4% | −5% | +10% | +13% |
+| Larrau | Météo-France | +5% | −6% | −3% | +14% | +14% |
+| Licq-Athérey | Météo-France | +1% | −3% | −6% | +3% | +12% |
+| Trois-Villes | Météo-France | +4% | −3% | −4% | +7% | +17% |
+
+Change 1961-1990 → 1991-2020 at the stations that pass the quality check and have 25+
+complete years in each normal. The timeline (website, `rain_timeline.csv`) uses 91 stations:
+every station with 20+ complete years in 1996-2025, as 10-year means relative to that period.
 
 Files in [`dist/climate/`](dist/climate/): `climate_annual.csv` (yearly temperature per
 territory, watershed side and Euskal Herria, with anomalies vs 1961-1990),
 `climate_by_municipality.csv` (both temperature normals and the change), `station_check.csv`
-(every station next to ERA5-Land), `rain_stations.gpkg` (the 10 stations with their measured
-rainfall change), and as a release asset `temperature_change.tif` (250 m, interpolated from
+(every long station next to ERA5-Land), `station_quality.csv` (the neighbour test),
+`rain_stations.gpkg` (the long stations with their measured rainfall change),
+`rain_timeline.csv` and `rain_timeline_stations.csv` (10-year rain per station and season), and as a release asset `temperature_change.tif` (250 m, interpolated from
 the 9 km grid: smooth, not local detail). In `ehmap.rgis`: the `Klima aldaketa` group with
 the `Tenperatura` and `Prezipitazioak` (stations) layers, hidden by default, and a
 temperature print layout.
@@ -325,6 +340,7 @@ create a free account, put your Personal Access Token in `~/.cdsapirc`
 (`url: https://cds.climate.copernicus.eu/api` and `key: <token>`), and accept the ERA5-Land
 licence on the dataset's download page. The AEMET station data needs a free key from
 [opendata.aemet.es](https://opendata.aemet.es) in `~/.aemet_key` (the key alone, one line).
+Météo-France and Navarre's data need no key (Navarre's download is about 4,000 small files).
 
 `ehmap.rgis` and the rasters are not versioned in git (they are large and change on every
 build); they are published as release assets.

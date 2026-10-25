@@ -23,11 +23,12 @@ cp ehmap.rgis dist/euskal_herria.gpkg \
    dist/osm/peaks.gpkg dist/osm/rivers.gpkg dist/elevation/drainage_basins.gpkg \
    dist/forest/forest_cover_100m.tif dist/forest/landcover_2021_10m.tif \
    dist/climate/temperature_change.tif dist/climate/rain_stations.gpkg dist/climate/station_check.csv \
+   dist/climate/station_quality.csv dist/climate/rain_timeline.csv dist/climate/rain_timeline_stations.csv \
    dist/climate/climate_annual.csv dist/climate/climate_by_municipality.csv "$ASSETS/"
 (cd dist && zip -qr "$ASSETS/euskal_herria_geojson.zip" geojson)
 (cd "$ASSETS" && sha256sum -- * > SHA256SUMS)
 
-printf '%s\n\nData: CC BY 4.0 (climate stations: © AEMET, © Météo-France), except elevation (Copernicus WorldDEM-30 licence) and peaks (ODbL, © OpenStreetMap contributors); see ATTRIBUTION.md. Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
+printf '%s\n\nData: CC BY 4.0 (climate stations: © AEMET, © Météo-France, © Gobierno de Navarra), except elevation (Copernicus WorldDEM-30 licence) and peaks (ODbL, © OpenStreetMap contributors); see ATTRIBUTION.md. Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
 gh release create "$VERSION" --repo "$REPO" --target main --title "$VERSION" \
   --notes-file "$ASSETS/notes.md" \
   "$ASSETS"/ehmap.rgis "$ASSETS"/euskal_herria.gpkg "$ASSETS"/euskal_herria_geojson.zip \
@@ -36,5 +37,6 @@ gh release create "$VERSION" --repo "$REPO" --target main --title "$VERSION" \
   "$ASSETS"/rivers.gpkg "$ASSETS"/drainage_basins.gpkg \
   "$ASSETS"/forest_cover_100m.tif "$ASSETS"/landcover_2021_10m.tif \
   "$ASSETS"/temperature_change.tif "$ASSETS"/rain_stations.gpkg "$ASSETS"/station_check.csv \
+  "$ASSETS"/station_quality.csv "$ASSETS"/rain_timeline.csv "$ASSETS"/rain_timeline_stations.csv \
   "$ASSETS"/climate_annual.csv "$ASSETS"/climate_by_municipality.csv \
   "$ASSETS"/SHA256SUMS

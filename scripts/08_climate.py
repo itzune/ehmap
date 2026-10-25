@@ -5,8 +5,8 @@ grid (0.1°, about 9 km) that covers both sides of the border, so there is no se
 Spanish and French national grids. It is a model constrained by observations, checked here
 against the long station records of Météo-France and AEMET:
 - temperature agrees (the model is slightly conservative on the coast), so it is published;
-- precipitation does not: ERA5-Land has 2023 at about half the normal rain where all 10
-  stations measured 102-118%, and summer drying most stations do not show. Rain is therefore
+- precipitation does not: ERA5-Land has 2023 at about half the normal rain where every long
+  station measured 102-118%, and summer drying most stations do not show. Rain is therefore
   published only as measured at the stations (rain_stations.gpkg); the model's rain is used
   only in station_check.csv, to document the disagreement.
 
@@ -26,7 +26,11 @@ Outputs (dist/climate/):
                                     of Euskal Herria, and its anomaly vs 1961-1990
   station_check.csv                 each long station record next to ERA5-Land at its place
   rain_stations.gpkg                stations with their measured rainfall change, per year and
-                                    season (© AEMET; © Météo-France, Licence Ouverte 2.0)
+                                    season (© AEMET; © Météo-France, Licence Ouverte 2.0;
+                                    Gobierno de Navarra)
+  station_quality.csv               the neighbour test for sudden steps; failed stations left out
+  rain_timeline.csv                 10-year rain per station and season, % of its 1996-2025 mean
+  rain_timeline_stations.csv        the stations of the timeline
 """
 import json
 from pathlib import Path
@@ -158,7 +162,7 @@ def download_aemet() -> None:
     raw = ROOT / "data" / "raw" / "aemet"
     raw.mkdir(parents=True, exist_ok=True)
     for station in AEMET_STATIONS:
-        for y0 in range(1961, 2026, 3):
+        for y0 in [*range(1919, 1961, 3), *range(1961, 2026, 3)]:  # 3-year chunks aligned on 1961
             y1 = min(y0 + 2, 2025)
             out = raw / f"{station}_{y0}_{y1}.json"
             if out.exists():
@@ -185,7 +189,47 @@ def download_aemet() -> None:
         print("AEMET", station)
 
 
-# Météo-France stations in Iparralde with records over both normals (Licence Ouverte 2.0)
+# Navarre's manual stations (Government of Navarre with AEMET): daily maximum and minimum
+# temperature and rain, one CSV per year, on meteo.navarra.es; locations from IDENA (CC BY 4.0).
+NAVARRA = "https://meteo.navarra.es"
+NAVARRA_STATIONS = "https://idena.navarra.es/descargas/METEOR_Sym_EstMetManu.zip"
+
+
+def download_navarra() -> None:
+    """Every yearly daily file of the manual stations that report today and began by 1996
+    (so they cover the 1996-2025 reference of the timeline)."""
+    import re
+    import time
+    import urllib.parse
+    import requests
+    raw = ROOT / "data" / "raw" / "navarra"
+    raw.mkdir(parents=True, exist_ok=True)
+    session = requests.Session()
+    session.headers["User-Agent"] = "ehmap (https://github.com/itzune/ehmap)"
+    shp = raw / "METEOR_Sym_EstMetManu.zip"
+    if not shp.exists():
+        shp.write_bytes(session.get(NAVARRA_STATIONS, timeout=60).content)
+    for sid in gpd.read_file(f"zip://{shp}").CESTACION:
+        out = raw / str(sid)
+        if (out / "complete").exists():
+            continue
+        page = session.get(f"{NAVARRA}/estaciones/descargardatos_estacion.cfm?IDEstacion={sid}", timeout=60).text
+        files = {int(y): f for f, y in re.findall(r"'(/_data/[^']*?_((?:19|20)\d\d)(?:_dia)?\.csv)'", page)}
+        if not files or min(files) > 1996 or max(files) < 2025:
+            continue
+        out.mkdir(exist_ok=True)
+        for year in sorted(files):
+            if year in files and not (out / f"{year}.csv").exists():
+                r = session.get(NAVARRA + urllib.parse.quote(files[year]), timeout=60)
+                r.raise_for_status()
+                (out / f"{year}.csv").write_bytes(r.content)
+                time.sleep(0.5)
+        (out / "complete").touch()
+        print("Navarra", sid)
+
+
+# Météo-France stations (Licence Ouverte 2.0): every station of département 64 inside
+# Euskal Herria is used; these are shown with a cleaner name than Météo-France's
 STATIONS = {64189001: "Socoa (Ziburu)", 64024001: "Biarritz", 64092002: "Banca", 64316001: "Larrau",
             64342001: "Licq-Athérey", 64537001: "Trois-Villes"}
 
@@ -212,8 +256,8 @@ def stations() -> pd.DataFrame:
     mf = ROOT / "data" / "raw" / "meteofrance"
     d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "RR"])
                   for p in sorted(mf.glob("MENSQ_64_*.csv.gz")))
-    d = d[d.NUM_POSTE.isin(STATIONS)]
-    frames.append(pd.DataFrame({"network": "Météo-France", "id": d.NUM_POSTE.astype(str), "name": d.NUM_POSTE.map(STATIONS),
+    names = d.NUM_POSTE.map(STATIONS).fillna(d.NOM_USUEL.str.title())
+    frames.append(pd.DataFrame({"network": "Météo-France", "id": d.NUM_POSTE.astype(str), "name": names,
                                 "lat": d.LAT, "lon": d.LON, "altitude_m": d.ALTI, "year": d.AAAAMM // 100,
                                 "month": d.AAAAMM % 100, "t": d.TM, "p": d.RR}))
     raw = ROOT / "data" / "raw" / "aemet"
@@ -233,7 +277,37 @@ def stations() -> pd.DataFrame:
                              # "Ip" is a trace of rain, under 0.1 mm
                              "p": 0.0 if p_ == "Ip" else pd.to_numeric(p_, errors="coerce")})
         frames.append(pd.DataFrame(rows))
-    return pd.concat(frames, ignore_index=True)
+    nav = ROOT / "data" / "raw" / "navarra"
+    if (nav / "METEOR_Sym_EstMetManu.zip").exists():
+        meta = gpd.read_file(f"zip://{nav / 'METEOR_Sym_EstMetManu.zip'}").to_crs(4326).set_index("CESTACION")
+        for d in sorted(p for p in nav.iterdir() if (p / "complete").exists()):
+            st = meta.loc[int(d.name)]
+            days = pd.concat(pd.read_csv(f, sep=";", encoding="latin-1", decimal=".", na_values=["", "-"],
+                                         usecols=[0, 1, 2, 3], names=["date", "tmax", "tmin", "p"], header=0)
+                             for f in sorted(d.glob("*.csv")))
+            days["date"] = pd.to_datetime(days.date.str[:10], format="%d/%m/%Y")
+            days = days.set_index("date").apply(pd.to_numeric, errors="coerce")
+            m = days.resample("MS").agg({"tmax": ["mean", "count"], "tmin": "mean", "p": ["sum", "count"]})
+            full_p = m[("p", "count")] == m.index.days_in_month          # every day measured
+            full_t = m[("tmax", "count")] >= m.index.days_in_month - 2   # at most 2 days missing
+            frames.append(pd.DataFrame({
+                "network": "Gobierno de Navarra", "id": d.name, "name": st.NOMBRE_eus,
+                "lat": st.geometry.y, "lon": st.geometry.x, "altitude_m": st.ALTITUD,
+                "year": m.index.year, "month": m.index.month,
+                "t": ((m[("tmax", "mean")] + m[("tmin", "mean")]) / 2).where(full_t).values,
+                "p": m[("p", "sum")].where(full_p).values}))
+    st = pd.concat(frames, ignore_index=True)
+    # Navarre's manual stations include AEMET ones (e.g. Pamplona, 9262): keep Navarre's copy,
+    # which is the longer record, and drop the AEMET duplicate
+    if (nav / "METEOR_Sym_EstMetManu.zip").exists():
+        twins = set(meta.loc[[int(i) for i in st[st.network == "Gobierno de Navarra"].id.unique()], "IDAEMET"].dropna())
+        st = st[~((st.network == "AEMET") & st.id.isin(twins))]
+    # only stations inside Euskal Herria (with 2 km of slack for coastal and border stations)
+    outline = gpd.read_file(GPKG, layer="euskal_herria").to_crs(CRS).buffer(2000).iloc[0]
+    places = st.drop_duplicates(["network", "id"])
+    pts = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
+    keep = set(zip(places.network[pts.within(outline).values], places.id[pts.within(outline).values]))
+    return st[[k in keep for k in zip(st.network, st.id)]].reset_index(drop=True)
 
 
 SEASONS = {12: "DJF", 1: "DJF", 2: "DJF", 3: "MAM", 4: "MAM", 5: "MAM",
@@ -268,9 +342,77 @@ def summarise(m: pd.DataFrame) -> dict:
     return out
 
 
-def station_check() -> pd.DataFrame:
+def homogeneity(st: pd.DataFrame) -> pd.DataFrame:
+    """Look for a sudden step in each station's yearly rain relative to its neighbours.
+
+    A station move or a new rain gauge shifts one record but not its neighbours; a change of
+    climate shifts them all. For each station with 40+ complete years in 1961-2020 and 3+
+    neighbours within 35 km, the ratio of its yearly rain to the neighbours' median is split
+    at the year that best separates two means (8+ years each side). `stat` is that
+    difference in standard deviations, scaled by the sample sizes (a two-sample t, maximised
+    over the split year). Stations with stat > 3.5 and a step of 10% or more are left out.
+    Steps shared by the whole network cannot be found this way.
+    """
+    ann = (st.dropna(subset=["p"]).groupby(["network", "id", "year"]).p.agg(["sum", "count"])
+           .query("count == 12")["sum"].unstack([0, 1]).sort_index())
+    places = st.drop_duplicates(["network", "id"]).set_index(["network", "id"])
+    xy = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
+    xy.index = places.index
+    rows = []
+    for k in ann.columns:
+        if ann[k].loc[1961:2020].count() < 40:
+            continue
+        dist = xy.distance(xy[k]).sort_values()
+        near = [n for n in dist.index[1:9] if n in ann.columns and dist[n] < 35000]
+        if len(near) < 3:
+            continue
+        ref = ann[near].median(axis=1)[ann[near].notna().sum(axis=1) >= 2]
+        q = (ann[k] / ref).dropna().loc[1950:2025]
+        if len(q) < 30:
+            continue
+        stat, year, step = 0.0, None, None
+        for y in q.index[8:-8]:
+            a, b = q.loc[:y - 1], q.loc[y:]
+            t = abs(b.mean() - a.mean()) / q.std() * np.sqrt(len(a) * len(b) / len(q))
+            if t > stat:
+                stat, year, step = t, y, 100 * (b.mean() / a.mean() - 1)
+        rows.append({"network": k[0], "id": k[1], "station": places.loc[k, "name"], "neighbours": len(near),
+                     "years": len(q), "stat": round(stat, 2), "break_year": year, "step_pct": round(step, 1),
+                     "excluded": stat > 3.5 and abs(step) >= 10})
+    return pd.DataFrame(rows)
+
+
+TIMELINE_BASE = (1996, 2025)   # the reference every current station covers
+WINDOW = 10                    # years per window of the timeline
+
+
+def rain_timeline(st: pd.DataFrame) -> pd.DataFrame:
+    """10-year mean rain per station, year and season, as % of the station's 1996-2025 mean.
+
+    A season (or year) counts only when complete; the reference needs 20 of its 30, a window
+    7 of its 10. Windows are named by their last year: 2025 = 2016-2025.
+    """
+    rows = []
+    for (net, sid), s in st.dropna(subset=["p"]).groupby(["network", "id"]):
+        s = s.assign(season=s.month.map(SEASONS), syear=s.year + (s.month == 12))
+        series = {"year": s.groupby("year").p.agg(["sum", "count"]).query("count == 12")["sum"]}
+        for se in ("DJF", "MAM", "JJA", "SON"):
+            g = s[s.season == se].groupby("syear").p.agg(["sum", "count"])
+            series[se.lower()] = g[g["count"] == 3]["sum"]
+        for key, y in series.items():
+            base = y.loc[TIMELINE_BASE[0]:TIMELINE_BASE[1]]
+            if len(base) < 20 or base.mean() <= 0:
+                continue
+            full = y.reindex(range(y.index.min(), 2026))
+            mean = full.rolling(WINDOW, min_periods=7).mean()
+            for end, v in mean.dropna().items():
+                rows.append({"network": net, "id": sid, "season": key, "window_end": end,
+                             "pct_of_1996_2025": round(100 * v / base.mean(), 1)})
+    return pd.DataFrame(rows)
+
+
+def station_check(st: pd.DataFrame) -> pd.DataFrame:
     """Each station's record next to ERA5-Land at the same place (bilinear interpolation)."""
-    st = stations()
     temperature, precipitation = monthly("2m_temperature"), monthly("total_precipitation")
     t_index = pd.to_datetime(temperature.time.values)
     rows = []
@@ -305,7 +447,19 @@ def main() -> None:
     rows, cols = rasterio.transform.rowcol(grid.transform, pts.x, pts.y)
 
     download_aemet()
-    check = station_check()
+    download_navarra()
+    st = stations()
+    quality = homogeneity(st)
+    quality.to_csv(OUT / "station_quality.csv", index=False)
+    bad = set(zip(quality.network[quality.excluded], quality.id[quality.excluded]))
+    print("left out (step against neighbours):", sorted(quality.station[quality.excluded]))
+    st = st[[k not in bad for k in zip(st.network, st.id)]]
+    places = st.drop_duplicates(["network", "id"])[["network", "id", "name", "lat", "lon", "altitude_m"]]
+    timeline = rain_timeline(st)
+    places[places.set_index(["network", "id"]).index.isin(timeline.set_index(["network", "id"]).index.unique())] \
+        .to_csv(OUT / "rain_timeline_stations.csv", index=False)
+    timeline.to_csv(OUT / "rain_timeline.csv", index=False)
+    check = station_check(st)
     check.to_csv(OUT / "station_check.csv", index=False)
     print(check.to_string(index=False))
     rain = check[check.source == "station"].drop(columns=["source", "lat", "lon"])

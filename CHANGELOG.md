@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.2 — 2026-10-25
+
+Rain over time: a station timeline, quality control, and a corrected conclusion.
+
+- **Navarre's manual stations** (Government of Navarre, back to 1900) and every Météo-France
+  station inside Euskal Herria join AEMET's: 91 stations in the timeline.
+- **Quality control**: a neighbour test for sudden steps (station moves, new gauges); 11
+  stations left out (`station_quality.csv`).
+- **Rain timeline** (`rain_timeline.csv`): 10-year rain per station and season, as % of its
+  1996-2025 mean, back to the 1920s where records exist.
+- **Corrected conclusion**: rain swings ±20-30% from decade to decade but has **no trend since
+  1960** in any season. v0.5.1's "drier springs, wetter autumns" is the difference between two
+  normals, explained by unusually wet springs in the 1970s-80s and dry autumns in the 1980s.
+- **Website**: the rain section is now an explorer (season tabs, a slider over the decades,
+  the median of the long stations); the four-season map and the dot chart are gone.
+
+Assets added: `rain_timeline.csv`, `rain_timeline_stations.csv`, `station_quality.csv`.
+
 ## v0.5.1 — 2026-10-25
 
 Rain from the stations, not the model.

@@ -355,42 +355,48 @@ def map_heat(b: Base):
 HEAT_BINS = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]   # °C; the site legend uses the same classes
 
 
-RAIN_BINS = [-15, -10, -5, 5, 10, 15]   # % change; |change| < 5% is drawn neutral
 SEASONS_EU = [("djf", "Negua", "abendua–otsaila"), ("mam", "Udaberria", "martxoa–maiatza"),
               ("jja", "Uda", "ekaina–abuztua"), ("son", "Udazkena", "iraila–azaroa")]
 
 
-def map_rain(b: Base):
-    """Rainfall change per season at the stations, 1961-1990 → 1991-2020 (measured, not modelled)."""
-    import pandas as pd
-    st = pd.read_csv(DIST / "climate" / "station_check.csv")
-    st = st[st.source == "station"]
-    pts = gpd.GeoDataFrame(st, geometry=gpd.points_from_xy(st.lon, st.lat), crs=4326).to_crs(CRS)
-    colors = PAL["dry"][::-1] + [PAL["neutral"]] + PAL["wet"]
-    x0, x1, y0, y1 = b.extent
-    w_in = WIDTH_PX / DPI
-    ph = (w_in / 2) * (y1 - y0) / (x1 - x0)
-    fig = plt.figure(figsize=(w_in, 2 * ph), dpi=DPI)
+def map_rain_base(b: Base):
+    """The explorer's base map: quiet relief and borders; the stations are drawn by the page."""
+    fig, ax = b.figure()
     card = np.broadcast_to(np.array(to_rgb(PAL["card"])), b.dem.shape + (3,))
-    for i, (key, name, months) in enumerate(SEASONS_EU):
-        ax = fig.add_axes([(i % 2) / 2, 1 - (i // 2 + 1) / 2, 0.5, 0.5])
-        ax.set_xlim(x0, x1); ax.set_ylim(y0, y1); ax.set_axis_off()
-        b.background(ax, card, relief=0.7)
-        b.ter.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.4, alpha=0.5, zorder=4)
-        b.outline.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.7, alpha=0.8, zorder=4)
-        v = pts[f"p_{key}_change_pct"]
-        ok = v.notna()
-        cls = np.digitize(v[ok], RAIN_BINS)
-        ax.scatter(pts[ok].geometry.x, pts[ok].geometry.y, s=170, c=[colors[k] for k in cls],
-                   edgecolors=PAL["paper"], linewidths=1.6, zorder=8)
-        # season name in the open sea, top left
-        ax.text(x0 + 0.04 * (x1 - x0), y1 - 0.09 * (y1 - y0), name, fontsize=17,
-                fontfamily=b.fonts["serif"], color=PAL["ink"], va="center", zorder=10)
-        ax.text(x0 + 0.04 * (x1 - x0), y1 - 0.155 * (y1 - y0), months, fontsize=8,
-                fontfamily=b.fonts["sans"], color=PAL["ink2"], va="center",
-                path_effects=b.halo(2.4), zorder=10)
-        ax.plot([x0, x0, x1, x1], [y0, y1, y1, y0], color=PAL["rule"], linewidth=1.2, zorder=11)
-    b.save(fig, "euria", f"{BOUNDS_CREDIT} · Prezipitazioa: © AEMET; © Météo-France (Licence Ouverte 2.0)")
+    b.background(ax, card, relief=0.75)
+    b.borders(ax, municipalities=False)
+    b.territory_labels(ax, size=8)
+    b.save(fig, "euria-oinarria", f"{BOUNDS_CREDIT} · Prezipitazioa: © AEMET; © Météo-France "
+           "(Licence Ouverte 2.0); Gobierno de Navarra (CC BY 4.0)")
+    # where each timeline station falls on this image, as fractions of its width and height
+    import pandas as pd
+    x0, x1, y0, y1 = b.extent
+    places = pd.read_csv(DIST / "climate" / "rain_timeline_stations.csv")
+    xy = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
+    places["fx"] = ((xy.x - x0) / (x1 - x0)).round(4).values
+    places["fy"] = ((y1 - xy.y) / (y1 - y0)).round(4).values
+    tl = pd.read_csv(DIST / "climate" / "rain_timeline.csv")
+    windows = list(range(int(tl.window_end.min()), 2026))
+    keys = ["year", "djf", "mam", "jja", "son"]
+    stations = []
+    for r in places.itertuples(index=False):
+        mine = tl[(tl.network == r.network) & (tl.id.astype(str) == str(r.id))]
+        v = {}
+        for k in keys:
+            ser = mine[mine.season == k].set_index("window_end").pct_of_1996_2025.reindex(windows)
+            v[k] = [None if np.isnan(x) else int(round(x)) for x in ser]
+        # "long" stations have a value in 90% of the windows since 1960: the curve under the
+        # slider uses only them, so it follows the same stations through time
+        since = [x for x, w in zip(v["year"], windows) if w >= 1960]
+        long = sum(x is not None for x in since) >= 0.9 * len(since)
+        stations.append({"name": r.name, "network": r.network, "altitude": int(r.altitude_m),
+                         "fx": r.fx, "fy": r.fy, "long": long, "v": v})
+    out = {"windows": windows, "window": 10, "base": "1996–2025",
+           "seasons": [{"key": "year", "name": "Urtea"}] + [{"key": k, "name": n} for k, n, _ in SEASONS_EU],
+           "stations": stations}
+    path = ROOT / "site" / "data" / "rain_timeline.json"
+    path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
+    print(path.relative_to(ROOT), len(stations), "stations")
 
 
 def stripes():
@@ -411,11 +417,12 @@ def stripes():
     print(path.relative_to(ROOT))
 
 
+
 def main():
     with tempfile.TemporaryDirectory() as tmp:
         fonts = load_fonts(Path(tmp))
         b = Base(fonts)
-        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat, map_rain)
+        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat, map_rain_base)
         only = sys.argv[1:]  # e.g. "heat people" renders only those
         for f in maps:
             if not only or f.__name__.removeprefix("map_") in only:

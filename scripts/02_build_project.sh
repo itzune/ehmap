@@ -32,7 +32,7 @@ sleep 1
 #   Basoa           % tree cover per 100 m cell, WorldCover 2021 (hidden by default)
 #   Klima aldaketa  group, ERA5-Land change 1961-1990 → 1991-2020 (layers hidden by default):
 #     Tenperatura     °C
-#     Prezipitazioak  rainfall change measured at the 10 long-record stations, % (AEMET, Météo-France)
+#     Prezipitazioak  rainfall change 1961-1990 → 1991-2020 at the long, quality-checked stations, %
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
 # The density, grid, relief, drainage, forest and warming views are also print layouts with legends.
 # The OSM basemap is added after the exports, so the previews hold no OSM tiles.
