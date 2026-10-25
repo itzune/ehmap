@@ -28,14 +28,21 @@ sleep 1
 #   Dentsitatea     population density per municipality (hidden by default)
 #   Isurialdeak     the two drainage sides (DEM, hidden by default)
 #   Lurraldeak      translucent territory colours
+#   Lurzorua 2021   WorldCover land cover, 10 m, from 1:150,000 in (hidden by default)
+#   Basoa           % tree cover per 100 m cell, WorldCover 2021 (hidden by default)
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
-# The density, grid, relief and drainage views are also saved as print layouts with legends.
+# The density, grid, relief, drainage and forest views are also print layouts with legends.
 # The OSM basemap is added after the exports, so the previews hold no OSM tiles.
 rustgis-cli run \
   --cmd 'map.basemap={"name":"blank"}' \
   --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/elevation/copernicus_dem_50m.tif\",\"name\":\"Erliebea\",\"whole\":true}" \
   --cmd 'raster.symbology={"layer":"Erliebea","type":"shadedRelief"}' \
   --cmd 'raster.stretch={"layer":"Erliebea","type":"custom","min":0,"max":2000}' \
+  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/forest/forest_cover_100m.tif\",\"name\":\"Basoa\",\"whole\":true}" \
+  --cmd 'raster.symbology={"layer":"Basoa","type":"stretch","ramp":"Forest"}' \
+  --cmd 'raster.stretch={"layer":"Basoa","type":"custom","min":0,"max":100}' \
+  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/forest/landcover_2021_10m.tif\",\"name\":\"Lurzorua 2021\",\"whole\":true}" \
+  --cmd 'layer.scaleRange={"layer":"Lurzorua 2021","min":150000}' \
   --cmd "layer.addData={\"path\":\"$GPKG\",\"layer\":\"territories\",\"name\":\"Lurraldeak\"}" \
   --cmd 'layer.symbology={"layer":"Lurraldeak","type":"unique","field":"name_eu"}' \
   --cmd 'layer.transparency={"layer":"Lurraldeak","value":40}' \
@@ -117,7 +124,7 @@ rustgis-cli run \
   --cmd 'labels.field={"layer":"Gailur nagusiak","field":"label"}' \
   --cmd 'labels.enable={"layer":"Gailur nagusiak","on":true}' \
   --cmd 'layer.zoomTo={"layer":"Lurraldeak"}' \
-  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak","Isurialdeak","Ibaiak","Banalerroa"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak","Isurialdeak","Ibaiak","Banalerroa","Basoa","Lurzorua 2021"],"visible":false}' \
   --cmd 'share.exportMap={"path":"docs/euskal_herria_territories.png","dpi":150}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":false}' \
   --cmd 'layer.visibility={"layer":"Dentsitatea","visible":true}' \
@@ -136,6 +143,10 @@ rustgis-cli run \
   --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Isurialdeak","title":"Ibaiak eta isurialdeak","subtitle":"Euskal Herria: Bizkaiko golkora edo Mediterraneora (Ebro)","sources":["Isurialdeak eta banalerroa: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved","Ibaiak: © OpenStreetMap contributors (ODbL)","Mugak: IGN España, IGN France","github.com/itzune/ehmap"],"locator":"none","author":""}' \
   --cmd 'layout.export={"layout":"Isurialdeak","path":"docs/rivers.png","dpi":120}' \
   --cmd 'layer.visibility={"layer":["Isurialdeak","Ibaiak","Banalerroa"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":"Basoa","visible":true}' \
+  --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Basoa","title":"Basoa 2021","subtitle":"Euskal Herria: zuhaitz-estalduraren ehunekoa (100 m-ko gelaxkak)","sources":["Basoa: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
+  --cmd 'layout.export={"layout":"Basoa","path":"docs/forest.png","dpi":120}' \
+  --cmd 'layer.visibility={"layer":"Basoa","visible":false}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":true}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
   --save ehmap.rgis

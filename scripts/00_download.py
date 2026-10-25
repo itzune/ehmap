@@ -47,6 +47,11 @@ COPDEM = "https://copernicus-dem-30m.s3.amazonaws.com/{0}/{0}.tif"
 COPDEM_TILE = "Copernicus_DSM_COG_10_N{lat:02d}_00_W{lon:03d}_00_DEM"
 COPDEM_LATS, COPDEM_LONS = (41, 42, 43), (4, 3, 2, 1)  # 41-44°N, 4-0°W
 
+# ESA WorldCover 2021 v200 (CC BY 4.0), 3°x3° tiles covering Euskal Herria
+WORLDCOVER = ("https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/"
+              "ESA_WorldCover_10m_2021_v200_{}_Map.tif")
+WORLDCOVER_TILES = ("N39W006", "N39W003", "N42W006", "N42W003")
+
 # OpenStreetMap peaks (ODbL) via Overpass, in the Euskal Herria bounding box
 OVERPASS = "https://overpass-api.de/api/interpreter"
 PEAKS_QUERY = """[out:json][timeout:180];
@@ -114,6 +119,12 @@ def copdem() -> None:
                 fetch(f"copdem/{tile}.tif", COPDEM.format(tile), {})
 
 
+def worldcover() -> None:
+    for tile in WORLDCOVER_TILES:
+        if not (RAW / "worldcover" / f"{tile}.tif").exists():
+            fetch(f"worldcover/{tile}.tif", WORLDCOVER.format(tile), {})
+
+
 def main() -> None:
     for path, (url, params) in DOWNLOADS.items():
         fetch(path, url, params)
@@ -127,6 +138,7 @@ def main() -> None:
     copdem()
     fetch("osm/peaks.json", OVERPASS, {"data": PEAKS_QUERY})
     fetch("osm/rivers.json", OVERPASS, {"data": RIVERS_QUERY})
+    worldcover()
 
 
 if __name__ == "__main__":

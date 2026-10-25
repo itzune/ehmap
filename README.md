@@ -27,6 +27,8 @@ point to it). Vector data is also in [`dist/`](dist/) in this repository.
 | [`peaks.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/peaks.gpkg) | 6,269 OpenStreetMap peaks inside Euskal Herria — ODbL; also [`dist/osm/`](dist/osm/) |
 | [`rivers.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/rivers.gpkg) | 247 named OpenStreetMap rivers clipped to Euskal Herria — ODbL; also [`dist/osm/`](dist/osm/) |
 | [`drainage_basins.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/drainage_basins.gpkg) | Bay of Biscay / Mediterranean sides and the watershed divide, from the DEM — Copernicus licence; also [`dist/elevation/`](dist/elevation/) |
+| [`forest_cover_100m.tif`](https://github.com/itzune/ehmap/releases/latest/download/forest_cover_100m.tif) | % tree cover per 100 m cell (ESA WorldCover 2021), EPSG:25830 |
+| [`landcover_2021_10m.tif`](https://github.com/itzune/ehmap/releases/latest/download/landcover_2021_10m.tif) | All ESA WorldCover 2021 land cover classes, 10 m, EPSG:25830, with colour table (21 MB) |
 | [`SHA256SUMS`](https://github.com/itzune/ehmap/releases/latest/download/SHA256SUMS) | Checksums |
 
 Earlier versions and what changed: [releases](https://github.com/itzune/ehmap/releases),
@@ -178,6 +180,34 @@ In `ehmap.rgis`: the `Ibaiak`, `Isurialdeak` and `Banalerroa` layers (hidden by 
 `Isurialdeak` print layout. The DEM-derived streams are in
 [`dist/elevation/streams_dem.gpkg`](dist/elevation/).
 
+## Forest
+
+![Tree cover in 2021, % per 100 m cell](docs/forest.png)
+
+The current forest comes from [ESA WorldCover 2021](https://doi.org/10.5281/zenodo.7254221)
+(10 m, from Sentinel-1 and Sentinel-2): its *tree cover* class, clipped to Euskal Herria.
+It measures **tree cover seen from space** (natural forest and plantations alike), not the
+legal or inventory definition of forest, so it runs higher than official forest statistics.
+
+| Territory | Tree cover km² | % of land |
+|---|---|---|
+| Gipuzkoa | 1,452 | 73.3 |
+| Bizkaia | 1,585 | 71.6 |
+| Zuberoa | 440 | 53.4 |
+| Lapurdi | 429 | 49.5 |
+| Araba | 1,608 | 48.5 |
+| Nafarroa Beherea | 598 | 44.8 |
+| Nafarroa Garaia | 4,252 | 40.9 |
+| **Euskal Herria** | **10,365** | **49.5** |
+
+The rest of Euskal Herria is mostly grassland (24%) and cropland (19%); built-up land covers
+2.7%. Per-municipality figures are in [`dist/forest/`](dist/forest/): the most wooded include
+Elduain (94%) and villages of the Zaraitzu and Erronkari valleys (Sartze, Espartza, Garde,
+Bidankoze: over 90%), the least the cereal lands of Tierra Estella and the Ribera (Barbarin,
+Arroitz, Pitillas: under 2%). In `ehmap.rgis`: the `Basoa` layer (100 m)
+and `Lurzorua 2021` (all classes at 10 m, when zoomed in), hidden by default, and the `Basoa`
+print layout.
+
 ## Decisions
 
 The 7 territories are historical, not current administrative units, so some choices had to be
@@ -210,6 +240,7 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/03_population_grid.py   # -> dist/population_grid/
 .venv/bin/python scripts/04_elevation.py         # -> dist/elevation/, dist/osm/
 .venv/bin/python scripts/05_rivers.py            # -> dist/osm/rivers, dist/elevation/ drainage (needs GeoLibre)
+.venv/bin/python scripts/06_forest.py            # -> dist/forest/ (needs ~10 GB of RAM)
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```

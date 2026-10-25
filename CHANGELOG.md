@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.0 — 2026-10-25
+
+Current forest.
+
+- **Land cover 2021** (ESA WorldCover, 10 m, all classes) clipped to Euskal Herria, and
+  **% tree cover per 100 m cell** (CC BY 4.0).
+- **Tree cover per municipality and territory**: 49.5% of Euskal Herria, from 41% in
+  Nafarroa Garaia to 73% in Gipuzkoa.
+- **RustGIS project**: `Basoa` and `Lurzorua 2021` layers and a `Basoa` print layout.
+
+Assets added: `forest_cover_100m.tif`, `landcover_2021_10m.tif`.
+
 ## v0.3.0 — 2026-10-25
 
 Rivers and the watershed divide.

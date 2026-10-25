@@ -10,6 +10,8 @@ Suggested credit line:
 > IGN France ADMIN EXPRESS (Licence Ouverte 2.0) and Wikidata (CC0).
 > Population: INE (CC BY 4.0) and INSEE (Licence Ouverte 2.0).
 > Population grid: GHSL GHS-POP R2023A, © European Union (CC BY 4.0).
+> Forest and land cover: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel
+> data (2021) processed by ESA WorldCover consortium (CC BY 4.0).
 
 ## Sources used in `dist/`
 
@@ -21,6 +23,7 @@ Suggested credit line:
 | Cifras oficiales de población (Padrón municipal), 1 January 2025, via the INE API (`servicios.ine.es/wstempus`) | © Instituto Nacional de Estadística (INE) | [CC BY 4.0](https://www.ine.es/dyngs/AYU/index.htm?cid=125) | `population` of the southern municipalities |
 | Populations de référence 2023 (population municipale), via the INSEE Melodi API (`api.insee.fr/melodi`) | © INSEE | [Licence Ouverte / Open Licence 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) | `population` of the Iparralde communes |
 | GHS-POP R2023A, epoch 2020, 100 m (tile R4_C18): Schiavina, Freire, Carioli, MacManus, *GHS-POP R2023A - GHS population grid multitemporal (1975-2030)*, European Commission, Joint Research Centre, [doi:10.2905/2FF68A52-5B5B-4A22-8F40-C41DA8332CFE](https://doi.org/10.2905/2FF68A52-5B5B-4A22-8F40-C41DA8332CFE) | © European Union, 1995-2026 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | `dist/population_grid/`. **Changes:** reprojected from Mollweide (ESRI:54009) to ETRS89-LAEA (EPSG:3035) with sum resampling, clipped to Euskal Herria, aggregated to 1 km |
+| ESA WorldCover 10 m 2021 v200: Zanaga, D. et al. (2022), [doi:10.5281/zenodo.7254221](https://doi.org/10.5281/zenodo.7254221) | © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | `dist/forest/`. **Changes:** mosaicked, reprojected from EPSG:4326 to EPSG:25830 at 10 m (nearest neighbour), clipped to Euskal Herria; tree cover aggregated to % per 100 m cell and per municipality / territory |
 
 Both CC BY 4.0 and the Licence Ouverte 2.0 allow redistribution of derived data, with
 attribution, under CC BY 4.0.
