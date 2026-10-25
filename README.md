@@ -239,6 +239,19 @@ the long Météo-France and AEMET records ([`station_check.csv`](dist/climate/st
 the model is conservative on the coast: Socoa/Ziburu measured +1.11 °C where ERA5-Land has
 +0.69, Bilbao airport +0.90 vs +0.68.
 
+### Water: same rain, more evaporation
+
+Rain has not changed, but a warmer air takes more of it back. The **evaporative demand**
+(reference evapotranspiration ET₀, by Hargreaves' formula from each station's monthly mean
+maximum and minimum temperature) of a typical station rose from 964 mm a year in 1961-1990
+to 1,023 mm in 2016-2025: **+59 mm, +6%**, a steady trend (+10 mm per decade, p < 0.001).
+Rain over the same stations: 1,540 → 1,520 mm (−1%, no trend). So less water is left for
+soil and rivers. ET₀ is the water the air *could* take from well-watered grass, computed from
+temperature: it translates the warming into water, it is not a separate measurement, and
+real evaporation is lower when the soil is dry. Data: [`water_balance.csv`](dist/climate/water_balance.csv),
+15 stations with 45+ complete years since 1961 that pass the neighbour test for rain and for
+ET₀ (5% step).
+
 ### Rain: ups and downs, no trend
 
 ERA5-Land's precipitation **failed the station check**, so it is not published: it puts 2023

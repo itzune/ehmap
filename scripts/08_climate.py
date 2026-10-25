@@ -28,7 +28,9 @@ Outputs (dist/climate/):
   rain_stations.gpkg                stations with their measured rainfall change, per year and
                                     season (© AEMET; © Météo-France, Licence Ouverte 2.0;
                                     Gobierno de Navarra)
-  station_quality.csv               the neighbour test for sudden steps; failed stations left out
+  station_quality.csv               the neighbour test for sudden steps (rain, ET0); failures left out
+  water_balance.csv                 yearly rain and evaporative demand (Hargreaves ET0) of a typical
+                                    station, 1961-2025, from the same stations every year
   rain_timeline.csv                 10-year rain per station and season, % of its 1996-2025 mean
   rain_timeline_stations.csv        the stations of the timeline
 """
@@ -251,15 +253,16 @@ def dms(v: str) -> float:
 
 
 def stations() -> pd.DataFrame:
-    """Monthly station records: network, id, name, lat, lon, altitude_m, year, month, t, p."""
+    """Monthly station records: network, id, name, lat, lon, altitude_m, year, month,
+    t (mean temperature), tx and tn (means of the daily maxima and minima), p (rain, mm)."""
     frames = []
     mf = ROOT / "data" / "raw" / "meteofrance"
-    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "RR"])
+    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "TX", "TN", "RR"])
                   for p in sorted(mf.glob("MENSQ_64_*.csv.gz")))
     names = d.NUM_POSTE.map(STATIONS).fillna(d.NOM_USUEL.str.title())
     frames.append(pd.DataFrame({"network": "Météo-France", "id": d.NUM_POSTE.astype(str), "name": names,
                                 "lat": d.LAT, "lon": d.LON, "altitude_m": d.ALTI, "year": d.AAAAMM // 100,
-                                "month": d.AAAAMM % 100, "t": d.TM, "p": d.RR}))
+                                "month": d.AAAAMM % 100, "t": d.TM, "tx": d.TX, "tn": d.TN, "p": d.RR}))
     raw = ROOT / "data" / "raw" / "aemet"
     if (raw / "inventario.json").exists():
         inv = {i["indicativo"]: i for i in json.loads((raw / "inventario.json").read_text())}
@@ -274,6 +277,8 @@ def stations() -> pd.DataFrame:
                 rows.append({"network": "AEMET", "id": r["indicativo"], "name": st["nombre"].title(),
                              "lat": dms(st["latitud"]), "lon": dms(st["longitud"]), "altitude_m": float(st["altitud"]),
                              "year": y, "month": m, "t": pd.to_numeric(r.get("tm_mes"), errors="coerce"),
+                             "tx": pd.to_numeric(r.get("tm_max"), errors="coerce"),
+                             "tn": pd.to_numeric(r.get("tm_min"), errors="coerce"),
                              # "Ip" is a trace of rain, under 0.1 mm
                              "p": 0.0 if p_ == "Ip" else pd.to_numeric(p_, errors="coerce")})
         frames.append(pd.DataFrame(rows))
@@ -287,14 +292,16 @@ def stations() -> pd.DataFrame:
                              for f in sorted(d.glob("*.csv")))
             days["date"] = pd.to_datetime(days.date.str[:10], format="%d/%m/%Y")
             days = days.set_index("date").apply(pd.to_numeric, errors="coerce")
-            m = days.resample("MS").agg({"tmax": ["mean", "count"], "tmin": "mean", "p": ["sum", "count"]})
+            m = days.resample("MS").agg({"tmax": ["mean", "count"], "tmin": ["mean", "count"], "p": ["sum", "count"]})
             full_p = m[("p", "count")] == m.index.days_in_month          # every day measured
-            full_t = m[("tmax", "count")] >= m.index.days_in_month - 2   # at most 2 days missing
+            full_t = ((m[("tmax", "count")] >= m.index.days_in_month - 2)   # at most 2 days missing
+                      & (m[("tmin", "count")] >= m.index.days_in_month - 2))
             frames.append(pd.DataFrame({
                 "network": "Gobierno de Navarra", "id": d.name, "name": st.NOMBRE_eus,
                 "lat": st.geometry.y, "lon": st.geometry.x, "altitude_m": st.ALTITUD,
                 "year": m.index.year, "month": m.index.month,
                 "t": ((m[("tmax", "mean")] + m[("tmin", "mean")]) / 2).where(full_t).values,
+                "tx": m[("tmax", "mean")].where(full_t).values, "tn": m[("tmin", "mean")].where(full_t).values,
                 "p": m[("p", "sum")].where(full_p).values}))
     st = pd.concat(frames, ignore_index=True)
     # Navarre's manual stations include AEMET ones (e.g. Pamplona, 9262): keep Navarre's copy,
@@ -342,20 +349,23 @@ def summarise(m: pd.DataFrame) -> dict:
     return out
 
 
-def homogeneity(st: pd.DataFrame) -> pd.DataFrame:
-    """Look for a sudden step in each station's yearly rain relative to its neighbours.
+def yearly(st: pd.DataFrame, column: str) -> pd.DataFrame:
+    """Yearly totals of a monthly column, complete years only: one column per (network, id)."""
+    return (st.dropna(subset=[column]).groupby(["network", "id", "year"])[column].agg(["sum", "count"])
+            .query("count == 12")["sum"].unstack([0, 1]).sort_index())
 
-    A station move or a new rain gauge shifts one record but not its neighbours; a change of
+
+def homogeneity(ann: pd.DataFrame, places: pd.DataFrame, min_step: float) -> pd.DataFrame:
+    """Look for a sudden step in each station's yearly series relative to its neighbours.
+
+    A station move or a new instrument shifts one record but not its neighbours; a change of
     climate shifts them all. For each station with 40+ complete years in 1961-2020 and 3+
-    neighbours within 35 km, the ratio of its yearly rain to the neighbours' median is split
+    neighbours within 35 km, the ratio of its yearly value to the neighbours' median is split
     at the year that best separates two means (8+ years each side). `stat` is that
     difference in standard deviations, scaled by the sample sizes (a two-sample t, maximised
-    over the split year). Stations with stat > 3.5 and a step of 10% or more are left out.
-    Steps shared by the whole network cannot be found this way.
+    over the split year). Stations with stat > 3.5 and a step of min_step % or more are left
+    out. Steps shared by the whole network cannot be found this way.
     """
-    ann = (st.dropna(subset=["p"]).groupby(["network", "id", "year"]).p.agg(["sum", "count"])
-           .query("count == 12")["sum"].unstack([0, 1]).sort_index())
-    places = st.drop_duplicates(["network", "id"]).set_index(["network", "id"])
     xy = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
     xy.index = places.index
     rows = []
@@ -378,8 +388,56 @@ def homogeneity(st: pd.DataFrame) -> pd.DataFrame:
                 stat, year, step = t, y, 100 * (b.mean() / a.mean() - 1)
         rows.append({"network": k[0], "id": k[1], "station": places.loc[k, "name"], "neighbours": len(near),
                      "years": len(q), "stat": round(stat, 2), "break_year": year, "step_pct": round(step, 1),
-                     "excluded": stat > 3.5 and abs(step) >= 10})
+                     "excluded": stat > 3.5 and abs(step) >= min_step})
     return pd.DataFrame(rows)
+
+
+def extraterrestrial_radiation(lat: np.ndarray, month: np.ndarray) -> np.ndarray:
+    """Ra on the middle day of each month, MJ m-2 day-1 (FAO-56, equations 21-25)."""
+    day = np.array([17, 47, 75, 105, 135, 162, 198, 228, 258, 288, 318, 344])[month - 1]
+    phi = np.radians(lat)
+    dr = 1 + 0.033 * np.cos(2 * np.pi * day / 365)
+    decl = 0.409 * np.sin(2 * np.pi * day / 365 - 1.39)
+    ws = np.arccos(-np.tan(phi) * np.tan(decl))
+    return 24 * 60 / np.pi * 0.0820 * dr * (ws * np.sin(phi) * np.sin(decl) + np.cos(phi) * np.cos(decl) * np.sin(ws))
+
+
+def add_et0(st: pd.DataFrame) -> pd.DataFrame:
+    """Monthly reference evapotranspiration, mm, by Hargreaves (FAO-56, equation 52).
+
+    ET0 = 0.0023 · (T + 17.8) · √(Tmax − Tmin) · Ra, with Ra in mm of water a day. It needs
+    only the monthly means of the daily maxima and minima, which all three networks publish.
+    It is the water the air could take from well-watered grass, not what really evaporates.
+    """
+    days = pd.to_datetime(dict(year=st.year, month=st.month, day=1)).dt.days_in_month
+    ok = st.tx > st.tn
+    ra = extraterrestrial_radiation(st.lat.values, st.month.values) * 0.408   # MJ → mm of water
+    et0 = 0.0023 * ((st.tx + st.tn) / 2 + 17.8) * np.sqrt((st.tx - st.tn).clip(lower=0)) * ra * days
+    return st.assign(et0=et0.where(ok))
+
+
+def water_balance(st: pd.DataFrame, places: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Yearly rain and ET0 for Euskal Herria from the stations that have both, 1961-2025.
+
+    Stations need 45+ years with complete rain and ET0 in 1961-2025 and must pass the step test
+    for ET0 (5%). The regional value of a year is the mean of the stations' departures from
+    their own 1961-2025 means, added to the median of those means: a typical station, built
+    from the same stations every year.
+    """
+    rain, et0 = yearly(st, "p"), yearly(st, "et0")
+    quality = homogeneity(et0, places, 5).assign(variable="et0")
+    bad = set(zip(quality.network[quality.excluded], quality.id[quality.excluded]))
+    both = rain.where(et0.notna()).loc[1961:2025]
+    keep = [k for k in both.columns if both[k].count() >= 45 and k in et0.columns and k not in bad]
+    out = {}
+    for name, table in (("rain_mm", rain), ("et0_mm", et0)):
+        t = table[keep].loc[1961:2025].where(both[keep].notna())
+        out[name] = (t - t.mean()).mean(axis=1) + t.mean().median()
+    wb = pd.DataFrame(out).rename_axis("year")
+    wb["stations"] = both[keep].notna().sum(axis=1)
+    for name in ("rain_mm", "et0_mm"):
+        wb[name.replace("_mm", "_10y_mm")] = wb[name].rolling(10, min_periods=8).mean()
+    return wb.round(1).reset_index(), quality
 
 
 TIMELINE_BASE = (1996, 2025)   # the reference every current station covers
@@ -449,11 +507,16 @@ def main() -> None:
     download_aemet()
     download_navarra()
     st = stations()
-    quality = homogeneity(st)
-    quality.to_csv(OUT / "station_quality.csv", index=False)
+    places = st.drop_duplicates(["network", "id"]).set_index(["network", "id"])
+    quality = homogeneity(yearly(st, "p"), places, 10).assign(variable="rain")
     bad = set(zip(quality.network[quality.excluded], quality.id[quality.excluded]))
     print("left out (step against neighbours):", sorted(quality.station[quality.excluded]))
     st = st[[k not in bad for k in zip(st.network, st.id)]]
+    wb, quality_et0 = water_balance(add_et0(st), places)
+    wb.to_csv(OUT / "water_balance.csv", index=False)
+    pd.concat([quality, quality_et0]).to_csv(OUT / "station_quality.csv", index=False)
+    print("water balance from", int(wb.stations.max()), "stations; ET0 left out:",
+          sorted(quality_et0.station[quality_et0.excluded]))
     places = st.drop_duplicates(["network", "id"])[["network", "id", "name", "lat", "lon", "altitude_m"]]
     timeline = rain_timeline(st)
     places[places.set_index(["network", "id"]).index.isin(timeline.set_index(["network", "id"]).index.unique())] \

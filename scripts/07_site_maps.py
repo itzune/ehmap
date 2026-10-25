@@ -355,50 +355,6 @@ def map_heat(b: Base):
 HEAT_BINS = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]   # °C; the site legend uses the same classes
 
 
-SEASONS_EU = [("djf", "Negua", "abendua–otsaila"), ("mam", "Udaberria", "martxoa–maiatza"),
-              ("jja", "Uda", "ekaina–abuztua"), ("son", "Udazkena", "iraila–azaroa")]
-
-
-def map_rain_base(b: Base):
-    """The explorer's base map: quiet relief and borders; the stations are drawn by the page."""
-    fig, ax = b.figure()
-    card = np.broadcast_to(np.array(to_rgb(PAL["card"])), b.dem.shape + (3,))
-    b.background(ax, card, relief=0.75)
-    b.borders(ax, municipalities=False)
-    b.territory_labels(ax, size=8)
-    b.save(fig, "euria-oinarria", f"{BOUNDS_CREDIT} · Prezipitazioa: © AEMET; © Météo-France "
-           "(Licence Ouverte 2.0); Gobierno de Navarra (CC BY 4.0)")
-    # where each timeline station falls on this image, as fractions of its width and height
-    import pandas as pd
-    x0, x1, y0, y1 = b.extent
-    places = pd.read_csv(DIST / "climate" / "rain_timeline_stations.csv")
-    xy = gpd.GeoSeries(gpd.points_from_xy(places.lon, places.lat), crs=4326).to_crs(CRS)
-    places["fx"] = ((xy.x - x0) / (x1 - x0)).round(4).values
-    places["fy"] = ((y1 - xy.y) / (y1 - y0)).round(4).values
-    tl = pd.read_csv(DIST / "climate" / "rain_timeline.csv")
-    windows = list(range(int(tl.window_end.min()), 2026))
-    keys = ["year", "djf", "mam", "jja", "son"]
-    stations = []
-    for r in places.itertuples(index=False):
-        mine = tl[(tl.network == r.network) & (tl.id.astype(str) == str(r.id))]
-        v = {}
-        for k in keys:
-            ser = mine[mine.season == k].set_index("window_end").pct_of_1996_2025.reindex(windows)
-            v[k] = [None if np.isnan(x) else int(round(x)) for x in ser]
-        # "long" stations have a value in 90% of the windows since 1960: the curve under the
-        # slider uses only them, so it follows the same stations through time
-        since = [x for x, w in zip(v["year"], windows) if w >= 1960]
-        long = sum(x is not None for x in since) >= 0.9 * len(since)
-        stations.append({"name": r.name, "network": r.network, "altitude": int(r.altitude_m),
-                         "fx": r.fx, "fy": r.fy, "long": long, "v": v})
-    out = {"windows": windows, "window": 10, "base": "1996–2025",
-           "seasons": [{"key": "year", "name": "Urtea"}] + [{"key": k, "name": n} for k, n, _ in SEASONS_EU],
-           "stations": stations}
-    path = ROOT / "site" / "data" / "rain_timeline.json"
-    path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
-    print(path.relative_to(ROOT), len(stations), "stations")
-
-
 def stripes():
     """site/data/stripes.json: yearly temperature anomalies vs 1961-1990 for the stripes chart."""
     import pandas as pd
@@ -416,13 +372,26 @@ def stripes():
     path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
     print(path.relative_to(ROOT))
 
+    # rain and evaporative demand: 10-year means of a typical station, for the "Ur gutxiago" chart
+    wb = pd.read_csv(DIST / "climate" / "water_balance.csv").set_index("year")
+    ref = wb.loc[1961:1990, ["rain_mm", "et0_mm"]].mean()
+    tens = wb.dropna(subset=["rain_10y_mm", "et0_10y_mm"])
+    water = {"reference": "1961–1990", "window": 10, "stations": int(wb.stations.max()),
+             "ref_rain_mm": round(ref.rain_mm), "ref_et0_mm": round(ref.et0_mm),
+             "end": tens.index.tolist(),
+             "rain_mm": tens.rain_10y_mm.round().astype(int).tolist(),
+             "et0_mm": tens.et0_10y_mm.round().astype(int).tolist()}
+    path = ROOT / "site" / "data" / "water.json"
+    path.write_text(json.dumps(water, separators=(",", ":")))
+    print(path.relative_to(ROOT))
+
 
 
 def main():
     with tempfile.TemporaryDirectory() as tmp:
         fonts = load_fonts(Path(tmp))
         b = Base(fonts)
-        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat, map_rain_base)
+        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat)
         only = sys.argv[1:]  # e.g. "heat people" renders only those
         for f in maps:
             if not only or f.__name__.removeprefix("map_") in only:

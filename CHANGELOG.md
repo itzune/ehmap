@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.3 — 2026-10-25
+
+"Ur gutxiago": same rain, more evaporation.
+
+- **Evaporative demand** (Hargreaves ET₀) from the stations' maximum and minimum temperatures:
+  +59 mm a year (+6%) in 2016-2025 vs 1961-1990, a steady rise; rain unchanged (−1%).
+  `water_balance.csv`: a typical station's yearly rain and ET₀, 1961-2025, from 15 stations.
+- **Quality control** for ET₀ too (neighbour step test, 5%); `station_quality.csv` now has a
+  `variable` column (rain, et0).
+- Station tables carry the monthly means of daily maxima and minima (`tx`, `tn`).
+- **Website**: the rain explorer is replaced by one chart, rain and evaporative demand as
+  10-year means (% of 1961-1990), under the title "Ur gutxiago".
+
+Asset added: `water_balance.csv`.
+
 ## v0.5.2 — 2026-10-25
 
 Rain over time: a station timeline, quality control, and a corrected conclusion.

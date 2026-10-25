@@ -184,22 +184,12 @@
   });
 })();
 
-// Rain explorer: season tabs, a slider over 10-year windows and a dot per station that has
-// data in that window, coloured by its rain as % of its own 1996-2025 mean. Under the slider,
-// the median of the stations over time for the chosen season.
+// "Ur gutxiago": rain and evaporative demand as 10-year means, % of 1961-1990, with a
+// crosshair and a tooltip in mm.
 (() => {
-  const root = document.getElementById("euria-esploratzailea");
-  if (!root) return;
+  const chart = document.querySelector(".water-chart");
+  if (!chart) return;
   const tip = document.getElementById("tip");
-  const tabs = root.querySelector(".tabs"), dots = root.querySelector(".ex-dots");
-  const slider = root.querySelector(".ex-slider"), play = root.querySelector(".ex-play");
-  const label = root.querySelector(".ex-window"), spark = root.querySelector(".ex-spark");
-  const img = root.querySelector(".ex-map img");
-  const DRY = ["#CC9967", "#A9733A", "#80521F"], WET = ["#63B5B4", "#2B9191", "#086B6C"], NEUTRAL = "#D8D2C6";
-  const colour = (pct) => {
-    const d = pct - 100, k = Math.abs(d) < 5 ? 0 : Math.min(Math.floor((Math.abs(d) - 5) / 5) + 1, 3);
-    return k === 0 ? NEUTRAL : (d < 0 ? DRY : WET)[k - 1];
-  };
   const NS = "http://www.w3.org/2000/svg";
   const el = (name, attrs, parent) => {
     const e = document.createElementNS(NS, name);
@@ -207,99 +197,62 @@
     parent?.append(e);
     return e;
   };
-  let data, season = "year", timer = null;
-  const W = 1000, H = Math.round((W * +img.getAttribute("height")) / +img.getAttribute("width"));
-  dots.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  let d, draw;
 
-  const median = (xs) => {
-    const s = xs.filter((x) => x != null).sort((a, b) => a - b);
-    return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null;
-  };
-
-  const drawSpark = () => {
-    spark.replaceChildren();
-    const w = spark.clientWidth, h = 90, pad = 18;
-    const long = data.stations.filter((s) => s.long);
-    const meds = data.windows.map((_, i) => {
-      const vals = long.map((s) => s.v[season][i]);
-      return vals.filter((v) => v != null).length >= 5 ? median(vals) : null;   // a median needs a few stations
-    });
-    const lo = 70, hi = 140;
-    const x = (i) => (i / (data.windows.length - 1)) * w;
-    const y = (v) => pad / 2 + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (h - pad);
-    el("line", { class: "ref", x1: 0, x2: w, y1: y(100), y2: y(100) }, spark);
-    let d = "";
-    meds.forEach((m, i) => { if (m != null) d += `${d && meds[i - 1] != null ? "L" : "M"}${x(i)},${y(m)}`; });
-    el("path", { class: "line", d }, spark);
-    const t1 = el("text", { x: w, y: y(100) + 13, "text-anchor": "end" }, spark);
-    t1.textContent = "%100 = 1996–2025";
-    const t2 = el("text", { x: 0, y: 10 }, spark);
-    t2.textContent = `${long.length} estazio luzeen mediana`;
-    for (const yr of [1930, 1960, 1990, 2025]) {
-      const i = data.windows.indexOf(yr);
-      if (i < 0) continue;
-      const t = el("text", { x: x(i), y: h + 4, "text-anchor": yr === 2025 ? "end" : "middle" }, spark);
-      t.textContent = yr;
-    }
-    const i = +slider.value, m = meds[i];
-    if (m != null) el("circle", { class: "now", cx: x(i), cy: y(m), r: 5 }, spark);
-  };
-
-  const draw = () => {
-    const i = +slider.value, end = data.windows[i];
-    dots.replaceChildren();
-    let n = 0;
-    for (const s of data.stations) {
-      const v = s.v[season][i];
-      if (v == null) continue;
-      n++;
-      const c = el("circle", { cx: s.fx * W, cy: s.fy * H, r: 9, fill: colour(v), class: s.long ? "long" : "" }, dots);
-      c.dataset.text = `<b>${s.name}</b> · ${end - data.window + 1}–${end}<br><span>%${v} (1996–2025 = %100)</span>`;
-    }
-    label.innerHTML = `${end - data.window + 1}–${end}<small>${n} estazio</small>`;
-    drawSpark();
-    tabs.querySelectorAll("button").forEach((b) => b.setAttribute("aria-selected", b.dataset.key === season));
-  };
-
-  const stop = () => { clearInterval(timer); timer = null; play.textContent = "▶"; play.setAttribute("aria-label", "Erreproduzitu"); };
-  play.addEventListener("click", () => {
-    if (timer) return stop();
-    if (+slider.value >= +slider.max) slider.value = 0;
-    play.textContent = "❚❚"; play.setAttribute("aria-label", "Gelditu");
-    timer = setInterval(() => {
-      if (+slider.value >= +slider.max) return stop();
-      slider.value = +slider.value + 1;
-      draw();
-    }, 160);
-  });
-  slider.addEventListener("input", () => { stop(); draw(); });
-
-  dots.addEventListener("pointerover", (e) => {
-    const c = e.target.closest("circle");
-    if (!c) return;
-    tip.innerHTML = c.dataset.text;
-    tip.hidden = false;
-  });
-  dots.addEventListener("pointermove", (e) => {
-    if (tip.hidden) return;
-    tip.style.left = `${Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8)}px`;
-    tip.style.top = `${e.clientY - tip.offsetHeight - 12}px`;
-  });
-  dots.addEventListener("pointerout", () => { tip.hidden = true; });
-
-  fetch("data/rain_timeline.json").then((r) => r.json()).then((d) => {
-    data = d;
-    for (const s of d.seasons) {
-      const b = document.createElement("button");
-      b.type = "button"; b.role = "tab"; b.dataset.key = s.key; b.textContent = s.name;
-      b.addEventListener("click", () => { season = s.key; draw(); });
-      tabs.append(b);
-    }
-    // start at the first window with a handful of stations
-    const first = d.windows.findIndex((_, i) => d.stations.filter((s) => s.v.year[i] != null).length >= 3);
-    slider.min = Math.max(0, first); slider.max = d.windows.length - 1; slider.step = 1;
-    slider.value = slider.max;
+  fetch(chart.dataset.src).then((r) => r.json()).then((data) => {
+    d = data;
+    const rain = d.rain_mm.map((v) => (100 * v) / d.ref_rain_mm);
+    const et0 = d.et0_mm.map((v) => (100 * v) / d.ref_et0_mm);
+    const start = (end) => Math.max(1961, end - d.window + 1);
+    draw = () => {
+      chart.replaceChildren();
+      const W = chart.clientWidth, small = W < 520, H = small ? 240 : 300, L = 40, R = small ? 74 : 130, T = 10, B = 26;
+      const lo = 90, hi = 110, n = d.end.length;
+      const x = (i) => L + (i / (n - 1)) * (W - L - R);
+      const y = (v) => T + (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - T - B);
+      const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, height: H, "aria-hidden": "true" }, chart);
+      for (const t of [90, 95, 105, 110]) {
+        el("line", { class: "grid", x1: L, x2: W - R, y1: y(t), y2: y(t) }, svg);
+      }
+      el("line", { class: "base", x1: L, x2: W - R, y1: y(100), y2: y(100) }, svg);
+      for (const t of [90, 95, 100, 105, 110]) {
+        const tx = el("text", { class: "tick", x: L - 8, y: y(t) + 4, "text-anchor": "end" }, svg);
+        tx.textContent = `%${t}`;
+      }
+      d.end.forEach((e, i) => {
+        if (i !== n - 1 && (e % 10 !== 0 || d.end[n - 1] - e < 8)) return;   // keep the last year clear
+        const tx = el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": i === n - 1 ? "end" : "middle" }, svg);
+        tx.textContent = e;
+      });
+      for (const [vals, cls, name] of [[rain, "c-rain", "Euria"], [et0, "c-et0", small ? "ET₀" : "Lurrunketa"]]) {
+        const g = el("g", { class: cls }, svg);
+        el("path", { class: "series", d: vals.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join("") }, g);
+        const lb = el("text", { class: "lbl", x: x(n - 1) + 8, y: y(vals[n - 1]) + 4 }, g);
+        lb.textContent = `${name} %${Math.round(vals[n - 1])}`;
+        el("circle", { class: "dot", r: 4.5, cx: 0, cy: 0 }, g);
+      }
+      el("line", { class: "cross", x1: 0, x2: 0, y1: T, y2: H - B }, svg);
+      svg.addEventListener("pointermove", (ev) => {
+        const r = svg.getBoundingClientRect();
+        const i = Math.max(0, Math.min(n - 1, Math.round(((ev.clientX - r.left - L) / (W - L - R)) * (n - 1))));
+        chart.classList.add("hover");
+        const cx = x(i);
+        svg.querySelector(".cross").setAttribute("x1", cx);
+        svg.querySelector(".cross").setAttribute("x2", cx);
+        svg.querySelector(".c-rain .dot").setAttribute("cx", cx);
+        svg.querySelector(".c-rain .dot").setAttribute("cy", y(rain[i]));
+        svg.querySelector(".c-et0 .dot").setAttribute("cx", cx);
+        svg.querySelector(".c-et0 .dot").setAttribute("cy", y(et0[i]));
+        tip.innerHTML = `<b>${start(d.end[i])}–${d.end[i]}</b><br><span>Euria: ${d.rain_mm[i]} mm (%${Math.round(rain[i])})</span>` +
+          `<br><span>Lurrunketa-eskaria: ${d.et0_mm[i]} mm (%${Math.round(et0[i])})</span>`;
+        tip.hidden = false;
+        tip.style.left = `${Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 8)}px`;
+        tip.style.top = `${ev.clientY - tip.offsetHeight - 12}px`;
+      });
+      svg.addEventListener("pointerleave", () => { chart.classList.remove("hover"); tip.hidden = true; });
+    };
     draw();
-    window.addEventListener("resize", drawSpark);
+    let t;
+    window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(draw, 150); });
   });
 })();
