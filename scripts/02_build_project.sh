@@ -7,15 +7,20 @@ cd "$(dirname "$0")/.."
 GPKG=dist/euskal_herria.gpkg
 mkdir -p docs
 
+# Municipality names show from 1:400,000 in, territory names until 1:250,000.
 # The OSM basemap is added after the export, so the preview holds only our own (CC BY) data.
 rustgis-cli run \
   --cmd 'map.basemap={"name":"blank"}' \
   --cmd "layer.addData={\"path\":\"$GPKG\",\"layer\":\"municipalities\",\"name\":\"Udalerriak\"}" \
   --cmd 'layer.symbology={"layer":"Udalerriak","type":"single"}' \
+  --cmd 'labels.field={"layer":"Udalerriak","field":"name_eu"}' \
+  --cmd 'labels.enable={"layer":"Udalerriak","on":true}' \
+  --cmd 'labels.scaleRange={"layer":"Udalerriak","min":400000}' \
   --cmd "layer.addData={\"path\":\"$GPKG\",\"layer\":\"territories\",\"name\":\"Lurraldeak\"}" \
   --cmd 'layer.symbology={"layer":"Lurraldeak","type":"unique","field":"name_eu"}' \
   --cmd 'labels.field={"layer":"Lurraldeak","field":"name_eu"}' \
   --cmd 'labels.enable={"layer":"Lurraldeak","on":true}' \
+  --cmd 'labels.scaleRange={"layer":"Lurraldeak","max":250000}' \
   --cmd 'layer.zoomTo={"layer":"Lurraldeak"}' \
   --cmd 'share.exportMap={"path":"docs/euskal_herria_territories.png","dpi":150}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
