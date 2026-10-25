@@ -4,10 +4,11 @@ One cartographic style for every map: warm paper, soft multi-directional relief 
 the territory borders, and labels in the site's typefaces (Fraunces, Source Sans 3).
 Colour scales come from site/palette.json, validated with the dataviz palette checks.
 
-Inputs: dist/ (boundaries, population grid, elevation, rivers, forest), data/raw/copdem
+Inputs: dist/ (boundaries, population grid, elevation, rivers, forest, climate), data/raw/copdem
 (context relief around Euskal Herria) and fonts/.
 """
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -334,12 +335,55 @@ def map_people(b: Base):
     b.save(fig, "jendea", f"{BOUNDS_CREDIT} · Biztanleria: GHSL GHS-POP R2023A, 2020, © European Union (CC BY 4.0)")
 
 
+def map_heat(b: Base):
+    """Warming between the climate normals 1961-1990 and 1991-2020 (ERA5-Land)."""
+    fig, ax = b.figure()
+    with rasterio.open(DIST / "climate" / "temperature_change.tif") as src:
+        dt = np.full(b.dem.shape, np.nan, "float32")
+        reproject(rasterio.band(src, 1), dt, dst_transform=b.t, dst_crs=CRS, dst_nodata=np.nan,
+                  resampling=Resampling.bilinear)
+    classes = np.digitize(np.nan_to_num(dt, nan=0), HEAT_BINS[1:-1])
+    colors = np.array([to_rgb(c) for c in PAL["heat"]])
+    b.background(ax, colors[classes], relief=1.0)
+    b.borders(ax, municipalities=False)
+    b.territory_labels(ax, size=8.5)
+    b.town_labels(ax, CITIES)
+    b.save(fig, "beroa", f"{BOUNDS_CREDIT} · Tenperatura: Copernicus Climate Change Service, "
+           "ERA5-Land (doi:10.24381/cds.68d2bb30, CC BY 4.0)")
+
+
+HEAT_BINS = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]   # °C; the site legend uses the same classes
+
+
+def stripes():
+    """site/data/stripes.json: yearly temperature anomalies vs 1961-1990 for the stripes chart."""
+    import pandas as pd
+    a = pd.read_csv(DIST / "climate" / "climate_annual.csv")
+    a = a[a.variable == "temperature_c"]
+    ter = gpd.read_file(DIST / "euskal_herria.gpkg", layer="territories", ignore_geometry=True)
+    rows = [("EH", "Euskal Herria")] + list(zip(ter.id, ter.name_eu))
+    years = sorted(a.year.unique())
+    out = {"years": [int(y) for y in years], "reference": "1961-1990",
+           "rows": [{"id": i, "name": n,
+                     "anomaly": a[a.area == i].set_index("year").anomaly.reindex(years).round(2).tolist()}
+                    for i, n in rows]}
+    path = ROOT / "site" / "data" / "stripes.json"
+    path.parent.mkdir(exist_ok=True)
+    path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
+    print(path.relative_to(ROOT))
+
+
 def main():
     with tempfile.TemporaryDirectory() as tmp:
         fonts = load_fonts(Path(tmp))
         b = Base(fonts)
-        for f in (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people):
-            f(b)
+        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat)
+        only = sys.argv[1:]  # e.g. "heat people" renders only those
+        for f in maps:
+            if not only or f.__name__.removeprefix("map_") in only:
+                f(b)
+    if not only or "stripes" in only:
+        stripes()
 
 
 if __name__ == "__main__":

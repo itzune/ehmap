@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0 — 2026-10-25
+
+Climate change.
+
+- **Temperature and precipitation change** between the climate normals 1961-1990 and
+  1991-2020 from ERA5-Land (Copernicus C3S, CC BY 4.0): +0.82 °C over Euskal Herria, from
+  +0.68 °C in Lapurdi to +0.91 °C in Nafarroa Garaia; 2016-2025 is +1.59 °C.
+- **Yearly series 1950-2025** per territory and watershed side: temperature, precipitation,
+  evaporation, topsoil moisture and snow cover.
+- **Station check** against Météo-France records (Socoa, Biarritz, Banca): the model is
+  conservative on temperature; its precipitation decline is not confirmed on the coast.
+- **Website**: chapter 06, "Klima aldatzen ari da", with a warming map and warming stripes.
+- **RustGIS project**: `Klima aldaketa` layer and print layout.
+
+Assets added: `temperature_change.tif`, `precipitation_change.tif`, `climate_annual.csv`,
+`climate_by_municipality.csv`.
+
 ## v0.4.0 — 2026-10-25
 
 Current forest.

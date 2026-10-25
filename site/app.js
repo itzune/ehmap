@@ -97,3 +97,89 @@
   stage.addEventListener("pointercancel", release);
   window.addEventListener("resize", () => { if (dialog.open) fit(); });
 })();
+
+// Warming stripes: one SVG row per area, built from site/data/stripes.json, with a shared
+// year cursor and a tooltip. Colours: cold arm, neutral, warm arm in 0.5 °C classes.
+(() => {
+  const chart = document.querySelector(".stripes-chart");
+  if (!chart) return;
+  const tip = document.getElementById("tip");
+  const COLD = ["#2F5996", "#4475B2", "#6491C3", "#88ADD4"];
+  const WARM = ["#EE8B68", "#E25E44", "#CA322B", "#A31C22"];
+  const NEUTRAL = "#D8D2C6";
+  const colour = (v) => {
+    if (v == null || Number.isNaN(v)) return "transparent";
+    const k = Math.min(Math.round(Math.abs(v) / 0.5), 4);   // ±0.25 → 0, ±0.75 → 1, …
+    if (k === 0) return NEUTRAL;
+    return v > 0 ? WARM[k - 1] : COLD[4 - k];
+  };
+  const fmt = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1).replace(".", ",") + " °C";
+  const NS = "http://www.w3.org/2000/svg";
+
+  fetch(chart.dataset.src).then((r) => r.json()).then((data) => {
+    const n = data.years.length;
+    const svgs = [];
+    data.rows.forEach((row, i) => {
+      const label = document.createElement("span");
+      label.className = "lbl" + (i === 0 ? " main" : "");
+      label.textContent = row.name;
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", `0 0 ${n} 1`);
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.setAttribute("shape-rendering", "crispEdges");
+      svg.setAttribute("aria-hidden", "true");
+      if (i === 0) svg.classList.add("main");
+      row.anomaly.forEach((v, j) => {
+        const r = document.createElementNS(NS, "rect");
+        r.setAttribute("x", j); r.setAttribute("width", 1.02); r.setAttribute("height", 1);
+        r.setAttribute("fill", colour(v));
+        svg.append(r);
+      });
+      svg.dataset.row = i;
+      svgs.push(svg);
+      chart.append(label, svg);
+    });
+
+    const axis = document.createElement("div");
+    axis.className = "axis";
+    const at = (y) => `${((y - data.years[0] + 0.5) / n) * 100}%`;
+    for (const y of [1950, 1975, 2000, 2025]) {
+      const s = document.createElement("span");
+      s.style.left = at(y); s.textContent = y;
+      axis.append(s);
+    }
+    const ref = document.createElement("span");
+    ref.className = "ref";
+    ref.style.left = `${((1961 - data.years[0]) / n) * 100}%`;
+    ref.style.width = `${(30 / n) * 100}%`;
+    ref.textContent = "erreferentzia: 1961–1990";
+    axis.append(ref);
+    chart.append(document.createElement("span"), axis);
+
+    const cursor = document.createElement("div");
+    cursor.className = "cursor";
+    chart.append(cursor);
+
+    const hide = () => { tip.hidden = true; cursor.style.opacity = 0; };
+    chart.addEventListener("pointerleave", hide);
+    chart.addEventListener("pointermove", (e) => {
+      const svg = e.target.closest("svg");
+      if (!svg) { hide(); return; }
+      const box = svg.getBoundingClientRect();
+      const j = Math.min(n - 1, Math.max(0, Math.floor(((e.clientX - box.left) / box.width) * n)));
+      const row = data.rows[svg.dataset.row];
+      const v = row.anomaly[j];
+      const cbox = chart.getBoundingClientRect();
+      const first = svgs[0].getBoundingClientRect(), last = svgs[svgs.length - 1].getBoundingClientRect();
+      cursor.style.left = `${box.left - cbox.left + ((j + 0.5) / n) * box.width}px`;
+      cursor.style.top = `${first.top - cbox.top}px`;
+      cursor.style.height = `${last.bottom - first.top}px`;
+      cursor.style.opacity = "";
+      tip.innerHTML = `<b>${data.years[j]}</b> · ${row.name}<br><span>${fmt(v)} 1961–1990ekin alderatuta</span>`;
+      tip.hidden = false;
+      const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+      tip.style.left = `${x}px`;
+      tip.style.top = `${e.clientY - tip.offsetHeight - 12}px`;
+    });
+  });
+})();

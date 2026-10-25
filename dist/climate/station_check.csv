@@ -1,0 +1,12 @@
+station,id,altitude_m,variable,source,normal_1961_1990,normal_1991_2020,change,years
+Socoa (Ziburu),64189001,21,temperature_c,station,13.93,15.04,1.11,30+30
+Socoa (Ziburu),64189001,21,temperature_c,era5land,12.58,13.27,0.69,30+30
+Socoa (Ziburu),64189001,21,precipitation_mm,station,1526.39,1521.36,-5.03,30+30
+Socoa (Ziburu),64189001,21,precipitation_mm,era5land,1546.82,1483.69,-63.13,30+30
+Biarritz,64024001,71,temperature_c,station,13.67,14.47,0.8,30+30
+Biarritz,64024001,71,temperature_c,era5land,13.47,14.13,0.66,30+30
+Biarritz,64024001,71,precipitation_mm,station,1483.13,1473.53,-9.6,30+30
+Biarritz,64024001,71,precipitation_mm,era5land,1391.58,1333.02,-58.56,30+30
+Banca,64092002,253,temperature_c,era5land,10.26,10.99,0.73,30+30
+Banca,64092002,253,precipitation_mm,station,1871.38,1786.01,-85.37,30+30
+Banca,64092002,253,precipitation_mm,era5land,1479.24,1398.43,-80.81,30+30

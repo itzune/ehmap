@@ -5,7 +5,7 @@ Open, reproducible base layers of **Euskal Herria and its 7 territories**
 in any GIS or web map. The goal is that anyone building something about Euskal Herria finds
 the base already done, with clear sources and licences.
 
-**Website: [itzune.github.io/ehmap](https://itzune.github.io/ehmap/)** — the atlas, in Basque.
+**Website: [itzune.eus/ehmap](https://itzune.eus/ehmap/)** — the atlas, in Basque.
 
 The project is also a playground to learn [RustGIS](https://github.com/opengeos/RustGIS);
 next topic is forest change over the last years.
@@ -210,6 +210,47 @@ Arroitz, Pitillas: under 2%). In `ehmap.rgis`: the `Basoa` layer (100 m)
 and `Lurzorua 2021` (all classes at 10 m, when zoomed in), hidden by default, and the `Basoa`
 print layout.
 
+## Climate change
+
+![Temperature change between 1961-1990 and 1991-2020](docs/climate.png)
+
+How the climate has changed, from [ERA5-Land](https://doi.org/10.24381/cds.68d2bb30)
+(Copernicus Climate Change Service / ECMWF, 1950-2025, CC BY 4.0). ERA5-Land is a reanalysis:
+a weather model constrained by observations, on one 0.1° grid (about 9 km) that covers both
+sides of the border without a seam. The periods are the WMO climate normals 1961-1990 and
+1991-2020.
+
+| Area | °C 1961-1990 | °C 1991-2020 | Change | 2016-2025 vs 1961-1990 | Precipitation* |
+|---|---|---|---|---|---|
+| Araba | 10.2 | 11.0 | +0.78 | +1.58 | −4.3% |
+| Bizkaia | 11.9 | 12.6 | +0.69 | +1.37 | −2.4% |
+| Gipuzkoa | 11.3 | 12.0 | +0.71 | +1.41 | −2.9% |
+| Nafarroa Garaia | 10.8 | 11.7 | +0.91 | +1.70 | −7.7% |
+| Lapurdi | 12.8 | 13.4 | +0.68 | +1.44 | −4.6% |
+| Nafarroa Beherea | 11.3 | 12.0 | +0.73 | +1.55 | −5.1% |
+| Zuberoa | 10.3 | 11.1 | +0.75 | +1.54 | −4.1% |
+| Bay of Biscay side | 11.4 | 12.1 | +0.71 | +1.45 | −3.8% |
+| Mediterranean side | 10.7 | 11.6 | +0.90 | +1.69 | −7.3% |
+| **Euskal Herria** | **11.0** | **11.8** | **+0.82** | **+1.59** | **−5.5%** |
+
+The five warmest years since 1950 are 2022, 2023, 2025, 2020 and 2024. Warming is largest in
+the Ebro valley (Ribera of Navarre, over +1 °C) and smallest on the coast.
+
+**Checked against stations.** [`station_check.csv`](dist/climate/station_check.csv) compares
+ERA5-Land with the long Météo-France records in Iparralde. Temperature: the stations warmed
+*more* than the model (Socoa/Ziburu +1.11 °C vs +0.69, Biarritz +0.80 vs +0.66), so the map
+is conservative, at least on the coast. *Precipitation: the model's decline matches the
+inland station (Banca, −4.6% measured vs −5.5%) but not the coastal ones (about 0% measured
+vs −4%), so treat precipitation trends as unconfirmed until checked against AEMET and
+Euskalmet stations in Hegoalde. The website shows temperature only.
+
+Files in [`dist/climate/`](dist/climate/): `climate_annual.csv` (yearly temperature,
+precipitation, evaporation, topsoil moisture and snow cover per territory, watershed side and
+all of Euskal Herria, with anomalies vs 1961-1990), `climate_by_municipality.csv` (both
+normals and the change), and as release assets `temperature_change.tif` and
+`precipitation_change.tif` (250 m, interpolated from the 9 km grid: smooth, not local
+detail). In `ehmap.rgis`: the `Klima aldaketa` layer (hidden by default) and print layout.
+
 ## Decisions
 
 The 7 territories are historical, not current administrative units, so some choices had to be
@@ -243,7 +284,8 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/04_elevation.py         # -> dist/elevation/, dist/osm/
 .venv/bin/python scripts/05_rivers.py            # -> dist/osm/rivers, dist/elevation/ drainage (needs GeoLibre)
 .venv/bin/python scripts/06_forest.py            # -> dist/forest/ (needs ~10 GB of RAM)
-.venv/bin/python scripts/07_site_maps.py         # -> site/maps/ (website maps)
+.venv/bin/python scripts/08_climate.py           # -> dist/climate/ (needs a Copernicus CDS key, see below)
+.venv/bin/python scripts/07_site_maps.py         # -> site/maps/, site/data/ (website maps)
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```
@@ -252,6 +294,11 @@ The website is plain HTML/CSS in [`site/`](site/), published to GitHub Pages by
 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on every push to `site/`. Its map
 colours are in [`site/palette.json`](site/palette.json) (checked for colour-blind safety and
 contrast); fonts are Fraunces and Source Sans 3 ([OFL](fonts/)).
+
+`08_climate.py` downloads ERA5-Land from the [Copernicus Climate Data Store](https://cds.climate.copernicus.eu):
+create a free account, put your Personal Access Token in `~/.cdsapirc`
+(`url: https://cds.climate.copernicus.eu/api` and `key: <token>`), and accept the ERA5-Land
+licence on the dataset's download page.
 
 `ehmap.rgis` and the rasters are not versioned in git (they are large and change on every
 build); they are published as release assets.

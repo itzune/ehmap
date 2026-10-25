@@ -21,7 +21,9 @@ cp ehmap.rgis dist/euskal_herria.gpkg \
    dist/population_grid/ghs_pop_2020_100m.tif dist/population_grid/ghs_pop_2020_1km.gpkg \
    dist/elevation/copernicus_dem_25m.tif dist/elevation/copernicus_dem_50m.tif \
    dist/osm/peaks.gpkg dist/osm/rivers.gpkg dist/elevation/drainage_basins.gpkg \
-   dist/forest/forest_cover_100m.tif dist/forest/landcover_2021_10m.tif "$ASSETS/"
+   dist/forest/forest_cover_100m.tif dist/forest/landcover_2021_10m.tif \
+   dist/climate/temperature_change.tif dist/climate/precipitation_change.tif \
+   dist/climate/climate_annual.csv dist/climate/climate_by_municipality.csv "$ASSETS/"
 (cd dist && zip -qr "$ASSETS/euskal_herria_geojson.zip" geojson)
 (cd "$ASSETS" && sha256sum -- * > SHA256SUMS)
 
@@ -33,4 +35,6 @@ gh release create "$VERSION" --repo "$REPO" --target main --title "$VERSION" \
   "$ASSETS"/copernicus_dem_25m.tif "$ASSETS"/copernicus_dem_50m.tif "$ASSETS"/peaks.gpkg \
   "$ASSETS"/rivers.gpkg "$ASSETS"/drainage_basins.gpkg \
   "$ASSETS"/forest_cover_100m.tif "$ASSETS"/landcover_2021_10m.tif \
+  "$ASSETS"/temperature_change.tif "$ASSETS"/precipitation_change.tif \
+  "$ASSETS"/climate_annual.csv "$ASSETS"/climate_by_municipality.csv \
   "$ASSETS"/SHA256SUMS

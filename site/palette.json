@@ -1,5 +1,5 @@
 {
-  "_doc": "Site and map palette. Ramps validated with the dataviz checks (ordinal: monotone L, ΔL ≥ 0.06, light end ≥ 2:1 on paper, single hue); biscay/med validated as a categorical pair (CVD ΔE 21.8).",
+  "_doc": "Site and map palette. Ramps validated with the dataviz checks (ordinal: monotone L, ΔL ≥ 0.06, light end ≥ 2:1 on paper, single hue); biscay/med validated as a categorical pair (CVD ΔE 21.8). heat and cold: ordinal ramps (heat more saturated than people so the two maps don't read alike); the stripes use cold[::-1] + neutral + heat[:4], L-matched arms.",
   "paper": "#F3EEE3",
   "card": "#FAF7F0",
   "rule": "#DDD4C3",
@@ -11,7 +11,39 @@
   "biscay": "#2867A8",
   "med": "#A86F1C",
   "divide": "#A44C32",
-  "earth": ["#BCA273", "#A08455", "#82663F", "#624A2C", "#43311D"],
-  "forest": ["#90B26E", "#6A9858", "#4A7C48", "#316139", "#1B4429"],
-  "people": ["#D69476", "#C26C4C", "#A44C32", "#7D3324", "#521D16"]
+  "earth": [
+    "#BCA273",
+    "#A08455",
+    "#82663F",
+    "#624A2C",
+    "#43311D"
+  ],
+  "forest": [
+    "#90B26E",
+    "#6A9858",
+    "#4A7C48",
+    "#316139",
+    "#1B4429"
+  ],
+  "people": [
+    "#D69476",
+    "#C26C4C",
+    "#A44C32",
+    "#7D3324",
+    "#521D16"
+  ],
+  "heat": [
+    "#EE8B68",
+    "#E25E44",
+    "#CA322B",
+    "#A31C22",
+    "#75151E"
+  ],
+  "cold": [
+    "#88ADD4",
+    "#6491C3",
+    "#4475B2",
+    "#2F5996"
+  ],
+  "neutral": "#D8D2C6"
 }

@@ -4,6 +4,11 @@ pyogrio>=0.13
 shapely>=2.1  # coverage_simplify
 requests>=2.32
 rustgis>=0.4
+# climate (scripts/08_climate.py)
+cdsapi>=0.7
+xarray>=2024.1
+netcdf4>=1.6
+scipy>=1.11
 # website maps (scripts/07_site_maps.py)
 matplotlib>=3.9
 pillow>=10
