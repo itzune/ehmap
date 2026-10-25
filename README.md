@@ -6,7 +6,7 @@ in any GIS or web map. The goal is that anyone building something about Euskal H
 the base already done, with clear sources and licences.
 
 The project is also a playground to learn [RustGIS](https://github.com/opengeos/RustGIS);
-next topics are elevation / mountain tops and forest change over the last years.
+next topic is forest change over the last years.
 
 ![The 7 territories of Euskal Herria](docs/euskal_herria_territories.png)
 
@@ -22,6 +22,9 @@ point to it). Vector data is also in [`dist/`](dist/) in this repository.
 | [`euskal_herria_geojson.zip`](https://github.com/itzune/ehmap/releases/latest/download/euskal_herria_geojson.zip) | The same layers as GeoJSON (RFC 7946), full detail and simplified (~50 m, shared borders kept) — also [`dist/geojson/`](dist/geojson/) |
 | [`ghs_pop_2020_100m.tif`](https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_100m.tif) | People per 100 m cell (GHSL, 2020), Cloud-Optimized GeoTIFF, EPSG:3035 |
 | [`ghs_pop_2020_1km.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_1km.gpkg) | Inhabited 1 km cells with `grid_id` (Eurostat format), `population`, `territory_id`, EPSG:3035 — also [`dist/population_grid/`](dist/population_grid/) |
+| [`copernicus_dem_25m.tif`](https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_25m.tif) | Elevation (m), 25 m, EPSG:25830, Cloud-Optimized GeoTIFF (90 MB) — Copernicus licence, see below |
+| [`copernicus_dem_50m.tif`](https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_50m.tif) | Lighter elevation: 50 m, whole metres (10 MB) — Copernicus licence |
+| [`peaks.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/peaks.gpkg) | 6,269 OpenStreetMap peaks inside Euskal Herria — ODbL; also [`dist/osm/`](dist/osm/) |
 | [`SHA256SUMS`](https://github.com/itzune/ehmap/releases/latest/download/SHA256SUMS) | Checksums |
 
 Earlier versions and what changed: [releases](https://github.com/itzune/ehmap/releases),
@@ -100,6 +103,35 @@ For counts, use the municipal `population` field. In `ehmap.rgis` the grid is th
 `Biztanleria 1km` layer (zoomed out) and `Biztanleria 100m` (zoomed in), hidden by default,
 and the `Biztanleria sareta` print layout.
 
+## Elevation and peaks
+
+![Relief and the three highest peaks of each territory](docs/elevation.png)
+
+Elevation comes from the Copernicus DEM GLO-30, reprojected to 25 m and clipped to Euskal
+Herria; it is a surface model (it includes buildings and trees), so summits come out a few
+metres lower than their surveyed heights and cities slightly higher. Peaks come from
+OpenStreetMap (`natural=peak`). Many summits sit on a border, so each peak lists every
+territory within 100 m (`territories`) and is ranked within each of them (`rank`).
+
+| Territory | Mean elevation | Highest peak (OSM) |
+|---|---|---|
+| Araba | 667 m | Gorbeiako gurutzea 1,482 m (with Bizkaia) |
+| Bizkaia | 295 m | Gorbeiako gurutzea 1,482 m (with Araba) |
+| Gipuzkoa | 397 m | Aketegi 1,549 m |
+| Nafarroa Garaia | 603 m | Hiru Erregeen Mahaia 2,446 m |
+| Lapurdi | 110 m | Artzamendi 926 m |
+| Nafarroa Beherea | 355 m | Okabe 1,466 m |
+| Zuberoa | 536 m | Orhi 2,017 m (with Nafarroa Garaia) |
+
+Per-municipality and per-territory minimum, mean and maximum elevation (and the location of
+each territory's highest point) are in [`dist/elevation/`](dist/elevation/). In `ehmap.rgis`:
+the `Erliebea` (shaded relief), `Gailurrak` and `Gailur nagusiak` layers, hidden by default,
+and the `Erliebea` print layout.
+
+**Known data issues** (to fix upstream in OpenStreetMap): the *Aitxuri* node (usually given as
+1,551 m, the top of Gipuzkoa) is tagged 1,508 m and placed where the DEM shows only ~1,425 m,
+so the Aitzkorri ridge appears topped by Aketegi instead.
+
 ## Decisions
 
 The 7 territories are historical, not current administrative units, so some choices had to be
@@ -130,6 +162,7 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/00_download.py          # source data -> data/raw/
 .venv/bin/python scripts/01_build_territories.py # -> dist/
 .venv/bin/python scripts/03_population_grid.py   # -> dist/population_grid/
+.venv/bin/python scripts/04_elevation.py         # -> dist/elevation/, dist/osm/
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```
@@ -139,6 +172,12 @@ build); they are published as release assets.
 
 ## Licences
 
-- **Data** (`dist/`, `data/reference/`, `docs/`, the layers in `ehmap.rgis`):
-  [CC BY 4.0](LICENSE-DATA). Sources and how to credit them: [ATTRIBUTION.md](ATTRIBUTION.md).
+- **Data** (`dist/` except the two folders below, `data/reference/`, `docs/` except
+  `elevation.png`): [CC BY 4.0](LICENSE-DATA). Sources and how to credit them:
+  [ATTRIBUTION.md](ATTRIBUTION.md).
+- **Elevation** (`dist/elevation/`, the DEM files): Copernicus WorldDEM-30 licence, with its
+  required notices — see [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md).
+- **Peaks** (`dist/osm/`, `peaks.gpkg`): [ODbL](https://opendatacommons.org/licenses/odbl/),
+  © OpenStreetMap contributors — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md).
+- `ehmap.rgis` and `docs/elevation.png` combine all three: follow each layer's licence.
 - **Code** (`scripts/`): [MIT](LICENSE).

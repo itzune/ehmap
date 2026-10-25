@@ -42,6 +42,17 @@ GHSL = ("https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_POP_GLOBE_R20
         "GHS_POP_E2020_GLOBE_R2023A_54009_100/V1-0/tiles/")
 GHSL_TILE = "GHS_POP_E2020_GLOBE_R2023A_54009_100_V1_0_R4_C18"
 
+# Copernicus DEM GLO-30 (Copernicus WorldDEM-30 licence), 1° tiles on AWS Open Data
+COPDEM = "https://copernicus-dem-30m.s3.amazonaws.com/{0}/{0}.tif"
+COPDEM_TILE = "Copernicus_DSM_COG_10_N{lat:02d}_00_W{lon:03d}_00_DEM"
+COPDEM_LATS, COPDEM_LONS = (41, 42, 43), (4, 3, 2, 1)  # 41-44°N, 4-0°W
+
+# OpenStreetMap peaks (ODbL) via Overpass, in the Euskal Herria bounding box
+OVERPASS = "https://overpass-api.de/api/interpreter"
+PEAKS_QUERY = """[out:json][timeout:180];
+node["natural"="peak"](41.85,-3.55,43.65,-0.55);
+out body;"""
+
 # Wikidata (CC0): Basque labels of Spanish municipalities by INE code (P772).
 # Iparralde Basque names live in data/reference/iparralde_territories.csv.
 SPARQL = {
@@ -89,6 +100,15 @@ def ghsl() -> None:
     print(f"{out.relative_to(RAW)}: {out.stat().st_size / 1e6:.1f} MB")
 
 
+def copdem() -> None:
+    for lat in COPDEM_LATS:
+        for lon in COPDEM_LONS:
+            tile = COPDEM_TILE.format(lat=lat, lon=lon)
+            out = RAW / "copdem" / f"{tile}.tif"
+            if not out.exists():
+                fetch(f"copdem/{tile}.tif", COPDEM.format(tile), {})
+
+
 def main() -> None:
     for path, (url, params) in DOWNLOADS.items():
         fetch(path, url, params)
@@ -99,6 +119,8 @@ def main() -> None:
     with open(ROOT / "data" / "reference" / "iparralde_territories.csv") as f:
         insee_population([row["insee"] for row in csv.DictReader(f)])
     ghsl()
+    copdem()
+    fetch("osm/peaks.json", OVERPASS, {"data": PEAKS_QUERY})
 
 
 if __name__ == "__main__":

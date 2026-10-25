@@ -25,6 +25,13 @@ Suggested credit line:
 Both CC BY 4.0 and the Licence Ouverte 2.0 allow redistribution of derived data, with
 attribution, under CC BY 4.0.
 
+## Under their own licences (not CC BY)
+
+| Data | Provider | Licence | Used for |
+|---|---|---|---|
+| Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md) |
+| `natural=peak` nodes via the Overpass API | © OpenStreetMap contributors | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | `dist/osm/` — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md) |
+
 ## Not redistributed
 
 - **OpenStreetMap tiles** — `ehmap.rgis` only references the standard tile server as a
@@ -34,5 +41,5 @@ attribution, under CC BY 4.0.
 - **[itzune/nongoeuskara](https://github.com/itzune/nongoeuskara)** — used only to cross-check
   the commune list; none of its data is included.
 
-Data derived from OpenStreetMap (e.g. mountain peaks) will be published separately under the
-ODbL, as that licence requires.
+Data derived from OpenStreetMap is published separately under the ODbL (`dist/osm/`), as that
+licence requires.

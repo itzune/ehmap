@@ -1,0 +1,8 @@
+territory_id,name_eu,elev_min,elev_mean,elev_max,highest_lon,highest_lat
+araba,Araba,42.7,666.8,1479.6,-2.78134,43.03399
+bizkaia,Bizkaia,-16.9,294.7,1479.6,-2.78134,43.03399
+gipuzkoa,Gipuzkoa,-0.7,397.4,1534.5,-2.32981,42.95885
+nafarroa_garaia,Nafarroa Garaia,9.1,603.4,2425.2,-0.72733,42.91933
+lapurdi,Lapurdi,-1.2,109.8,922.9,-1.40803,43.28313
+nafarroa_beherea,Nafarroa Beherea,-0.5,354.8,1462.1,-1.10735,43.0325
+zuberoa,Zuberoa,42.0,535.8,2010.6,-1.006,42.98756

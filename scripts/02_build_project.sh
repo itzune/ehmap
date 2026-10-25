@@ -9,7 +9,7 @@ GRID=dist/population_grid
 mkdir -p docs
 
 # RustGIS stores raster paths as absolute paths, but embeds rasters it downloads from a URL.
-# Serve dist/ locally for the duration of the build so the raster ends up inside ehmap.rgis.
+# Serve dist/ locally for the duration of the build so rasters end up inside ehmap.rgis.
 PORT=8765
 python3 -m http.server "$PORT" --bind 127.0.0.1 --directory dist >/dev/null 2>&1 &
 SERVER=$!
@@ -17,16 +17,22 @@ trap 'kill $SERVER' EXIT
 sleep 1
 
 # Layers, top to bottom:
+#   Gailur nagusiak the 3 highest peaks of each territory (OSM, hidden by default)
+#   Gailurrak       all named peaks, from 1:400,000 in (OSM, hidden by default)
 #   Lurralde mugak  territory borders + names (until 1:250,000)
 #   Udalerriak      municipality outlines + Basque names (from 1:400,000 in)
 #   Biztanleria 100m  GHSL people per 100 m cell, from 1:500,000 in (hidden by default)
 #   Biztanleria 1km   GHSL people per km², beyond 1:500,000 (hidden by default)
 #   Dentsitatea     population density per municipality (hidden by default)
 #   Lurraldeak      translucent territory colours
-# The density and grid views are also saved as print layouts with their legends.
-# The OSM basemap is added after the exports, so the previews hold only our own (CC BY) data.
+#   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
+# The density, grid and relief views are also saved as print layouts with their legends.
+# The OSM basemap is added after the exports, so the previews hold no OSM tiles.
 rustgis-cli run \
   --cmd 'map.basemap={"name":"blank"}' \
+  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/elevation/copernicus_dem_50m.tif\",\"name\":\"Erliebea\",\"whole\":true}" \
+  --cmd 'raster.symbology={"layer":"Erliebea","type":"shadedRelief"}' \
+  --cmd 'raster.stretch={"layer":"Erliebea","type":"custom","min":0,"max":2000}' \
   --cmd "layer.addData={\"path\":\"$GPKG\",\"layer\":\"territories\",\"name\":\"Lurraldeak\"}" \
   --cmd 'layer.symbology={"layer":"Lurraldeak","type":"unique","field":"name_eu"}' \
   --cmd 'layer.transparency={"layer":"Lurraldeak","value":40}' \
@@ -76,8 +82,26 @@ rustgis-cli run \
   --cmd 'labels.field={"layer":"Lurralde mugak","field":"name_eu"}' \
   --cmd 'labels.enable={"layer":"Lurralde mugak","on":true}' \
   --cmd 'labels.scaleRange={"layer":"Lurralde mugak","max":250000}' \
+  --cmd 'layer.addData={"path":"dist/osm/peaks.gpkg","name":"Gailurrak"}' \
+  --cmd 'layer.definitionQuery={"layer":"Gailurrak","where":"name IS NOT NULL AND ele IS NOT NULL"}' \
+  --cmd 'layer.symbology={"layer":"Gailurrak","type":"single"}' \
+  --cmd 'layer.marker={"layer":"Gailurrak","shape":"triangle","size":4}' \
+  --cmd 'layer.color={"layer":"Gailurrak","color":"#3A2A1A"}' \
+  --cmd 'layer.scaleRange={"layer":"Gailurrak","min":400000}' \
+  --cmd 'labels.field={"layer":"Gailurrak","field":"label"}' \
+  --cmd 'labels.enable={"layer":"Gailurrak","on":true}' \
+  --cmd 'labels.scaleRange={"layer":"Gailurrak","min":150000}' \
+  --cmd 'labels.class.add={"layer":"Gailurrak","name":"Mila metrotik gora","where":"ele >= 1000"}' \
+  --cmd 'labels.scaleRange={"layer":"Gailurrak","class":"Mila metrotik gora","min":400000}' \
+  --cmd 'layer.addData={"path":"dist/osm/peaks.gpkg","name":"Gailur nagusiak"}' \
+  --cmd 'layer.definitionQuery={"layer":"Gailur nagusiak","where":"rank <= 3"}' \
+  --cmd 'layer.symbology={"layer":"Gailur nagusiak","type":"single"}' \
+  --cmd 'layer.marker={"layer":"Gailur nagusiak","shape":"triangle","size":8}' \
+  --cmd 'layer.color={"layer":"Gailur nagusiak","color":"#B22222"}' \
+  --cmd 'labels.field={"layer":"Gailur nagusiak","field":"label"}' \
+  --cmd 'labels.enable={"layer":"Gailur nagusiak","on":true}' \
   --cmd 'layer.zoomTo={"layer":"Lurraldeak"}' \
-  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak"],"visible":false}' \
   --cmd 'share.exportMap={"path":"docs/euskal_herria_territories.png","dpi":150}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":false}' \
   --cmd 'layer.visibility={"layer":"Dentsitatea","visible":true}' \
@@ -88,6 +112,10 @@ rustgis-cli run \
   --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Biztanleria sareta","title":"Non bizi da jendea?","subtitle":"Euskal Herria, 1 km-ko laukietan (biztanle/km², 2020)","sources":["Biztanleria: GHSL GHS-POP R2023A, 2020 (EB, JRC)","Mugak: IGN España, IGN France","github.com/itzune/ehmap · CC BY 4.0"],"locator":"none","author":""}' \
   --cmd 'layout.export={"layout":"Biztanleria sareta","path":"docs/population_grid.png","dpi":120}' \
   --cmd 'layer.visibility={"layer":"Biztanleria 1km","visible":false}' \
+  --cmd 'layer.visibility={"layer":["Erliebea","Gailur nagusiak"],"visible":true}' \
+  --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.5,43.6],"name":"Erliebea","title":"Erliebea eta gailurrak","subtitle":"Euskal Herria: lurralde bakoitzeko hiru gailur garaienak","sources":["Erliebea: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved","Gailurrak: © OpenStreetMap contributors (ODbL)","Mugak: IGN España, IGN France","github.com/itzune/ehmap"],"locator":"none","author":""}' \
+  --cmd 'layout.export={"layout":"Erliebea","path":"docs/elevation.png","dpi":120}' \
+  --cmd 'layer.visibility={"layer":["Erliebea","Gailur nagusiak"],"visible":false}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":true}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
   --save ehmap.rgis

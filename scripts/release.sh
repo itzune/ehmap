@@ -18,12 +18,16 @@ NOTES=$(awk -v v="## $VERSION" '$0 ~ "^"v {on=1; next} /^## / && on {exit} on' C
 ASSETS=$(mktemp -d)
 trap 'rm -rf "$ASSETS"' EXIT
 cp ehmap.rgis dist/euskal_herria.gpkg \
-   dist/population_grid/ghs_pop_2020_100m.tif dist/population_grid/ghs_pop_2020_1km.gpkg "$ASSETS/"
+   dist/population_grid/ghs_pop_2020_100m.tif dist/population_grid/ghs_pop_2020_1km.gpkg \
+   dist/elevation/copernicus_dem_25m.tif dist/elevation/copernicus_dem_50m.tif \
+   dist/osm/peaks.gpkg "$ASSETS/"
 (cd dist && zip -qr "$ASSETS/euskal_herria_geojson.zip" geojson)
 (cd "$ASSETS" && sha256sum -- * > SHA256SUMS)
 
-printf '%s\n\nData: CC BY 4.0 (see ATTRIBUTION.md). Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
+printf '%s\n\nData: CC BY 4.0, except elevation (Copernicus WorldDEM-30 licence) and peaks (ODbL, © OpenStreetMap contributors); see ATTRIBUTION.md. Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
 gh release create "$VERSION" --repo "$REPO" --target main --title "$VERSION" \
   --notes-file "$ASSETS/notes.md" \
   "$ASSETS"/ehmap.rgis "$ASSETS"/euskal_herria.gpkg "$ASSETS"/euskal_herria_geojson.zip \
-  "$ASSETS"/ghs_pop_2020_100m.tif "$ASSETS"/ghs_pop_2020_1km.gpkg "$ASSETS"/SHA256SUMS
+  "$ASSETS"/ghs_pop_2020_100m.tif "$ASSETS"/ghs_pop_2020_1km.gpkg \
+  "$ASSETS"/copernicus_dem_25m.tif "$ASSETS"/copernicus_dem_50m.tif "$ASSETS"/peaks.gpkg \
+  "$ASSETS"/SHA256SUMS

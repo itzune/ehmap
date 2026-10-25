@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.0 — 2026-10-25
+
+Elevation and mountain peaks.
+
+- **Elevation model**: Copernicus DEM GLO-30 clipped to Euskal Herria, at 25 m (float, 0.1 m)
+  and 50 m (whole metres), EPSG:25830, under the Copernicus WorldDEM-30 licence.
+- **Elevation statistics** (min / mean / max) per municipality and per territory, with each
+  territory's highest point.
+- **Peaks**: 6,269 OpenStreetMap peaks inside Euskal Herria (ODbL), with every territory they
+  touch and their rank within it.
+- **RustGIS project**: shaded relief (`Erliebea`), peak layers and an `Erliebea` print layout.
+
+Assets added: `copernicus_dem_25m.tif`, `copernicus_dem_50m.tif`, `peaks.gpkg`.
+
 ## v0.1.0 — 2026-10-25
 
 First release: the base layers of Euskal Herria and its population.
