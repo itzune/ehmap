@@ -19,7 +19,9 @@ Everything in [`dist/`](dist/) (WGS 84, EPSG:4326):
 | `dist/euskal_herria.gpkg` | GeoPackage with layers `municipalities`, `territories`, `euskal_herria` |
 | `dist/geojson/*.geojson` | Same layers as GeoJSON (RFC 7946), full detail |
 | `dist/geojson/simplified/*.geojson` | Lighter versions for web maps (~50 m simplification, shared borders kept) |
-| `ehmap.rgis` | RustGIS project: territories, municipalities and population density (hidden layer + print layout), over an OpenStreetMap basemap |
+| `dist/population_grid/ghs_pop_2020_100m.tif` | People per 100 m cell (GHSL, 2020), Cloud-Optimized GeoTIFF, EPSG:3035 |
+| `dist/population_grid/ghs_pop_2020_1km.gpkg` | Inhabited 1 km cells with `grid_id` (Eurostat format), `population`, `territory_id`, EPSG:3035 |
+| `ehmap.rgis` | RustGIS project: territories, municipalities, population density and population grid (hidden layers + print layouts), over an OpenStreetMap basemap |
 
 ### `municipalities` (706 features)
 
@@ -67,6 +69,33 @@ Density is shown per municipality with hand-picked classes (the values are very 
 median is 34 inh./km², the densest municipalities pass 14,000). In `ehmap.rgis` it is the
 `Dentsitatea` layer (hidden by default) and the `Dentsitatea` print layout.
 
+## Population grid
+
+![Where people live: population per km²](docs/population_grid.png)
+
+Municipal densities spread people evenly over each municipality. The
+[GHSL](https://doi.org/10.2905/2FF68A52-5B5B-4A22-8F40-C41DA8332CFE) population grid (EU Joint
+Research Centre, 2020 estimate) places them where buildings are, so valleys, coastal corridors
+and empty mountains show up. It is published here clipped to Euskal Herria, at 100 m (raster)
+and aggregated to the Eurostat 1 km grid (vector).
+
+GHSL is a **model**, good for showing where people live but not for exact counts: for this area
+it totals 2.97 million people against 3.25 million in the official registers (2023–2025).
+
+| Territory | GHSL 2020 / official |
+|---|---|
+| Araba | 0.99 |
+| Bizkaia | 0.91 |
+| Gipuzkoa | 0.87 |
+| Nafarroa Garaia | 0.91 |
+| Lapurdi | 0.94 |
+| Nafarroa Beherea | 0.97 |
+| Zuberoa | 0.98 |
+
+For counts, use the municipal `population` field. In `ehmap.rgis` the grid is the
+`Biztanleria 1km` layer (zoomed out) and `Biztanleria 100m` (zoomed in), hidden by default,
+and the `Biztanleria sareta` print layout.
+
 ## Decisions
 
 The 7 territories are historical, not current administrative units, so some choices had to be
@@ -96,6 +125,7 @@ uv venv --python 3.12 .venv            # or: python3 -m venv .venv
 uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/00_download.py          # source data -> data/raw/
 .venv/bin/python scripts/01_build_territories.py # -> dist/
+.venv/bin/python scripts/03_population_grid.py   # -> dist/population_grid/
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 ```
 

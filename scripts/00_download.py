@@ -3,7 +3,9 @@
 Sources and licences are listed in ATTRIBUTION.md.
 """
 import csv
+import io
 import json
+import zipfile
 from pathlib import Path
 
 import requests
@@ -34,6 +36,11 @@ INE = "https://servicios.ine.es/wstempus/js/ES/DATOS_TABLA/{}"
 INSEE = "https://api.insee.fr/melodi/data/DS_POPULATIONS_REFERENCE"
 INSEE_YEAR = "2023"  # populations légales 2023, in force from 1 January 2026
 INSEE_GEO = "2025-COM-{}"  # commune boundaries of 1 January 2025
+
+# GHSL GHS-POP R2023A, epoch 2020, 100 m Mollweide (JRC, CC BY 4.0); tile R4_C18 covers Euskal Herria
+GHSL = ("https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_POP_GLOBE_R2023A/"
+        "GHS_POP_E2020_GLOBE_R2023A_54009_100/V1-0/tiles/")
+GHSL_TILE = "GHS_POP_E2020_GLOBE_R2023A_54009_100_V1_0_R4_C18"
 
 # Wikidata (CC0): Basque labels of Spanish municipalities by INE code (P772).
 # Iparralde Basque names live in data/reference/iparralde_territories.csv.
@@ -71,6 +78,17 @@ def insee_population(codes: list[str], batch: int = 40) -> None:
     print(f"{out.relative_to(RAW)}: {len(obs)} communes")
 
 
+def ghsl() -> None:
+    """Download the GHSL tile and extract only its GeoTIFF."""
+    out = RAW / "ghsl" / f"{GHSL_TILE}.tif"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    r = requests.get(f"{GHSL}{GHSL_TILE}.zip", headers=UA, timeout=600)
+    r.raise_for_status()
+    with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+        out.write_bytes(z.read(f"{GHSL_TILE}.tif"))
+    print(f"{out.relative_to(RAW)}: {out.stat().st_size / 1e6:.1f} MB")
+
+
 def main() -> None:
     for path, (url, params) in DOWNLOADS.items():
         fetch(path, url, params)
@@ -80,6 +98,7 @@ def main() -> None:
         fetch(f"ine/population_{prov}.json", INE.format(table), {"nult": 1, "tip": "AM"})
     with open(ROOT / "data" / "reference" / "iparralde_territories.csv") as f:
         insee_population([row["insee"] for row in csv.DictReader(f)])
+    ghsl()
 
 
 if __name__ == "__main__":
