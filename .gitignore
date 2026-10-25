@@ -1,0 +1,10 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Downloaded source data (reproduce with scripts/00_download.py)
+data/raw/
+
+# Scratch output (published maps go to dist/)
+out/

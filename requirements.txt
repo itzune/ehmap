@@ -1,0 +1,6 @@
+geopandas>=1.2
+pandas>=3.0
+pyogrio>=0.13
+shapely>=2.1  # coverage_simplify
+requests>=2.32
+rustgis>=0.4

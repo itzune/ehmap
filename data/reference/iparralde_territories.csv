@@ -1,0 +1,162 @@
+insee,name_fr,name_eu,territory,in_capb,source,note,wikidata
+64009,Ahetze,Ahetze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q746192
+64014,Ainhoa,Ainhoa,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q212962
+64024,Anglet,Angelu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q191765
+64035,Arbonne,Arbona,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q742635
+64038,Arcangues,Arrangoitze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q197339
+64065,Ascain,Azkaine,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q838300
+64094,Bardos,Bardoze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q274809
+64100,Bassussarry,Basusarri,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q839448
+64102,Bayonne,Baiona,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q134674
+64122,Biarritz,Biarritz,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q132790
+64125,Bidart,Bidarte,Lapurdi,True,manual,,http://www.wikidata.org/entity/Q932076
+64130,Biriatou,Biriatu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q196871
+64134,Bonloc,Lekuine,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q839442
+64140,Boucau,Bokale,Lapurdi,True,manual,,http://www.wikidata.org/entity/Q320282
+64147,Briscous,Beskoitze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q675447
+64160,Cambo-les-Bains,Kanbo,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q197014
+64189,Ciboure,Ziburu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q235208
+64213,Espelette,Ezpeleta,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q236575
+64249,Guéthary,Getaria,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q672766
+64250,Guiche,Gixune,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q324578
+64255,Halsou,Haltsu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q196980
+64256,Hasparren,Hazparne,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q197150
+64260,Hendaye,Hendaia,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q191754
+64279,Itxassou,Itsasu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q683474
+64282,Jatxou,Jatsu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q543986
+64304,Lahonce,Lehuntze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q197079
+64317,Larressore,Larresoro,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q843484
+64350,Louhossoa,Luhuso,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q842624
+64364,Macaye,Makea,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q771803
+64377,Mendionde,Lekorne,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q839458
+64407,Mouguerre,Mugerre,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q839753
+64483,Saint-Jean-de-Luz,Donibane Lohizune,Lapurdi,True,manual,,http://www.wikidata.org/entity/Q232135
+64495,Saint-Pée-sur-Nivelle,Senpere,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q243738
+64496,Saint-Pierre-d'Irube,Hiriburu,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q197256
+64504,Sare,Sara,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q274155
+64527,Souraïde,Zuraide,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q645206
+64540,Urcuit,Urketa,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q838728
+64545,Urrugne,Urruña,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q672401
+64546,Urt,Ahurti,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q842706
+64547,Ustaritz,Uztaritze,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q269874
+64558,Villefranque,Milafranga,Lapurdi,True,wikidata:P131,,http://www.wikidata.org/entity/Q839575
+64008,Ahaxe-Alciette-Bascassan,Ahatsa-Altzieta-Bazkazane,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q188629
+64010,Aïcirits-Camou-Suhast,Aiziritze-Gamue-Zohazti,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q188658
+64011,Aincille,Aintzila,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q740512
+64013,Ainhice-Mongelos,Ainhize-Monjolose,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839563
+64016,Aldudes,Aldude,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839431
+64018,Amendeuix-Oneix,Amendüze-Unaso,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839824
+64019,Amorots-Succos,Amorotze-Zokotze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842641
+64026,Anhaux,Anhauze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197023
+64031,Arancou,Erango,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197127
+64034,Arbérats-Sillègue,Arberatze-Zilhekoa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q739581
+64036,Arbouet-Sussaute,Arboti-Zohota,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839516
+64045,Arhansus,Arhantsusi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839821
+64046,Armendarits,Armendaritze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q548220
+64047,Arnéguy,Arnegi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q275901
+64051,Arraute-Charritte,Arrueta-Sarrikota,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q662584
+64066,Ascarat,Azkarate,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842619
+64086,Ayherre,Aiherra,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197053
+64092,Banca,Banka,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839427
+64105,Béguios,Behauze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q663115
+64106,Béhasque-Lapiste,Behaskane-Laphizketa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197325
+64107,Béhorléguy,Behorlegi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q317341
+64113,Bergouey-Viellenave,Burgue-Erreiti,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839536
+64120,Beyrie-sur-Joyeuse,Bithiriña,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q540903
+64123,Bidache,Bidaxune,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197008
+64124,Bidarray,Bidarrai,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q746221
+64150,Bunus,Bunuze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q733126
+64154,Bussunarits-Sarrasquette,Duzunaritze-Sarasketa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q589030
+64155,Bustince-Iriberry,Buztintze-Hiriberri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q538230
+64161,Came,Akamarre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q656076
+64166,Caro,Zaro,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842635
+64205,Escos,Ezkoze,Nafarroa Beherea,False,wikidata:P131,disputed border commune (Nafarroa Beherea / Bearn); administratively in a Bearn EPCI,http://www.wikidata.org/entity/Q739615
+64218,Estérençuby,Ezterenzubi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842724
+64228,Gabat,Gabadi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843728
+64229,Gamarthe,Gamarte,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197103
+64235,Garris,Garrüze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q680593
+64259,Hélette,Heleta,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q317326
+64265,Hosta,Hozta,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197114
+64267,Ibarrolle,Ibarrola,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197780
+64271,Iholdy,Iholdi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842681
+64272,Ilharre,Ilharre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q642990
+64273,Irissarry,Irisarri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843746
+64274,Irouléguy,Irulegi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197247
+64275,Ispoure,Izpura,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q763568
+64277,Isturits,Izturitze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843459
+64283,Jaxu,Jatsu,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q324222
+64285,Juxue,Jutsi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843481
+64289,La Bastide-Clairence,Bastida,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q317214
+64294,Labets-Biscay,Labetze-Bizkai,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q188701
+64297,Lacarre,Lakarra,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842672
+64313,Lantabat,Landibarre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q324227
+64314,Larceveau-Arros-Cibits,Larzabale-Arroze-Zibitze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q634814
+64319,Larribar-Sorhapuru,Larribarre-Sorhapürü,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843433
+64322,Lasse,Lasa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197244
+64327,Lecumberry,Lekunberri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197192
+64362,Luxe-Sumberraute,Lüküze-Altzümarta,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q324142
+64368,Masparraute,Martxueta,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q741619
+64375,Méharin,Mehaine,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197685
+64379,Mendive,Mendibe,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197953
+64425,Orègue,Oragarre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q196905
+64429,Orsanco,Ostankoa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197353
+64436,Ossès,Ortzaize,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q838739
+64437,Ostabat-Asme,Izura-Azme,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q188562
+64476,Saint-Esteben,Donoztiri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q768391
+64477,Saint-Étienne-de-Baïgorry,Baigorri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q279252
+64484,Saint-Jean-le-Vieux,Donazaharre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q196928
+64485,Saint-Jean-Pied-de-Port,Donibane Garazi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q270294
+64487,Saint-Just-Ibarre,Donaixti-Ibarre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843767
+64489,Saint-Martin-d'Arberoue,Donamartiri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q144182
+64490,Saint-Martin-d'Arrossa,Arrosa,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843415
+64492,Saint-Michel,Eiheralarre,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q529943
+64493,Saint-Palais,Donapaleu,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q266826
+64502,Sames,Samatze,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q843449
+64528,Suhescun,Suhuskune,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q385408
+64538,Uhart-Cize,Uharte Garazi,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q842676
+64539,Uhart-Mixe,Uhartehiri,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q197262
+64543,Urepel,Urepele,Nafarroa Beherea,True,wikidata:P131,,http://www.wikidata.org/entity/Q839971
+64012,Ainharp,Ainharbe,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q548601
+64015,Alçay-Alçabéhéty-Sunharette,Altzai-Altzabeheti-Zunharreta,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q197004
+64017,Alos-Sibas-Abense,Aloze-Ziboze-Onizegaine,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q733324
+64049,Aroue-Ithorots-Olhaïby,Arüe-Ithorrotze-Olhaibi,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q274833
+64050,Arrast-Larrebieu,Ürrüstoi-Larrabile,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q764976
+64081,Aussurucq,Altzürükü,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q274207
+64093,Barcus,Barkoxe,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q839436
+64115,Berrogain-Laruns,Berrogaine-Larüntze,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q839453
+64162,Camou-Cihigue,Gamere-Zihiga,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q737116
+64187,Charritte-de-Bas,Sarrikotapea,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q680193
+64188,Chéraute,Sohüta,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q274861
+64202,Domezain-Berraute,Domintxaine-Berroeta,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q842711
+64214,Espès-Undurein,Ezpeize-Ündüreine,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q243907
+64217,Esquiule,Eskiula,Zuberoa,False,wikidata:P131,in Bearn geographically; attached to Zuberoa historically and culturally,http://www.wikidata.org/entity/Q842607
+64221,Etcharry,Etxarri,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q840701
+64222,Etchebar,Etxebarre,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q548326
+64231,Garindein,Garindaine,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q607724
+64242,Gestas,Jeztaze,Zuberoa,False,wikidata:P131,Basque enclave in Bearn; Zuberoa historically and culturally,http://www.wikidata.org/entity/Q196945
+64247,Gotein-Libarrenx,Gotaine-Irabarne,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q178701
+64258,Haux,Hauze,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q324184
+64264,L'Hôpital-Saint-Blaise,Ospitalepea,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q133828
+64268,Idaux-Mendy,Idauze-Mendi,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q840696
+64298,Lacarry-Arhan-Charritte-de-Haut,Lakarri-Arhane-Sarrikotagaine,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q843697
+64303,Laguinge-Restoue,Liginaga-Astüe,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q843750
+64316,Larrau,Larraine,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q608335
+64340,Lichans-Sunhar,Lexantzü-Zunharre,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q670134
+64341,Lichos,Lixoze,Zuberoa,True,wikidata:P131,joined Zuberoa grouping / CA Pays Basque in 2017,http://www.wikidata.org/entity/Q195082
+64342,Licq-Athérey,Ligi-Atherei,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q646840
+64345,Lohitzun-Oyhercq,Lohitzüne-Oihergi,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q197029
+64371,Mauléon-Licharre,Maule-Lextarre,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q236528
+64378,Menditte,Mendikota,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q570678
+64391,Moncayolle-Larrory-Mendibieu,Mitikile-Larrori-Mendibile,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q843429
+64404,Montory,Montori,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q685980
+64411,Musculdy,Muskildi,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q535638
+64424,Ordiarp,Urdiñarbe,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q840674
+64432,Ossas-Suhare,Ozaze-Zühara,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q840669
+64435,Osserain-Rivareyte,Ozaraine-Erribareita,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q772619
+64441,Pagolle,Pagola,Zuberoa,True,wikidata:P131,split historically between Zuberoa (Arbaila) and Nafarroa Beherea (Oztibarre); assigned to Zuberoa,http://www.wikidata.org/entity/Q778822
+64468,Roquiague,Arrokiaga,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q840691
+64475,Sainte-Engrâce,Urdatx / Santa Grazi,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q197211
+64509,Sauguis-Saint-Étienne,Zalgize-Doneztebe,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q842629
+64533,Tardets-Sorholus,Atharratze-Sorholüze,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q366359
+64537,Trois-Villes,Iruri,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q838752
+64559,Viodos-Abense-de-Bas,Bildoze-Onizepea,Zuberoa,True,wikidata:P131,,http://www.wikidata.org/entity/Q375949
