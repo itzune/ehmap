@@ -228,7 +228,9 @@ h2 {
 .note { font-size: var(--step--1); color: var(--muted) !important; line-height: 1.45; }
 
 /* warming stripes: one row per area, one stripe per year */
-.stripes { grid-column: 1 / -1; order: 3; margin: 0; }
+.chapter:has(+ .band) { padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+.band { max-width: 78rem; margin: 0 auto; padding: 0 var(--gutter) clamp(3rem, 7vw, 6rem); }
+.stripes { margin: 0; }
 .stripes h3 { font: 500 var(--step-1)/1.15 var(--serif); margin: 0 0 0.4rem; }
 .stripes figcaption p { margin: 0 0 1.2rem; color: var(--ink-2); max-width: 42rem; }
 .stripes-chart { position: relative; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 0.9rem; align-items: center; }
