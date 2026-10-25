@@ -5,6 +5,8 @@ Inputs (from scripts/00_download.py, sources in ATTRIBUTION.md):
   data/raw/es/municipios_burgos_trevino.geojson Treviño enclave (Burgos), counted in Araba
   data/raw/fr/communes_64.geojson               Pyrénées-Atlantiques communes (IGN ADMIN EXPRESS)
   data/raw/wikidata/names_eu_es.csv             Basque names of the southern municipalities
+  data/raw/ine/population_<prov>.json           Spanish municipal population (INE Padrón)
+  data/raw/insee/population_<year>.json         French municipal population (INSEE)
   data/reference/iparralde_territories.csv      INSEE code -> Lapurdi / Nafarroa Beherea / Zuberoa
 
 Outputs (EPSG:4326; areas computed in EPSG:25830):
@@ -12,6 +14,7 @@ Outputs (EPSG:4326; areas computed in EPSG:25830):
   dist/geojson/<layer>.geojson            same layers, full detail
   dist/geojson/simplified/<layer>.geojson lighter versions for web maps (shared borders kept)
 """
+import json
 from pathlib import Path
 
 import geopandas as gpd
@@ -41,6 +44,7 @@ SOUTH = {"01": "araba", "20": "gipuzkoa", "48": "bizkaia", "31": "nafarroa_garai
 TREVINO = {"09109", "09276"}  # Condado de Treviño, La Puebla de Arganzón
 COLS = ["code", "country", "type", "name", "name_eu", "territory_id", "territory",
         "admin_province", "wikidata", "note", "geometry"]
+POP_COLS = ["population", "population_year", "population_source", "density_km2"]
 
 
 def south() -> gpd.GeoDataFrame:
@@ -79,6 +83,26 @@ def north() -> gpd.GeoDataFrame:
     g["type"] = "municipality"
     g["country"] = "FR"
     return gpd.GeoDataFrame(g, crs=fr.crs)
+
+
+def population() -> pd.DataFrame:
+    """Municipal population by official code: INE Padrón (ES) and INSEE PMUN (FR)."""
+    rows = []
+    for f in sorted((RAW / "ine").glob("population_*.json")):
+        for series in json.loads(f.read_text()):
+            meta = {m["T3_Variable"]: m for m in series["MetaData"]}
+            mun, sex = meta.get("Municipios"), meta["Sexo"]
+            if mun and sex["Codigo"] == "0" and series["Data"]:
+                d = series["Data"][0]
+                rows.append((mun["Codigo"], d["Valor"], d["Anyo"], "INE Padrón"))
+    for f in sorted((RAW / "insee").glob("population_*.json")):
+        for o in json.loads(f.read_text()):
+            rows.append((o["dimensions"]["GEO"].rsplit("-", 1)[1],
+                         o["measures"]["OBS_VALUE_NIVEAU"]["value"],
+                         int(o["dimensions"]["TIME_PERIOD"]), "INSEE PMUN"))
+    p = pd.DataFrame(rows, columns=["code", "population", "population_year", "population_source"])
+    assert p.code.is_unique
+    return p.astype({"population": "Int64", "population_year": "Int64"})
 
 
 def stitch_border(s: gpd.GeoDataFrame, n: gpd.GeoDataFrame, max_gap_m2: float = 1e6) -> gpd.GeoDataFrame:
@@ -134,13 +158,17 @@ def aggregate(m: gpd.GeoDataFrame) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
     """Territories and the Euskal Herria outline from the municipality layer."""
     m = m.assign(is_mun=m["type"].eq("municipality").astype(int),
                  is_shared=m["type"].eq("shared_land").astype(int))
-    t = m.dissolve("territory_id", aggfunc={"is_mun": "sum", "is_shared": "sum", "area_km2": "sum"})
+    t = m.dissolve("territory_id", aggfunc={"is_mun": "sum", "is_shared": "sum",
+                                            "population": "sum", "area_km2": "sum"})
     t = t.rename(columns={"is_mun": "n_municipalities", "is_shared": "n_shared_lands"})
     t = gpd.GeoDataFrame(TERRITORIES.merge(t, left_on="id", right_index=True), crs=m.crs)
     eh = gpd.GeoDataFrame({**{k: [v] for k, v in EUSKAL_HERRIA.items()},
                            "n_municipalities": [t.n_municipalities.sum()],
+                           "population": [t.population.sum()],
                            "area_km2": [t.area_km2.sum()]},
                           geometry=[t.union_all()], crs=m.crs)
+    for x in (t, eh):
+        x["density_km2"] = (x.population / x.area_km2).round(1)
     return t, eh
 
 
@@ -163,7 +191,12 @@ def main() -> None:
     m = stitch_border(south().to_crs(25830), north().to_crs(25830))
     m["territory"] = m.territory_id.map(dict(zip(TERRITORIES.id, TERRITORIES.name_eu)))
     m["area_km2"] = m.area / 1e6
-    m = m[COLS[:-1] + ["area_km2", "geometry"]].sort_values(["territory_id", "code"], ignore_index=True)
+    m = m.drop(columns="population", errors="ignore").merge(population(), on="code", how="left")
+    missing = m[m["type"].eq("municipality") & m.population.isna()]
+    assert missing.empty, missing[["code", "name"]].values.tolist()
+    m["density_km2"] = (m.population / m.area_km2).astype(float).round(1)
+    m = m[COLS[:-1] + ["area_km2"] + POP_COLS + ["geometry"]]
+    m = gpd.GeoDataFrame(m.sort_values(["territory_id", "code"], ignore_index=True), crs=25830)
     t, eh = aggregate(m)
     write({"municipalities": m, "territories": t, "euskal_herria": eh},
           DIST / "euskal_herria.gpkg", DIST / "geojson")
@@ -176,7 +209,7 @@ def main() -> None:
 
     print(t.drop(columns="geometry").round(1).to_string(index=False))
     print(f"Total: {eh.n_municipalities[0]} municipalities + {t.n_shared_lands.sum()} shared lands,"
-          f" {eh.area_km2[0]:.0f} km² -> {DIST.relative_to(ROOT)}/")
+          f" {eh.area_km2[0]:.0f} km², {eh.population[0]:,} inhabitants -> {DIST.relative_to(ROOT)}/")
 
 
 if __name__ == "__main__":
