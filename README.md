@@ -5,6 +5,8 @@ Open, reproducible base layers of **Euskal Herria and its 7 territories**
 in any GIS or web map. The goal is that anyone building something about Euskal Herria finds
 the base already done, with clear sources and licences.
 
+**Website: [itzune.github.io/ehmap](https://itzune.github.io/ehmap/)** — the atlas, in Basque.
+
 The project is also a playground to learn [RustGIS](https://github.com/opengeos/RustGIS);
 next topic is forest change over the last years.
 
@@ -241,9 +243,15 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/04_elevation.py         # -> dist/elevation/, dist/osm/
 .venv/bin/python scripts/05_rivers.py            # -> dist/osm/rivers, dist/elevation/ drainage (needs GeoLibre)
 .venv/bin/python scripts/06_forest.py            # -> dist/forest/ (needs ~10 GB of RAM)
+.venv/bin/python scripts/07_site_maps.py         # -> site/maps/ (website maps)
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```
+
+The website is plain HTML/CSS in [`site/`](site/), published to GitHub Pages by
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) on every push to `site/`. Its map
+colours are in [`site/palette.json`](site/palette.json) (checked for colour-blind safety and
+contrast); fonts are Fraunces and Source Sans 3 ([OFL](fonts/)).
 
 `ehmap.rgis` and the rasters are not versioned in git (they are large and change on every
 build); they are published as release assets.

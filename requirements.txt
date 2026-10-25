@@ -4,3 +4,8 @@ pyogrio>=0.13
 shapely>=2.1  # coverage_simplify
 requests>=2.32
 rustgis>=0.4
+# website maps (scripts/07_site_maps.py)
+matplotlib>=3.9
+pillow>=10
+fonttools>=4.50
+brotli>=1.1

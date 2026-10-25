@@ -1,0 +1,17 @@
+{
+  "_doc": "Site and map palette. Ramps validated with the dataviz checks (ordinal: monotone L, ΔL ≥ 0.06, light end ≥ 2:1 on paper, single hue); biscay/med validated as a categorical pair (CVD ΔE 21.8).",
+  "paper": "#F3EEE3",
+  "card": "#FAF7F0",
+  "rule": "#DDD4C3",
+  "ink": "#2A2925",
+  "ink2": "#5E594E",
+  "muted": "#6B6457",
+  "sea": "#DCE3E1",
+  "water": "#2867A8",
+  "biscay": "#2867A8",
+  "med": "#A86F1C",
+  "divide": "#A44C32",
+  "earth": ["#BCA273", "#A08455", "#82663F", "#624A2C", "#43311D"],
+  "forest": ["#90B26E", "#6A9858", "#4A7C48", "#316139", "#1B4429"],
+  "people": ["#D69476", "#C26C4C", "#A44C32", "#7D3324", "#521D16"]
+}

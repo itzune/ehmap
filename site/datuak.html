@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="eu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datuak · Euskal Herria mapetan · ehmap</title>
+<meta name="description" content="Euskal Herriko geodatu irekiak deskargatzeko: mugak, biztanleria, erliebea, ibaiak eta basoa, eta haien lizentziak.">
+<meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/SourceSans3.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#edukia">Edukira joan</a>
+
+<header class="bar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><use href="favicon.svg#mark"/></svg>
+    ehmap
+  </a>
+  <nav aria-label="Nagusia">
+    <a href="./">Atlasa</a>
+    <a href="datuak.html" aria-current="page">Datuak</a>
+    <a href="https://github.com/itzune/ehmap">GitHub</a>
+  </nav>
+</header>
+
+<main id="edukia" class="page">
+  <p class="eyebrow">Deskargak eta lizentziak</p>
+  <h1>Datuak</h1>
+  <p>Atlaseko datu guztiak libreki deskarga eta berrerabil daitezke. Fitxategiak
+    <a href="https://github.com/itzune/ehmap/releases/latest">azken bertsioan</a> daude; behean dauden
+    estekek beti bertsio horretara eramaten dute. Dena berriz sor daiteke
+    <a href="https://github.com/itzune/ehmap">iturburu-kodetik</a>.</p>
+
+  <h2>Mugak eta biztanleria · CC BY 4.0</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Fitxategia</th><th>Edukia</th><th>Lizentzia</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/euskal_herria.gpkg">euskal_herria.gpkg</a></td>
+          <td>Udalerriak (706), zazpi lurraldeak eta Euskal Herria: kode ofizialak, euskarazko izenak, azalera, biztanleria eta dentsitatea</td><td class="lic">CC BY 4.0</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/euskal_herria_geojson.zip">euskal_herria_geojson.zip</a></td>
+          <td>Geruza berak GeoJSON formatuan, xehetasun osoz eta web-mapetarako sinplifikatuta</td><td class="lic">CC BY 4.0</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_1km.gpkg">ghs_pop_2020_1km.gpkg</a></td>
+          <td>Biztanleria kilometro karratuko laukietan (GHSL, 2020)</td><td class="lic">CC BY 4.0</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_100m.tif">ghs_pop_2020_100m.tif</a></td>
+          <td>Biztanleria 100 m-ko gelaxketan (GeoTIFF)</td><td class="lic">CC BY 4.0</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/forest_cover_100m.tif">forest_cover_100m.tif</a></td>
+          <td>Zuhaitz-estalduraren ehunekoa 100 m-ko gelaxketan (ESA WorldCover 2021)</td><td class="lic">CC BY 4.0</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/landcover_2021_10m.tif">landcover_2021_10m.tif</a></td>
+          <td>Lurzoruaren estaldura, klase guztiak, 10 m (ESA WorldCover 2021)</td><td class="lic">CC BY 4.0</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Erliebea eta isurialdeak · Copernicus lizentzia</h2>
+  <p>Copernicus DEM GLO-30 ereduan oinarrituak. Berrerabil daitezke, baina ohar hauek gorde behar dira:</p>
+  <p><em>Produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH
+    2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. The
+    organisations in charge of the Copernicus programme by law or by delegation do not incur any
+    liability for any use of the Copernicus WorldDEM-30.</em></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Fitxategia</th><th>Edukia</th><th>Lizentzia</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_25m.tif">copernicus_dem_25m.tif</a></td>
+          <td>Garaiera, 25 m (90 MB)</td><td class="lic">Copernicus</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_50m.tif">copernicus_dem_50m.tif</a></td>
+          <td>Garaiera, 50 m, metro osoetan (10 MB)</td><td class="lic">Copernicus</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/drainage_basins.gpkg">drainage_basins.gpkg</a></td>
+          <td>Bizkaiko golkoko eta Mediterraneoko isurialdeak, eta banalerroa</td><td class="lic">Copernicus</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Gailurrak eta ibaiak · ODbL</h2>
+  <p>OpenStreetMap-etik ateratakoak: © OpenStreetMap-en laguntzaileak. Haietatik eratorritako datu-baseek
+    ODbL lizentzia izan behar dute. Akatsak OpenStreetMap-en bertan zuzentzea da onena.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Fitxategia</th><th>Edukia</th><th>Lizentzia</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/peaks.gpkg">peaks.gpkg</a></td>
+          <td>6.269 gailur, ukitzen dituzten lurraldeekin eta lurralde bakoitzeko hurrenkerarekin</td><td class="lic">ODbL</td></tr>
+      <tr><td><a href="https://github.com/itzune/ehmap/releases/latest/download/rivers.gpkg">rivers.gpkg</a></td>
+          <td>247 ibai izendun, Euskal Herriko luzerarekin</td><td class="lic">ODbL</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>RustGIS proiektua</h2>
+  <p><a href="https://github.com/itzune/ehmap/releases/latest/download/ehmap.rgis">ehmap.rgis</a> fitxategiak
+    geruza guztiak biltzen ditu, estiloekin eta inprimatzeko diseinuekin, <a href="https://rustgis.app">RustGIS</a>
+    programarekin irekitzeko. Geruza bakoitzak bere lizentzia du.</p>
+
+  <h2>Nola aipatu</h2>
+  <p>«ehmap: Euskal Herriko geodatu irekiak», https://github.com/itzune/ehmap (CC BY 4.0), eta iturri
+    bakoitzaren aipamena: IGN España, IGN France, INE, INSEE, Wikidata, GHSL (JRC), ESA WorldCover,
+    Copernicus DEM eta OpenStreetMap. Zehaztasun guztiak
+    <a href="https://github.com/itzune/ehmap/blob/main/ATTRIBUTION.md">ATTRIBUTION.md</a> fitxategian.</p>
+</main>
+
+<footer>
+  <div class="inner">
+    <p><strong>ehmap</strong> — <a href="https://github.com/itzune">itzune</a>. Kodea: MIT.</p>
+    <p>Mapen tipografiak: Fraunces eta Source Sans 3 (SIL Open Font License).</p>
+  </div>
+</footer>
+</body>
+</html>

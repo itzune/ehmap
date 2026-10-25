@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="eu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euskal Herria mapetan · ehmap</title>
+<meta name="description" content="Euskal Herriko zazpi lurraldeen geodatu irekiak mapetan: mugak, erliebea, ibaiak, basoa eta biztanleria.">
+<meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Euskal Herria mapetan">
+<meta property="og:description" content="Zazpi lurraldeen geodatu irekiak: mugak, erliebea, ibaiak, basoa eta biztanleria.">
+<meta property="og:image" content="https://itzune.eus/ehmap/maps/erliebea-1200.webp">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/SourceSans3.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#edukia">Edukira joan</a>
+
+<header class="bar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><use href="favicon.svg#mark"/></svg>
+    ehmap
+  </a>
+  <nav aria-label="Nagusia">
+    <a href="./" aria-current="page">Atlasa</a>
+    <a href="datuak.html">Datuak</a>
+    <a href="https://github.com/itzune/ehmap">GitHub</a>
+  </nav>
+</header>
+
+<main id="edukia">
+  <section class="hero" aria-labelledby="izenburua">
+    <div>
+    <p class="eyebrow">Atlas irekia · 2026</p>
+    <h1 id="izenburua">Euskal Herria mapetan</h1>
+    <p class="lede">Zazpi lurraldeen oinarrizko geodatuak, iturri publiko eta irekietatik eraikiak:
+      mugak, erliebea, ibaiak, basoa eta biztanleria. Begiratzeko, ikasteko eta berrerabiltzeko.</p>
+    </div>
+    <figure class="cover">
+      <img src="maps/azala-1200.webp" srcset="maps/azala-1200.webp 1200w, maps/azala.webp 2400w"
+           sizes="(min-width: 60rem) 45vw, 100vw" width="1200" height="962" fetchpriority="high"
+           alt="Euskal Herriaren erliebea, itzal leunekin: Pirinioak ekialdean eta Ebro ibarra hegoaldean.">
+    </figure>
+    <dl class="facts">
+      <div class="fact"><dt>lurralde</dt><dd>7</dd></div>
+      <div class="fact"><dt>udalerri</dt><dd>686</dd></div>
+      <div class="fact"><dt>km² azalera</dt><dd>20.921</dd></div>
+      <div class="fact"><dt>biztanle</dt><dd>3,25 M</dd></div>
+    </dl>
+  </section>
+
+  <ol class="toc" aria-label="Kapituluak">
+    <li><a href="#lurraldeak"><img src="maps/lurraldeak-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">01</span><span class="t">Zazpi lurraldeak</span></a></li>
+    <li><a href="#erliebea"><img src="maps/erliebea-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">02</span><span class="t">Erliebea eta gailurrak</span></a></li>
+    <li><a href="#ibaiak"><img src="maps/ibaiak-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">03</span><span class="t">Ibaiak eta isurialdeak</span></a></li>
+    <li><a href="#basoa"><img src="maps/basoa-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">04</span><span class="t">Basoa</span></a></li>
+    <li><a href="#jendea"><img src="maps/jendea-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">05</span><span class="t">Non bizi da jendea?</span></a></li>
+  </ol>
+
+  <!-- 01 -->
+  <section class="chapter" id="lurraldeak" aria-labelledby="h-lurraldeak">
+    <figure class="map">
+      <button type="button" data-full="maps/lurraldeak.webp" aria-label="Mapa handitu: Zazpi lurraldeak">
+        <img src="maps/lurraldeak-1200.webp" srcset="maps/lurraldeak-1200.webp 1200w, maps/lurraldeak.webp 2400w"
+             sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+             alt="Euskal Herriko mapa, zazpi lurraldeen mugekin eta udal-mugekin, erliebe leunaren gainean.">
+      </button>
+      <figcaption>Mugak: IGN España, IGN France, Wikidata. Erliebea: Copernicus WorldDEM-30.</figcaption>
+    </figure>
+    <div class="text">
+      <p class="num">01</p>
+      <h2 id="h-lurraldeak">Zazpi lurraldeak</h2>
+      <p>Araba, Bizkaia, Gipuzkoa, Nafarroa Garaia, Lapurdi, Nafarroa Beherea eta Zuberoa.
+        Udal-mugak bi estatuetako iturri ofizialetatik hartu eta estatu-mugaren bi aldeak josi ditugu,
+        <strong>hutsunerik eta gainjartzerik gabe</strong>.</p>
+      <p>Iparraldeko 161 udalerriak bere lurralde historikoari lotu dizkiogu; zalantzazko kasuak
+        (Pagola, Ezkoze, Eskiula…) datuetan bertan azalduta daude.</p>
+      <div class="stats">
+        <div><b>20.921 km²</b><span>azalera osoa</span></div>
+        <div><b>706</b><span>udal-unitate: 686 udalerri eta 20 lur partzuergo</span></div>
+      </div>
+      <ul class="legend" aria-label="Legenda">
+        <li><span class="sw line"></span>Lurralde-muga</li>
+        <li><span class="sw hair"></span>Udal-muga</li>
+      </ul>
+      <p class="dl">
+        <a href="maps/lurraldeak.webp" download>Mapa</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/euskal_herria.gpkg">GeoPackage</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/euskal_herria_geojson.zip">GeoJSON</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="chapter flip" id="erliebea" aria-labelledby="h-erliebea">
+    <figure class="map">
+      <button type="button" data-full="maps/erliebea.webp" aria-label="Mapa handitu: Erliebea eta gailurrak">
+        <img src="maps/erliebea-1200.webp" srcset="maps/erliebea-1200.webp 1200w, maps/erliebea.webp 2400w"
+             sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+             alt="Erliebe-mapa: itsas mailako lurrak kolore argiz eta gailurrak lur-kolore ilunez; lurralde bakoitzeko gailurrik altuena triangelu batez markatuta.">
+      </button>
+      <figcaption>Erliebea: Copernicus WorldDEM-30. Gailurrak: © OpenStreetMap-en laguntzaileak.</figcaption>
+    </figure>
+    <div class="text">
+      <p class="num">02</p>
+      <h2 id="h-erliebea">Erliebea eta gailurrak</h2>
+      <p>Itsasotik 2.446 metrora. Ekialdean Pirinioak altxatzen dira; erdialdean Aralar, Urbasa eta
+        Aitzkorri; hegoaldean Ebroren ibarra zabaltzen da. Mapan, <strong>lurralde bakoitzeko gailurrik
+        altuena</strong>.</p>
+      <div class="stats">
+        <div><b>2.446 m</b><span>Hiru Erregeen Mahaia, gailurrik altuena</span></div>
+        <div><b>522 m</b><span>batez besteko garaiera</span></div>
+      </div>
+      <div class="legend" role="group" aria-label="Legenda">
+        <p class="title">Garaiera</p>
+        <div class="ramp" style="background: linear-gradient(90deg, #FAF7F0, #E3D5B3, #BCA273, #A08455, #82663F, #624A2C, #43311D)"></div>
+        <div class="ramp-labels"><span>0 m</span><span>1.000</span><span>2.300 m</span></div>
+        <ul class="legend"><li><span class="sw peak"></span>Lurraldeko gailurrik altuena</li></ul>
+      </div>
+      <p class="dl">
+        <a href="maps/erliebea.webp" download>Mapa</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_50m.tif">Erliebea (50 m)</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/peaks.gpkg">Gailurrak</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="chapter" id="ibaiak" aria-labelledby="h-ibaiak">
+    <figure class="map">
+      <button type="button" data-full="maps/ibaiak.webp" aria-label="Mapa handitu: Ibaiak eta isurialdeak">
+        <img src="maps/ibaiak-1200.webp" srcset="maps/ibaiak-1200.webp 1200w, maps/ibaiak.webp 2400w"
+             sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+             alt="Ibaien mapa: iparraldea urdinez, Bizkaiko golkora isurtzen dena; hegoaldea okrez, Ebrora eta Mediterraneora isurtzen dena; bien artean banalerroa marra eten gorriz.">
+      </button>
+      <figcaption>Isurialdeak eta ibai-sarea: Copernicus WorldDEM-30, GeoLibre/Whitebox tresnekin kalkulatuak. Izenak: © OpenStreetMap-en laguntzaileak.</figcaption>
+    </figure>
+    <div class="text">
+      <p class="num">03</p>
+      <h2 id="h-ibaiak">Ibaiak eta isurialdeak</h2>
+      <p>Euri-tanta batek bi bide ditu: <strong>Bizkaiko golkora</strong> zuzenean, edo Ebroan behera
+        <strong>Mediterraneora</strong>. Banalerroa erliebe-ereduaren gainean kalkulatu dugu: Gorbeiatik
+        Aralarrera eta Pirinioetaraino doa.</p>
+      <div class="stats">
+        <div><b>%58</b><span>Mediterraneora (12.241 km²)</span></div>
+        <div><b>%42</b><span>Bizkaiko golkora (8.681 km²)</span></div>
+        <div><b>401 km</b><span>banalerroa Euskal Herrian</span></div>
+        <div><b>160 km</b><span>Ebro, ibairik luzeena hemen</span></div>
+      </div>
+      <ul class="legend" aria-label="Legenda">
+        <li><span class="sw" style="background: color-mix(in srgb, #2867A8 20%, #F3EEE3)"></span>Bizkaiko golkora</li>
+        <li><span class="sw" style="background: color-mix(in srgb, #A86F1C 20%, #F3EEE3)"></span>Mediterraneora (Ebro)</li>
+        <li><span class="sw dash"></span>Isurialdeen banalerroa</li>
+        <li><span class="sw river"></span>Ibaiak (lodiagoak, emari-arro handiagoak)</li>
+      </ul>
+      <p class="dl">
+        <a href="maps/ibaiak.webp" download>Mapa</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/drainage_basins.gpkg">Isurialdeak</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/rivers.gpkg">Ibaiak</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="chapter flip" id="basoa" aria-labelledby="h-basoa">
+    <figure class="map">
+      <button type="button" data-full="maps/basoa.webp" aria-label="Mapa handitu: Basoa">
+        <img src="maps/basoa-1200.webp" srcset="maps/basoa-1200.webp 1200w, maps/basoa.webp 2400w"
+             sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+             alt="Zuhaitz-estalduraren mapa: Kantauri isurialdea eta Pirinioak berde ilunez, oso basotsuak; Ebro ibarra ia zuri, zuhaitzik gabe.">
+      </button>
+      <figcaption>© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium.</figcaption>
+    </figure>
+    <div class="text">
+      <p class="num">04</p>
+      <h2 id="h-basoa">Basoa</h2>
+      <p>Euskal Herriaren erdia zuhaitzez estalita dago. Kantauri isurialdea eta Pirinioak dira
+        basotsuenak; Erriberako laborantza-lurrak, berriz, ia zuhaitzik gabe daude.</p>
+      <p>Satelitetik ikusitako <strong>zuhaitz-estaldura</strong> da, baso naturala eta landaketak
+        barne; ez da baso-inbentarioen definizioa.</p>
+      <div class="stats">
+        <div><b>%49,5</b><span>zuhaitz-estaldura (10.365 km²)</span></div>
+        <div><b>%73</b><span>Gipuzkoa, basotsuena</span></div>
+      </div>
+      <div class="legend" role="group" aria-label="Legenda">
+        <p class="title">Zuhaitz-estaldura, 100 m-ko gelaxkatan</p>
+        <ul class="legend">
+          <li><span class="sw" style="background:#90B26E"></span>%10–30</li>
+          <li><span class="sw" style="background:#6A9858"></span>%30–50</li>
+          <li><span class="sw" style="background:#4A7C48"></span>%50–70</li>
+          <li><span class="sw" style="background:#316139"></span>%70–90</li>
+          <li><span class="sw" style="background:#1B4429"></span>%90–100</li>
+        </ul>
+      </div>
+      <p class="dl">
+        <a href="maps/basoa.webp" download>Mapa</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/forest_cover_100m.tif">Basoa (100 m)</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/landcover_2021_10m.tif">Lurzorua (10 m)</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="chapter" id="jendea" aria-labelledby="h-jendea">
+    <figure class="map">
+      <button type="button" data-full="maps/jendea.webp" aria-label="Mapa handitu: Non bizi da jendea?">
+        <img src="maps/jendea-1200.webp" srcset="maps/jendea-1200.webp 1200w, maps/jendea.webp 2400w"
+             sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+             alt="Biztanleriaren mapa kilometro karratuko laukietan: kostaldeko korridorea, Bilbo, Donostia, Baiona, Gasteiz eta Iruñea kolore ilunez; mendiak eta Bardeak ia hutsik.">
+      </button>
+      <figcaption>Biztanleria: GHSL GHS-POP R2023A, 2020 (Europar Batzordea, JRC). Erliebea: Copernicus WorldDEM-30.</figcaption>
+    </figure>
+    <div class="text">
+      <p class="num">05</p>
+      <h2 id="h-jendea">Non bizi da jendea?</h2>
+      <p>Biztanleak ez daude berdin banatuta: kostaldeko korridorean, Bilbo eta Baiona artean, eta
+        hiriburuen inguruan biltzen dira. <strong>Biztanleen erdia lurraldearen %0,7an bizi da.</strong></p>
+      <div class="stats">
+        <div><b>%50</b><span>biztanleena, 145 km²-tan</span></div>
+        <div><b>%80</b><span>biztanleena, lurraldearen %3,2an</span></div>
+      </div>
+      <div class="legend" role="group" aria-label="Legenda">
+        <p class="title">Biztanleak km² bakoitzeko</p>
+        <ul class="legend">
+          <li><span class="sw" style="background:#D69476"></span>25–100</li>
+          <li><span class="sw" style="background:#C26C4C"></span>100–500</li>
+          <li><span class="sw" style="background:#A44C32"></span>500–2.500</li>
+          <li><span class="sw" style="background:#7D3324"></span>2.500–10.000</li>
+          <li><span class="sw" style="background:#521D16"></span>10.000 baino gehiago</li>
+        </ul>
+      </div>
+      <p class="dl">
+        <a href="maps/jendea.webp" download>Mapa</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_1km.gpkg">Sareta (1 km)</a>
+        <a href="https://github.com/itzune/ehmap/releases/latest/download/euskal_herria.gpkg">Udalerrien biztanleria</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="inner">
+    <p><strong>ehmap</strong> — <a href="https://github.com/itzune">itzune</a>. Datuak: CC BY 4.0;
+      erliebea eta isurialdeak: Copernicus lizentzia; gailurrak eta ibaiak: ODbL. Kodea: MIT.
+      Xehetasunak <a href="datuak.html">Datuak</a> orrian.</p>
+    <p>Produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH
+      2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.</p>
+  </div>
+</footer>
+
+<dialog class="viewer" id="viewer" aria-label="Mapa pantaila osoan">
+  <div class="stage"><img alt=""></div>
+  <div class="controls">
+    <button type="button" data-zoom="in" aria-label="Handitu">+</button>
+    <button type="button" data-zoom="out" aria-label="Txikitu">−</button>
+    <button type="button" data-zoom="fit" aria-label="Doitu">⤢</button>
+    <button type="button" data-close aria-label="Itxi">✕</button>
+  </div>
+  <p class="caption"></p>
+</dialog>
+
+<script src="app.js" defer></script>
+</body>
+</html>
