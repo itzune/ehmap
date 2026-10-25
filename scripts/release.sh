@@ -31,7 +31,7 @@ cp ehmap.rgis dist/euskal_herria.gpkg \
 (cd dist && zip -qr "$ASSETS/euskal_herria_geojson.zip" geojson)
 (cd "$ASSETS" && sha256sum -- * > SHA256SUMS)
 
-printf '%s\n\nData: CC BY 4.0 (climate stations: © AEMET, © Météo-France, © Gobierno de Navarra; rivers: Hub'Eau, © MITECO; sea: NOAA, PSMSL), except elevation (Copernicus WorldDEM-30 licence) and peaks (ODbL, © OpenStreetMap contributors); see ATTRIBUTION.md. Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
+printf '%s\n\nData: CC BY 4.0 (climate stations: © AEMET, © Météo-France, © Gobierno de Navarra; rivers: Hub’Eau, © MITECO; sea: NOAA, PSMSL), except elevation (Copernicus WorldDEM-30 licence) and peaks (ODbL, © OpenStreetMap contributors); see ATTRIBUTION.md. Code: MIT.\n' "$NOTES" > "$ASSETS/notes.md"
 gh release create "$VERSION" --repo "$REPO" --target main --title "$VERSION" \
   --notes-file "$ASSETS/notes.md" \
   "$ASSETS"/ehmap.rgis "$ASSETS"/euskal_herria.gpkg "$ASSETS"/euskal_herria_geojson.zip \
