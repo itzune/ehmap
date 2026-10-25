@@ -8,3 +8,7 @@ data/raw/
 
 # Scratch output (published maps go to dist/)
 out/
+
+# Large / binary outputs are published as GitHub Release assets (scripts/release.sh)
+ehmap.rgis
+dist/**/*.tif

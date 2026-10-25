@@ -12,16 +12,20 @@ next topics are elevation / mountain tops and forest change over the last years.
 
 ## Download
 
-Everything in [`dist/`](dist/) (WGS 84, EPSG:4326):
+Get the files from the **[latest release](https://github.com/itzune/ehmap/releases/latest/)** (stable links below always
+point to it). Vector data is also in [`dist/`](dist/) in this repository.
 
 | File | Contents |
 |---|---|
-| `dist/euskal_herria.gpkg` | GeoPackage with layers `municipalities`, `territories`, `euskal_herria` |
-| `dist/geojson/*.geojson` | Same layers as GeoJSON (RFC 7946), full detail |
-| `dist/geojson/simplified/*.geojson` | Lighter versions for web maps (~50 m simplification, shared borders kept) |
-| `dist/population_grid/ghs_pop_2020_100m.tif` | People per 100 m cell (GHSL, 2020), Cloud-Optimized GeoTIFF, EPSG:3035 |
-| `dist/population_grid/ghs_pop_2020_1km.gpkg` | Inhabited 1 km cells with `grid_id` (Eurostat format), `population`, `territory_id`, EPSG:3035 |
-| `ehmap.rgis` | RustGIS project: territories, municipalities, population density and population grid (hidden layers + print layouts), over an OpenStreetMap basemap |
+| [`ehmap.rgis`](https://github.com/itzune/ehmap/releases/latest/download/ehmap.rgis) | RustGIS project, self-contained: territories, municipalities, population density and population grid (hidden layers + print layouts), over an OpenStreetMap basemap |
+| [`euskal_herria.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/euskal_herria.gpkg) | GeoPackage with layers `municipalities`, `territories`, `euskal_herria` (EPSG:4326) — also [`dist/`](dist/) |
+| [`euskal_herria_geojson.zip`](https://github.com/itzune/ehmap/releases/latest/download/euskal_herria_geojson.zip) | The same layers as GeoJSON (RFC 7946), full detail and simplified (~50 m, shared borders kept) — also [`dist/geojson/`](dist/geojson/) |
+| [`ghs_pop_2020_100m.tif`](https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_100m.tif) | People per 100 m cell (GHSL, 2020), Cloud-Optimized GeoTIFF, EPSG:3035 |
+| [`ghs_pop_2020_1km.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/ghs_pop_2020_1km.gpkg) | Inhabited 1 km cells with `grid_id` (Eurostat format), `population`, `territory_id`, EPSG:3035 — also [`dist/population_grid/`](dist/population_grid/) |
+| [`SHA256SUMS`](https://github.com/itzune/ehmap/releases/latest/download/SHA256SUMS) | Checksums |
+
+Earlier versions and what changed: [releases](https://github.com/itzune/ehmap/releases),
+[CHANGELOG.md](CHANGELOG.md).
 
 ### `municipalities` (706 features)
 
@@ -127,7 +131,11 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/01_build_territories.py # -> dist/
 .venv/bin/python scripts/03_population_grid.py   # -> dist/population_grid/
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
+scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```
+
+`ehmap.rgis` and the rasters are not versioned in git (they are large and change on every
+build); they are published as release assets.
 
 ## Licences
 
