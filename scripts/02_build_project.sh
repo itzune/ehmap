@@ -32,7 +32,7 @@ sleep 1
 #   Basoa           % tree cover per 100 m cell, WorldCover 2021 (hidden by default)
 #   Klima aldaketa  group, ERA5-Land change 1961-1990 → 1991-2020 (layers hidden by default):
 #     Tenperatura     °C
-#     Prezipitazioak  % (not confirmed by the coastal stations: see README)
+#     Prezipitazioak  rainfall change measured at the 10 long-record stations, % (AEMET, Météo-France)
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
 # The density, grid, relief, drainage, forest and warming views are also print layouts with legends.
 # The OSM basemap is added after the exports, so the previews hold no OSM tiles.
@@ -44,9 +44,12 @@ rustgis-cli run \
   --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/climate/temperature_change.tif\",\"name\":\"Tenperatura\",\"whole\":true}" \
   --cmd 'ramp.add={"text":"0% 238 139 104\n25% 226 94 68\n50% 202 50 43\n75% 163 28 34\n100% 117 21 30\n","format":"gdal","name":"Beroa","kind":"sequential"}' \
   --cmd 'raster.symbology={"layer":"Tenperatura","type":"classify","ramp":"Beroa","classes":5}' \
-  --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/climate/precipitation_change.tif\",\"name\":\"Prezipitazioak\",\"whole\":true}" \
-  --cmd 'ramp.add={"text":"0% 67 49 29\n25% 98 74 44\n50% 130 102 63\n75% 160 132 85\n100% 188 162 115\n","format":"gdal","name":"Lehorra","kind":"sequential"}' \
-  --cmd 'raster.symbology={"layer":"Prezipitazioak","type":"classify","ramp":"Lehorra","classes":5}' \
+  --cmd 'layer.addData={"path":"dist/climate/rain_stations.gpkg","layer":"rain_stations","name":"Prezipitazioak"}' \
+  --cmd 'ramp.add={"text":"0% 128 82 31\n17% 169 115 58\n33% 204 153 103\n50% 216 210 198\n67% 99 181 180\n83% 43 145 145\n100% 8 107 108\n","format":"gdal","name":"Euria","kind":"diverging"}' \
+  --cmd 'layer.symbology={"layer":"Prezipitazioak","type":"graduated","field":"p_change_pct","method":"manual","breaks":[-15,-10,-5,5,10,15],"ramp":"Euria"}' \
+  --cmd 'layer.marker={"layer":"Prezipitazioak","shape":"circle","size":10}' \
+  --cmd 'labels.field={"layer":"Prezipitazioak","field":"station"}' \
+  --cmd 'labels.enable={"layer":"Prezipitazioak","on":true}' \
   --cmd "layer.addUrl={\"url\":\"http://127.0.0.1:$PORT/forest/forest_cover_100m.tif\",\"name\":\"Basoa\",\"whole\":true}" \
   --cmd 'raster.symbology={"layer":"Basoa","type":"stretch","ramp":"Forest"}' \
   --cmd 'raster.stretch={"layer":"Basoa","type":"custom","min":0,"max":100}' \

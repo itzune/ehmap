@@ -304,6 +304,42 @@
       </ul>
       <p class="dl"><a href="https://github.com/itzune/ehmap/releases/latest/download/climate_annual.csv">Urteko datuak (CSV)</a></p>
     </figure>
+
+    <div class="rain">
+      <figure class="map">
+        <button type="button" data-full="maps/euria.webp" aria-label="Mapa handitu: Euria, urtaroz urtaro">
+          <img src="maps/euria-1200.webp" srcset="maps/euria-1200.webp 1200w, maps/euria.webp 2400w"
+               sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
+               alt="Lau mapa txiki, urtaro bakoitzeko bat, euri-estazioekin: neguan eta udaberrian marroiak (lehorrago) nagusi, udazkenean berde-urdinak (euritsuago), udan nahasian.">
+        </button>
+        <figcaption>Prezipitazioa: © AEMET; © Météo-France (Licence Ouverte 2.0). 1961etik etengabe neurtu duten 10 estazio.</figcaption>
+      </figure>
+      <div class="text">
+        <h3 id="h-euria">Euria: ez gutxiago, beste garai batean</h3>
+        <p>Urteko euri kopurua ia ez da aldatu estazioetan (%5 baino gutxiago). Aldaketa urtaroetan dago:
+          <strong>udaberriak lehorragoak dira, udazkenak euritsuagoak</strong>. Udan, Bilbon eta
+          Iruñean gutxiago euri egiten du; Zuberoan, gehiago.</p>
+        <div class="legend" role="group" aria-label="Legenda">
+          <p class="title">Euriaren aldaketa, 1961–1990etik 1991–2020ra</p>
+          <ul class="legend diverging">
+            <li><span class="sw" style="background:#80521F"></span>−15</li>
+            <li><span class="sw" style="background:#A9733A"></span>−10</li>
+            <li><span class="sw" style="background:#CC9967"></span>−5</li>
+            <li><span class="sw" style="background:#D8D2C6"></span>±5</li>
+            <li><span class="sw" style="background:#63B5B4"></span>+5</li>
+            <li><span class="sw" style="background:#2B9191"></span>+10</li>
+            <li><span class="sw" style="background:#086B6C"></span>+15 %</li>
+          </ul>
+        </div>
+        <p class="note">Estazioetako neurketak dira, ez eredu batenak: ERA5-Land ereduak euri gutxiago
+          ematen zuen, eta 2023a urterik lehorrena, baina estazio guztiek urte arrunta edo euritsua
+          neurtu zuten. Araban eta Erriberan ez dago 1961etik etengabe neurtutako estaziorik datu irekietan.</p>
+        <p class="dl">
+          <a href="maps/euria.webp" download>Mapa</a>
+          <a href="https://github.com/itzune/ehmap/releases/latest/download/rain_stations.gpkg">Estazioak (GeoPackage)</a>
+        </p>
+      </div>
+    </div>
   </section>
 </main>
 

@@ -1,10 +1,14 @@
-"""Climate change in Euskal Herria from ERA5-Land monthly means, 1950-2025 (CC BY 4.0).
+"""Climate change in Euskal Herria, 1950-2025: temperature from ERA5-Land, rain from stations.
 
-ERA5-Land (Muñoz-Sabater et al. 2021, doi:10.24381/cds.68d2bb30) is one reanalysis grid
-(0.1°, about 9 km) that covers both sides of the border, so there is no seam between the
-Spanish and French national grids. It is a model constrained by observations, not a set of
-stations: its temperatures are reliable, its precipitation trends less so. The official
-station records (Météo-France, AEMET, Euskalmet) are the cross-check.
+ERA5-Land (Muñoz-Sabater et al. 2021, doi:10.24381/cds.68d2bb30, CC BY 4.0) is one reanalysis
+grid (0.1°, about 9 km) that covers both sides of the border, so there is no seam between the
+Spanish and French national grids. It is a model constrained by observations, checked here
+against the long station records of Météo-France and AEMET:
+- temperature agrees (the model is slightly conservative on the coast), so it is published;
+- precipitation does not: ERA5-Land has 2023 at about half the normal rain where all 10
+  stations measured 102-118%, and summer drying most stations do not show. Rain is therefore
+  published only as measured at the stations (rain_stations.gpkg); the model's rain is used
+  only in station_check.csv, to document the disagreement.
 
 Download needs a Copernicus Climate Data Store account, its key in ~/.cdsapirc, and the
 dataset licence accepted on the CDS website.
@@ -17,13 +21,14 @@ Periods: the WMO climate normals 1961-1990 (reference) and 1991-2020 (current).
 
 Outputs (dist/climate/):
   temperature_change.tif            °C, 1991-2020 mean minus 1961-1990 mean (250 m)
-  precipitation_change.tif          %, the same for annual precipitation
-  climate_by_municipality.csv       normals of both periods and their change, per municipality
-  station_check.csv                 the change measured at Météo-France stations vs ERA5-Land
-  climate_annual.csv                yearly values per territory, watershed side and all of
-                                    Euskal Herria: temperature, precipitation, evaporation,
-                                    soil moisture, snow cover, and anomalies vs 1961-1990
+  climate_by_municipality.csv       temperature normals of both periods and their change
+  climate_annual.csv                yearly temperature per territory, watershed side and all
+                                    of Euskal Herria, and its anomaly vs 1961-1990
+  station_check.csv                 each long station record next to ERA5-Land at its place
+  rain_stations.gpkg                stations with their measured rainfall change, per year and
+                                    season (© AEMET; © Météo-France, Licence Ouverte 2.0)
 """
+import json
 from pathlib import Path
 
 import geopandas as gpd
@@ -46,10 +51,7 @@ REF, NOW = (1961, 1990), (1991, 2020)
 AREA = [43.6, -3.6, 41.8, -0.6]  # N, W, S, E: Euskal Herria with a margin
 VARIABLES = {  # CDS name: (short name in the file, our name)
     "2m_temperature": ("t2m", "temperature_c"),
-    "total_precipitation": ("tp", "precipitation_mm"),
-    "total_evaporation": ("e", "evaporation_mm"),
-    "volumetric_soil_water_layer_1": ("swvl1", "soil_moisture"),
-    "snow_cover": ("snowc", "snow_cover_pct"),
+    "total_precipitation": ("tp", "precipitation_mm"),  # station check only, see above
 }
 
 
@@ -69,18 +71,10 @@ def download() -> None:
         }, str(out))
 
 
-def annual(var: str) -> xr.DataArray:
-    """Yearly values on the ERA5-Land grid, in the units of the output tables."""
-    short, name = VARIABLES[var]
-    da = xr.open_dataset(RAW / f"monthly_{var}.nc")[short].rename(valid_time="time")
-    if short == "t2m":
-        da = da - 273.15
-    elif short in ("tp", "e"):
-        # monthly means of daily accumulations in metres: × days in the month × 1000 = mm.
-        # Evaporation is negative (towards the atmosphere) in ECMWF's convention.
-        da = da * da.time.dt.days_in_month * 1000 * (-1 if short == "e" else 1)
-        return da.groupby("time.year").sum(min_count=12).rename(name)
-    return da.groupby("time.year").mean().rename(name)
+def annual_temperature() -> xr.DataArray:
+    """Yearly mean temperature on the ERA5-Land grid, °C."""
+    da = xr.open_dataset(RAW / "monthly_2m_temperature.nc")["t2m"].rename(valid_time="time") - 273.15
+    return da.groupby("time.year").mean().rename("temperature_c")
 
 
 def fill_sea(a: np.ndarray) -> np.ndarray:
@@ -144,41 +138,154 @@ def period(years: np.ndarray, p: tuple[int, int]) -> np.ndarray:
     return (years >= p[0]) & (years <= p[1])
 
 
+# AEMET stations in Hegoalde that may hold records over both normals ("© AEMET", reuse with
+# attribution). The API needs a free key (opendata.aemet.es) in ~/.aemet_key.
+AEMET_STATIONS = ["1024E", "1082", "1014A", "1014", "1060X", "1069Y", "9087", "9091O", "9091R", "9122I",
+                  "9171K", "9218A", "9228T", "9252X", "9262", "9263D", "9283X", "9294E", "9302Y", "1002Y",
+                  "1010X", "1021X", "1025A", "1037Y", "1049N", "9995Y"]
+AEMET_API = "https://opendata.aemet.es/opendata/api/valores/climatologicos/mensualesanuales/datos"
+
+
+def download_aemet() -> None:
+    """Monthly climatology per station, 1961-2025, in the 3-year chunks the API allows."""
+    import time
+    import requests
+    key_file = Path.home() / ".aemet_key"
+    if not key_file.exists():
+        print("no ~/.aemet_key: skipping AEMET")
+        return
+    headers = {"api_key": key_file.read_text().strip(), "User-Agent": "ehmap (https://github.com/itzune/ehmap)"}
+    raw = ROOT / "data" / "raw" / "aemet"
+    raw.mkdir(parents=True, exist_ok=True)
+    for station in AEMET_STATIONS:
+        for y0 in range(1961, 2026, 3):
+            y1 = min(y0 + 2, 2025)
+            out = raw / f"{station}_{y0}_{y1}.json"
+            if out.exists():
+                continue
+            for attempt in range(6):
+                try:
+                    r = requests.get(f"{AEMET_API}/anioini/{y0}/aniofin/{y1}/estacion/{station}",
+                                     headers=headers, timeout=60)
+                    meta = r.json()
+                    if meta.get("estado") == 404:      # no data for these years
+                        rows = []
+                        break
+                    if meta.get("estado") != 200:
+                        raise RuntimeError(meta)
+                    rows = requests.get(meta["datos"], timeout=60).json()
+                    break
+                except Exception as e:  # rate limit (429) or a transient error: wait and retry
+                    print(station, y0, "retry:", str(e)[:80])
+                    time.sleep(20 * (attempt + 1))
+            else:
+                raise RuntimeError(f"AEMET {station} {y0}-{y1} failed")
+            out.write_text(json.dumps(rows, ensure_ascii=False))
+            time.sleep(1.5)
+        print("AEMET", station)
+
+
 # Météo-France stations in Iparralde with records over both normals (Licence Ouverte 2.0)
-STATIONS = {64189001: "Socoa (Ziburu)", 64024001: "Biarritz", 64092002: "Banca"}
+STATIONS = {64189001: "Socoa (Ziburu)", 64024001: "Biarritz", 64092002: "Banca", 64316001: "Larrau",
+            64342001: "Licq-Athérey", 64537001: "Trois-Villes"}
 
 
-def station_check(temperature: xr.DataArray, precipitation: xr.DataArray) -> pd.DataFrame:
-    """The change between the normals at each station, measured and in ERA5-Land.
+def monthly(var: str) -> xr.DataArray:
+    """Monthly ERA5-Land values (°C or mm per month), sea cells filled from the nearest land."""
+    short = VARIABLES[var][0]
+    da = xr.open_dataset(RAW / f"monthly_{var}.nc")[short].rename(valid_time="time")
+    # precipitation: monthly means of daily accumulations in metres, × days × 1000 = mm
+    da = da - 273.15 if short == "t2m" else da * da.time.dt.days_in_month * 1000
+    return xr.apply_ufunc(fill_sea, da, input_core_dims=[["latitude", "longitude"]],
+                          output_core_dims=[["latitude", "longitude"]], vectorize=True)
 
-    A station year counts only with all 12 months; a normal needs at least 25 such years.
-    ERA5-Land is read at the station by bilinear interpolation.
-    """
-    raw = ROOT / "data" / "raw" / "meteofrance"
-    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "AAAAMM", "TM", "RR"])
-                  for p in sorted(raw.glob("MENSQ_64_*.csv.gz")))
+
+def dms(v: str) -> float:
+    """AEMET coordinates, e.g. '431824N' -> 43.3067."""
+    d, m, s_ = int(v[:-5]), int(v[-5:-3]), int(v[-3:-1])
+    return (d + m / 60 + s_ / 3600) * (-1 if v[-1] in "WS" else 1)
+
+
+def stations() -> pd.DataFrame:
+    """Monthly station records: network, id, name, lat, lon, altitude_m, year, month, t, p."""
+    frames = []
+    mf = ROOT / "data" / "raw" / "meteofrance"
+    d = pd.concat(pd.read_csv(p, sep=";", usecols=["NUM_POSTE", "NOM_USUEL", "LAT", "LON", "ALTI", "AAAAMM", "TM", "RR"])
+                  for p in sorted(mf.glob("MENSQ_64_*.csv.gz")))
     d = d[d.NUM_POSTE.isin(STATIONS)]
-    d["year"] = d.AAAAMM // 100
-    meta = pd.read_csv(sorted(raw.glob("MENSQ_64_previous-*.csv.gz"))[0], sep=";",
-                       usecols=["NUM_POSTE", "LAT", "LON", "ALTI"]).drop_duplicates("NUM_POSTE").set_index("NUM_POSTE")
-    rows = []
-    for num, name in STATIONS.items():
-        s = d[d.NUM_POSTE == num]
-        lat, lon = meta.loc[num, "LAT"], meta.loc[num, "LON"]
-        for col, da, how in (("TM", temperature, "mean"), ("RR", precipitation, "sum")):
-            y = s.groupby("year")[col].agg([how, "count"])
-            y = y[y["count"] == 12][how]
-            land = xr.apply_ufunc(fill_sea, da, input_core_dims=[["latitude", "longitude"]],
-                                  output_core_dims=[["latitude", "longitude"]], vectorize=True)
-            model = land.interp(latitude=lat, longitude=lon).to_series()
-            for src, series in (("station", y), ("era5land", model)):
-                a, b = series.loc[REF[0]:REF[1]], series.loc[NOW[0]:NOW[1]]
-                if min(len(a), len(b)) < 25:
+    frames.append(pd.DataFrame({"network": "Météo-France", "id": d.NUM_POSTE.astype(str), "name": d.NUM_POSTE.map(STATIONS),
+                                "lat": d.LAT, "lon": d.LON, "altitude_m": d.ALTI, "year": d.AAAAMM // 100,
+                                "month": d.AAAAMM % 100, "t": d.TM, "p": d.RR}))
+    raw = ROOT / "data" / "raw" / "aemet"
+    if (raw / "inventario.json").exists():
+        inv = {i["indicativo"]: i for i in json.loads((raw / "inventario.json").read_text())}
+        rows = []
+        for f in sorted(raw.glob("*_*_*.json")):
+            for r in json.loads(f.read_text()):
+                y, m = map(int, r["fecha"].split("-"))
+                if m == 13:  # the annual summary row
                     continue
-                rows.append({"station": name, "id": num, "altitude_m": meta.loc[num, "ALTI"],
-                             "variable": "temperature_c" if col == "TM" else "precipitation_mm",
-                             "source": src, "normal_1961_1990": a.mean(), "normal_1991_2020": b.mean(),
-                             "change": b.mean() - a.mean(), "years": f"{len(a)}+{len(b)}"})
+                st = inv[r["indicativo"]]
+                p_ = r.get("p_mes")
+                rows.append({"network": "AEMET", "id": r["indicativo"], "name": st["nombre"].title(),
+                             "lat": dms(st["latitud"]), "lon": dms(st["longitud"]), "altitude_m": float(st["altitud"]),
+                             "year": y, "month": m, "t": pd.to_numeric(r.get("tm_mes"), errors="coerce"),
+                             # "Ip" is a trace of rain, under 0.1 mm
+                             "p": 0.0 if p_ == "Ip" else pd.to_numeric(p_, errors="coerce")})
+        frames.append(pd.DataFrame(rows))
+    return pd.concat(frames, ignore_index=True)
+
+
+SEASONS = {12: "DJF", 1: "DJF", 2: "DJF", 3: "MAM", 4: "MAM", 5: "MAM",
+           6: "JJA", 7: "JJA", 8: "JJA", 9: "SON", 10: "SON", 11: "SON"}
+
+
+def summarise(m: pd.DataFrame) -> dict:
+    """Normals, changes and recent years from one monthly series (columns year, month, t, p).
+
+    A year counts only with all 12 months, a season with its 3; a normal needs 25 such years.
+    December counts with the next year's winter.
+    """
+    out = {}
+    m = m.assign(season=m.month.map(SEASONS), syear=m.year + (m.month == 12))
+
+    def change(v, how, by="year", season=None):
+        x = m if season is None else m[m.season == season]
+        g = x.dropna(subset=[v]).groupby(by)[v].agg([how, "count"])
+        g = g[g["count"] == (12 if season is None else 3)][how]
+        a, b = g.loc[REF[0]:REF[1]], g.loc[NOW[0]:NOW[1]]
+        return g, (a.mean(), b.mean()) if min(len(a), len(b)) >= 25 else (np.nan, np.nan)
+
+    t, (ta, tb) = change("t", "mean")
+    out.update(t_1961_1990=ta, t_1991_2020=tb, t_change=tb - ta)
+    p, (pa, pb) = change("p", "sum")
+    out.update(p_1961_1990=pa, p_1991_2020=pb, p_change_pct=100 * (pb / pa - 1))
+    for se in ("DJF", "MAM", "JJA", "SON"):
+        _, (a, b) = change("p", "sum", "syear", se)
+        out[f"p_{se.lower()}_change_pct"] = 100 * (b / a - 1)
+    for y in (2022, 2023):
+        out[f"p_{y}_pct_of_normal"] = 100 * p.get(y, np.nan) / pb if pb == pb else np.nan
+    return out
+
+
+def station_check() -> pd.DataFrame:
+    """Each station's record next to ERA5-Land at the same place (bilinear interpolation)."""
+    st = stations()
+    temperature, precipitation = monthly("2m_temperature"), monthly("total_precipitation")
+    t_index = pd.to_datetime(temperature.time.values)
+    rows = []
+    for (net, sid), s in st.groupby(["network", "id"]):
+        first = s.iloc[0]
+        measured = summarise(s)
+        if np.isnan(measured["t_change"]) and np.isnan(measured["p_change_pct"]):
+            continue  # record too short for the normals
+        model = summarise(pd.DataFrame({
+            "year": t_index.year, "month": t_index.month,
+            "t": temperature.interp(latitude=first.lat, longitude=first.lon).values,
+            "p": precipitation.interp(latitude=first.lat, longitude=first.lon).values}))
+        for src, v in (("station", measured), ("era5land", model)):
+            rows.append({"network": net, "id": sid, "station": first["name"], "lat": round(first.lat, 4),
+                         "lon": round(first.lon, 4), "altitude_m": first.altitude_m, "source": src, **v})
     return pd.DataFrame(rows).round(2)
 
 
@@ -197,13 +304,18 @@ def main() -> None:
     pts = munis.to_crs(CRS).representative_point()
     rows, cols = rasterio.transform.rowcol(grid.transform, pts.x, pts.y)
 
-    check = station_check(annual("2m_temperature"), annual("total_precipitation"))
+    download_aemet()
+    check = station_check()
     check.to_csv(OUT / "station_check.csv", index=False)
     print(check.to_string(index=False))
+    rain = check[check.source == "station"].drop(columns=["source", "lat", "lon"])
+    rain = gpd.GeoDataFrame(rain, geometry=gpd.points_from_xy(check.loc[rain.index, "lon"],
+                                                              check.loc[rain.index, "lat"]), crs=4326)
+    rain.to_file(OUT / "rain_stations.gpkg", layer="rain_stations", driver="GPKG")
+    (OUT / "precipitation_change.tif").unlink(missing_ok=True)  # withdrawn in v0.5.1
 
     tables, muni_cols = [], {}
-    for var in VARIABLES:
-        da = annual(var)
+    for da in (annual_temperature(),):
         name, years = da.name, da.year.values
         cube = grid.warp(da)
         ref, now = cube[period(years, REF)].mean(0), cube[period(years, NOW)].mean(0)
@@ -228,9 +340,6 @@ def main() -> None:
         if name == "temperature_c":
             grid.write(np.where(inside, now - ref, np.nan), OUT / "temperature_change.tif",
                        "Mean annual temperature change, °C (1991-2020 minus 1961-1990)")
-        if name == "precipitation_mm":
-            grid.write(np.where(inside, 100 * (now - ref) / ref, np.nan), OUT / "precipitation_change.tif",
-                       "Annual precipitation change, % (1991-2020 vs 1961-1990)")
 
     annual_df = pd.concat(tables)
     ref_mean = (annual_df[annual_df.year.between(*REF)]
@@ -245,7 +354,6 @@ def main() -> None:
     for k, v in muni_cols.items():
         m[k] = v
     m["temperature_change_c"] = m.temperature_c_1991_2020 - m.temperature_c_1961_1990
-    m["precipitation_change_pct"] = 100 * (m.precipitation_mm_1991_2020 / m.precipitation_mm_1961_1990 - 1)
     m.round(3).to_csv(OUT / "climate_by_municipality.csv", index=False)
 
     # a short report
@@ -254,10 +362,6 @@ def main() -> None:
         y = g.set_index("year").value
         print(f"{atype:13} {area:14} T {y.loc[REF[0]:REF[1]].mean():5.2f} → {y.loc[NOW[0]:NOW[1]].mean():5.2f} °C"
               f"   2016-2025 {y.loc[2016:2025].mean():5.2f}")
-    for (atype, area), g in eh[eh.variable == "precipitation_mm"].groupby(["area_type", "area"]):
-        y = g.set_index("year").value
-        print(f"{atype:13} {area:14} P {y.loc[REF[0]:REF[1]].mean():6.0f} → {y.loc[NOW[0]:NOW[1]].mean():6.0f} mm"
-              f"   2016-2025 {y.loc[2016:2025].mean():6.0f}")
 
 
 if __name__ == "__main__":

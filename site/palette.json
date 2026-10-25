@@ -1,5 +1,5 @@
 {
-  "_doc": "Site and map palette. Ramps validated with the dataviz checks (ordinal: monotone L, ΔL ≥ 0.06, light end ≥ 2:1 on paper, single hue); biscay/med validated as a categorical pair (CVD ΔE 21.8). heat and cold: ordinal ramps (heat more saturated than people so the two maps don't read alike); the stripes use cold[::-1] + neutral + heat[:4], L-matched arms.",
+  "_doc": "Site and map palette. Ramps validated with the dataviz checks (ordinal: monotone L, ΔL ≥ 0.06, light end ≥ 2:1 on paper, single hue); biscay/med validated as a categorical pair (CVD ΔE 21.8). heat and cold: ordinal ramps (heat more saturated than people so the two maps don't read alike); the stripes use cold[::-1] + neutral + heat[:4], L-matched arms. dry/wet: L-matched diverging arms for rainfall change (each passes the ordinal checks; dry vs wet at each step passes CVD ΔE ≥ 10).",
   "paper": "#F3EEE3",
   "card": "#FAF7F0",
   "rule": "#DDD4C3",
@@ -45,5 +45,15 @@
     "#4475B2",
     "#2F5996"
   ],
-  "neutral": "#D8D2C6"
+  "neutral": "#D8D2C6",
+  "dry": [
+    "#CC9967",
+    "#A9733A",
+    "#80521F"
+  ],
+  "wet": [
+    "#63B5B4",
+    "#2B9191",
+    "#086B6C"
+  ]
 }

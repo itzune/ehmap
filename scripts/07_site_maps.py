@@ -355,6 +355,44 @@ def map_heat(b: Base):
 HEAT_BINS = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1]   # °C; the site legend uses the same classes
 
 
+RAIN_BINS = [-15, -10, -5, 5, 10, 15]   # % change; |change| < 5% is drawn neutral
+SEASONS_EU = [("djf", "Negua", "abendua–otsaila"), ("mam", "Udaberria", "martxoa–maiatza"),
+              ("jja", "Uda", "ekaina–abuztua"), ("son", "Udazkena", "iraila–azaroa")]
+
+
+def map_rain(b: Base):
+    """Rainfall change per season at the stations, 1961-1990 → 1991-2020 (measured, not modelled)."""
+    import pandas as pd
+    st = pd.read_csv(DIST / "climate" / "station_check.csv")
+    st = st[st.source == "station"]
+    pts = gpd.GeoDataFrame(st, geometry=gpd.points_from_xy(st.lon, st.lat), crs=4326).to_crs(CRS)
+    colors = PAL["dry"][::-1] + [PAL["neutral"]] + PAL["wet"]
+    x0, x1, y0, y1 = b.extent
+    w_in = WIDTH_PX / DPI
+    ph = (w_in / 2) * (y1 - y0) / (x1 - x0)
+    fig = plt.figure(figsize=(w_in, 2 * ph), dpi=DPI)
+    card = np.broadcast_to(np.array(to_rgb(PAL["card"])), b.dem.shape + (3,))
+    for i, (key, name, months) in enumerate(SEASONS_EU):
+        ax = fig.add_axes([(i % 2) / 2, 1 - (i // 2 + 1) / 2, 0.5, 0.5])
+        ax.set_xlim(x0, x1); ax.set_ylim(y0, y1); ax.set_axis_off()
+        b.background(ax, card, relief=0.7)
+        b.ter.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.4, alpha=0.5, zorder=4)
+        b.outline.boundary.plot(ax=ax, color=PAL["ink"], linewidth=0.7, alpha=0.8, zorder=4)
+        v = pts[f"p_{key}_change_pct"]
+        ok = v.notna()
+        cls = np.digitize(v[ok], RAIN_BINS)
+        ax.scatter(pts[ok].geometry.x, pts[ok].geometry.y, s=170, c=[colors[k] for k in cls],
+                   edgecolors=PAL["paper"], linewidths=1.6, zorder=8)
+        # season name in the open sea, top left
+        ax.text(x0 + 0.04 * (x1 - x0), y1 - 0.09 * (y1 - y0), name, fontsize=17,
+                fontfamily=b.fonts["serif"], color=PAL["ink"], va="center", zorder=10)
+        ax.text(x0 + 0.04 * (x1 - x0), y1 - 0.155 * (y1 - y0), months, fontsize=8,
+                fontfamily=b.fonts["sans"], color=PAL["ink2"], va="center",
+                path_effects=b.halo(2.4), zorder=10)
+        ax.plot([x0, x0, x1, x1], [y0, y1, y1, y0], color=PAL["rule"], linewidth=1.2, zorder=11)
+    b.save(fig, "euria", f"{BOUNDS_CREDIT} · Prezipitazioa: © AEMET; © Météo-France (Licence Ouverte 2.0)")
+
+
 def stripes():
     """site/data/stripes.json: yearly temperature anomalies vs 1961-1990 for the stripes chart."""
     import pandas as pd
@@ -377,7 +415,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         fonts = load_fonts(Path(tmp))
         b = Base(fonts)
-        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat)
+        maps = (map_cover, map_territories, map_relief, map_rivers, map_forest, map_people, map_heat, map_rain)
         only = sys.argv[1:]  # e.g. "heat people" renders only those
         for f in maps:
             if not only or f.__name__.removeprefix("map_") in only:

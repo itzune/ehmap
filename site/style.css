@@ -231,6 +231,9 @@ h2 {
 .chapter:has(+ .band) { padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
 .band { max-width: 78rem; margin: 0 auto; padding: 0 var(--gutter) clamp(3rem, 7vw, 6rem); }
 .stripes { margin: 0; }
+.rain { display: grid; gap: clamp(1.5rem, 3vw, 3.5rem); margin-top: clamp(3rem, 6vw, 5rem); grid-template-columns: minmax(0, 1fr); }
+.rain h3 { font: 500 var(--step-1)/1.15 var(--serif); margin: 0 0 1rem; }
+@media (min-width: 60rem) { .rain { grid-template-columns: minmax(0, 1.85fr) minmax(17rem, 1fr); align-items: start; } }
 .stripes h3 { font: 500 var(--step-1)/1.15 var(--serif); margin: 0 0 0.4rem; }
 .stripes figcaption p { margin: 0 0 1.2rem; color: var(--ink-2); max-width: 42rem; }
 .stripes-chart { position: relative; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 0.9rem; align-items: center; }

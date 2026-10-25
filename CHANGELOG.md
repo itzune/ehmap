@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.5.1 — 2026-10-25
+
+Rain from the stations, not the model.
+
+- **Withdrawn**: ERA5-Land precipitation (`precipitation_change.tif` and the precipitation,
+  evaporation, soil moisture and snow cover columns of v0.5.0). Checked against 10 long
+  station records it puts 2023 at about half the normal rain where every station measured
+  102-118%, and shows summer drying most stations do not. Do not use the v0.5.0 files for rain.
+- **Rain as measured** at 10 stations (4 AEMET, 6 Météo-France): `rain_stations.gpkg`, with
+  the change per year and season. The yearly total has hardly changed; springs are drier and
+  autumns wetter.
+- **Station check** extended to AEMET (Hondarribia, Igeldo, Bilbao, Pamplona) and three
+  Zuberoa stations; temperature results unchanged.
+- **Website**: seasonal rain map in chapter 06; the stripes now sit below the chapter text.
+- **RustGIS project**: `Klima aldaketa` group (`Tenperatura`, `Prezipitazioak` stations).
+
+Assets added: `rain_stations.gpkg`, `station_check.csv`. Removed: `precipitation_change.tif`.
+
 ## v0.5.0 — 2026-10-25
 
 Climate change.
