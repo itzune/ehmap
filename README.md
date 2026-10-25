@@ -25,6 +25,8 @@ point to it). Vector data is also in [`dist/`](dist/) in this repository.
 | [`copernicus_dem_25m.tif`](https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_25m.tif) | Elevation (m), 25 m, EPSG:25830, Cloud-Optimized GeoTIFF (90 MB) — Copernicus licence, see below |
 | [`copernicus_dem_50m.tif`](https://github.com/itzune/ehmap/releases/latest/download/copernicus_dem_50m.tif) | Lighter elevation: 50 m, whole metres (10 MB) — Copernicus licence |
 | [`peaks.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/peaks.gpkg) | 6,269 OpenStreetMap peaks inside Euskal Herria — ODbL; also [`dist/osm/`](dist/osm/) |
+| [`rivers.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/rivers.gpkg) | 247 named OpenStreetMap rivers clipped to Euskal Herria — ODbL; also [`dist/osm/`](dist/osm/) |
+| [`drainage_basins.gpkg`](https://github.com/itzune/ehmap/releases/latest/download/drainage_basins.gpkg) | Bay of Biscay / Mediterranean sides and the watershed divide, from the DEM — Copernicus licence; also [`dist/elevation/`](dist/elevation/) |
 | [`SHA256SUMS`](https://github.com/itzune/ehmap/releases/latest/download/SHA256SUMS) | Checksums |
 
 Earlier versions and what changed: [releases](https://github.com/itzune/ehmap/releases),
@@ -132,6 +134,50 @@ and the `Erliebea` print layout.
 1,551 m, the top of Gipuzkoa) is tagged 1,508 m and placed where the DEM shows only ~1,425 m,
 so the Aitzkorri ridge appears topped by Aketegi instead.
 
+## Rivers and the watershed divide
+
+![Rivers, and the Bay of Biscay and Mediterranean sides](docs/rivers.png)
+
+**Rivers** come from OpenStreetMap (`waterway=river`): each OSM river relation, or same-named
+connected segments, is one river; pieces whose names match after normalising ("Zadorra",
+"Río Zadorra", "Zadorra ibaia") are joined, also across reservoirs for rivers that have a
+relation. Lengths are measured inside Euskal Herria.
+
+| River | km in Euskal Herria | Territories |
+|---|---|---|
+| Ebro | 160 | Araba, Nafarroa Garaia |
+| Arga | 147 | Nafarroa Garaia |
+| Ega | 147 | Araba, Nafarroa Garaia |
+| Aragoi | 118 | Nafarroa Garaia |
+| Irati | 86 | Nafarroa Garaia |
+| Arakil | 77 | Araba, Nafarroa Garaia |
+| Errobi | 77 | Lapurdi, Nafarroa Beherea |
+| Oria | 76 | Gipuzkoa |
+| Biduze | 72 | Lapurdi, Nafarroa Beherea |
+| Zadorra | 69 | Araba |
+
+**The watershed divide** was computed from the elevation model with the GeoLibre (Whitebox)
+hydrology tools that RustGIS uses: breach depressions, D8 flow direction and accumulation,
+streams above 10 km² of catchment with their Strahler order, and the watershed of a point on
+the Ebro below Zaragoza. The work is done at 100 m over 41–44°N, 4–0°W so that water reaches
+its real outlet. **58% of Euskal Herria (12,241 km²) drains to the Mediterranean through the
+Ebro, 42% (8,681 km²) to the Bay of Biscay**; the divide runs 401 km inside Euskal Herria.
+It is approximate at the scale of a few hundred metres along the ridges.
+
+| Territory | Bay of Biscay km² | Mediterranean km² |
+|---|---|---|
+| Araba | 455 | 2,860 |
+| Bizkaia | 2,153 | 60 — Otxandio, Ubide and the south slopes of Gorbeia–Urkiola |
+| Gipuzkoa | 1,936 | 45 — mostly the shared land of the Aitzkorri range |
+| Nafarroa Garaia | 1,164 | 9,223 |
+| Lapurdi | 867 | — |
+| Nafarroa Beherea | 1,302 | 32 — the Irati forest (Lekunberri, Mendibe) |
+| Zuberoa | 803 | 21 — the Irati forest (Larraine) |
+
+In `ehmap.rgis`: the `Ibaiak`, `Isurialdeak` and `Banalerroa` layers (hidden by default) and the
+`Isurialdeak` print layout. The DEM-derived streams are in
+[`dist/elevation/streams_dem.gpkg`](dist/elevation/).
+
 ## Decisions
 
 The 7 territories are historical, not current administrative units, so some choices had to be
@@ -163,6 +209,7 @@ uv pip install --python .venv/bin/python -r requirements.txt
 .venv/bin/python scripts/01_build_territories.py # -> dist/
 .venv/bin/python scripts/03_population_grid.py   # -> dist/population_grid/
 .venv/bin/python scripts/04_elevation.py         # -> dist/elevation/, dist/osm/
+.venv/bin/python scripts/05_rivers.py            # -> dist/osm/rivers, dist/elevation/ drainage (needs GeoLibre)
 scripts/02_build_project.sh                      # -> ehmap.rgis, docs/ previews (needs rustgis-cli)
 scripts/release.sh vX.Y.Z                        # publish a GitHub Release (maintainers)
 ```
@@ -173,11 +220,12 @@ build); they are published as release assets.
 ## Licences
 
 - **Data** (`dist/` except the two folders below, `data/reference/`, `docs/` except
-  `elevation.png`): [CC BY 4.0](LICENSE-DATA). Sources and how to credit them:
+  `elevation.png` and `rivers.png`): [CC BY 4.0](LICENSE-DATA). Sources and how to credit them:
   [ATTRIBUTION.md](ATTRIBUTION.md).
 - **Elevation** (`dist/elevation/`, the DEM files): Copernicus WorldDEM-30 licence, with its
   required notices — see [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md).
-- **Peaks** (`dist/osm/`, `peaks.gpkg`): [ODbL](https://opendatacommons.org/licenses/odbl/),
+- **Peaks and rivers** (`dist/osm/`, `peaks.gpkg`, `rivers.gpkg`): [ODbL](https://opendatacommons.org/licenses/odbl/),
   © OpenStreetMap contributors — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md).
-- `ehmap.rgis` and `docs/elevation.png` combine all three: follow each layer's licence.
+- `ehmap.rgis`, `docs/elevation.png` and `docs/rivers.png` combine all three: follow each
+  layer's licence.
 - **Code** (`scripts/`): [MIT](LICENSE).

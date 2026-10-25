@@ -19,14 +19,17 @@ sleep 1
 # Layers, top to bottom:
 #   Gailur nagusiak the 3 highest peaks of each territory (OSM, hidden by default)
 #   Gailurrak       all named peaks, from 1:400,000 in (OSM, hidden by default)
+#   Banalerroa      Mediterranean / Bay of Biscay watershed divide (DEM, hidden by default)
+#   Ibaiak          OSM rivers with names (hidden by default)
 #   Lurralde mugak  territory borders + names (until 1:250,000)
 #   Udalerriak      municipality outlines + Basque names (from 1:400,000 in)
 #   Biztanleria 100m  GHSL people per 100 m cell, from 1:500,000 in (hidden by default)
 #   Biztanleria 1km   GHSL people per km², beyond 1:500,000 (hidden by default)
 #   Dentsitatea     population density per municipality (hidden by default)
+#   Isurialdeak     the two drainage sides (DEM, hidden by default)
 #   Lurraldeak      translucent territory colours
 #   Erliebea        Copernicus DEM, 50 m, shaded relief (hidden by default)
-# The density, grid and relief views are also saved as print layouts with their legends.
+# The density, grid, relief and drainage views are also saved as print layouts with legends.
 # The OSM basemap is added after the exports, so the previews hold no OSM tiles.
 rustgis-cli run \
   --cmd 'map.basemap={"name":"blank"}' \
@@ -37,6 +40,10 @@ rustgis-cli run \
   --cmd 'layer.symbology={"layer":"Lurraldeak","type":"unique","field":"name_eu"}' \
   --cmd 'layer.transparency={"layer":"Lurraldeak","value":40}' \
   --cmd 'layer.outline={"layer":"Lurraldeak","color":"#33333300","width":0}' \
+  --cmd 'layer.addData={"path":"dist/elevation/drainage_basins.gpkg","layer":"basins","name":"Isurialdeak"}' \
+  --cmd 'layer.symbology={"layer":"Isurialdeak","type":"unique","field":"side"}' \
+  --cmd 'layer.classStyle={"layer":"Isurialdeak","value":"mediterranean","color":"#E0A04080","outline":"#00000000","label":"Mediterraneoa (Ebro)"}' \
+  --cmd 'layer.classStyle={"layer":"Isurialdeak","value":"biscay","color":"#3A7DC080","outline":"#00000000","label":"Bizkaiko golkoa"}' \
   --cmd "layer.addData={\"path\":\"$GPKG\",\"layer\":\"municipalities\",\"name\":\"Dentsitatea\"}" \
   --cmd 'layer.symbology={"layer":"Dentsitatea","type":"graduated","field":"density_km2","method":"manual","breaks":[10,25,50,100,250,500,1000,2500,5000],"ramp":"Ember"}' \
   --cmd 'layer.outline={"layer":"Dentsitatea","color":"#FFFFFF66","width":0.3}' \
@@ -82,6 +89,15 @@ rustgis-cli run \
   --cmd 'labels.field={"layer":"Lurralde mugak","field":"name_eu"}' \
   --cmd 'labels.enable={"layer":"Lurralde mugak","on":true}' \
   --cmd 'labels.scaleRange={"layer":"Lurralde mugak","max":250000}' \
+  --cmd 'layer.addData={"path":"dist/osm/rivers.gpkg","name":"Ibaiak"}' \
+  --cmd 'layer.symbology={"layer":"Ibaiak","type":"single"}' \
+  --cmd 'layer.color={"layer":"Ibaiak","color":"#1F5FA8"}' \
+  --cmd 'labels.field={"layer":"Ibaiak","field":"label"}' \
+  --cmd 'labels.enable={"layer":"Ibaiak","on":true}' \
+  --cmd 'labels.scaleRange={"layer":"Ibaiak","min":600000}' \
+  --cmd 'layer.addData={"path":"dist/elevation/drainage_basins.gpkg","layer":"divide","name":"Banalerroa"}' \
+  --cmd 'layer.symbology={"layer":"Banalerroa","type":"single"}' \
+  --cmd 'layer.color={"layer":"Banalerroa","color":"#C0392B"}' \
   --cmd 'layer.addData={"path":"dist/osm/peaks.gpkg","name":"Gailurrak"}' \
   --cmd 'layer.definitionQuery={"layer":"Gailurrak","where":"name IS NOT NULL AND ele IS NOT NULL"}' \
   --cmd 'layer.symbology={"layer":"Gailurrak","type":"single"}' \
@@ -101,7 +117,7 @@ rustgis-cli run \
   --cmd 'labels.field={"layer":"Gailur nagusiak","field":"label"}' \
   --cmd 'labels.enable={"layer":"Gailur nagusiak","on":true}' \
   --cmd 'layer.zoomTo={"layer":"Lurraldeak"}' \
-  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":["Dentsitatea","Biztanleria 1km","Biztanleria 100m","Erliebea","Gailurrak","Gailur nagusiak","Isurialdeak","Ibaiak","Banalerroa"],"visible":false}' \
   --cmd 'share.exportMap={"path":"docs/euskal_herria_territories.png","dpi":150}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":false}' \
   --cmd 'layer.visibility={"layer":"Dentsitatea","visible":true}' \
@@ -116,6 +132,10 @@ rustgis-cli run \
   --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.5,43.6],"name":"Erliebea","title":"Erliebea eta gailurrak","subtitle":"Euskal Herria: lurralde bakoitzeko hiru gailur garaienak","sources":["Erliebea: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved","Gailurrak: © OpenStreetMap contributors (ODbL)","Mugak: IGN España, IGN France","github.com/itzune/ehmap"],"locator":"none","author":""}' \
   --cmd 'layout.export={"layout":"Erliebea","path":"docs/elevation.png","dpi":120}' \
   --cmd 'layer.visibility={"layer":["Erliebea","Gailur nagusiak"],"visible":false}' \
+  --cmd 'layer.visibility={"layer":["Isurialdeak","Ibaiak","Banalerroa"],"visible":true}' \
+  --cmd 'layout.publication={"profile":"a4-landscape","style":"panel","extent":[-3.47,41.9,-0.7,43.6],"name":"Isurialdeak","title":"Ibaiak eta isurialdeak","subtitle":"Euskal Herria: Bizkaiko golkora edo Mediterraneora (Ebro)","sources":["Isurialdeak eta banalerroa: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved","Ibaiak: © OpenStreetMap contributors (ODbL)","Mugak: IGN España, IGN France","github.com/itzune/ehmap"],"locator":"none","author":""}' \
+  --cmd 'layout.export={"layout":"Isurialdeak","path":"docs/rivers.png","dpi":120}' \
+  --cmd 'layer.visibility={"layer":["Isurialdeak","Ibaiak","Banalerroa"],"visible":false}' \
   --cmd 'layer.visibility={"layer":["Lurraldeak","Udalerriak"],"visible":true}' \
   --cmd 'map.addTiles={"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png","name":"OpenStreetMap","attribution":"© OpenStreetMap contributors","maxZoom":19,"replace":true}' \
   --save ehmap.rgis

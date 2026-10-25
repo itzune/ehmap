@@ -6,7 +6,8 @@ These files are **not** under CC BY 4.0. They are derived from the Copernicus DE
 which allows reproduction, distribution and modification free of charge, under these conditions.
 
 Files: `copernicus_dem_25m.tif`, `copernicus_dem_50m.tif` (release assets),
-`elevation_by_municipality.csv`, `elevation_by_territory.csv`.
+`elevation_by_municipality.csv`, `elevation_by_territory.csv`, `streams_dem.gpkg`,
+`drainage_basins.gpkg`.
 
 Required notice for these modified data:
 
@@ -23,4 +24,6 @@ the same obligations on to your users (Article 6 of the licence).
 Changes made: the 1° tiles were mosaicked, reprojected from EPSG:4326 to ETRS89 / UTM 30N
 (EPSG:25830) with bilinear resampling at 25 m, clipped to Euskal Herria and rounded to 0.1 m;
 the 50 m version averages 2 × 2 cells and rounds to whole metres. The Copernicus DEM is a
-surface model (DSM): it includes buildings and trees.
+surface model (DSM): it includes buildings and trees. The drainage files were computed with
+the GeoLibre (Whitebox) tools on the DEM resampled to 100 m over 41-44°N, 4-0°W (see
+`scripts/05_rivers.py`).

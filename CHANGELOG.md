@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.3.0 — 2026-10-25
+
+Rivers and the watershed divide.
+
+- **Rivers**: 247 named OpenStreetMap rivers clipped to Euskal Herria (ODbL), merged across
+  inconsistent names and reservoirs, with length and territories.
+- **Drainage** computed from the Copernicus DEM with the GeoLibre (Whitebox) tools: streams
+  with Strahler order, the Bay of Biscay and Mediterranean (Ebro) sides, and the watershed
+  divide (Copernicus licence).
+- **RustGIS project**: `Ibaiak`, `Isurialdeak` and `Banalerroa` layers and an `Isurialdeak`
+  print layout.
+
+Assets added: `rivers.gpkg`, `drainage_basins.gpkg`.
+
 ## v0.2.0 — 2026-10-25
 
 Elevation and mountain peaks.

@@ -10,6 +10,10 @@ Files: `peaks.gpkg`, `peaks.geojson` — `natural=peak` nodes inside Euskal Herr
 `territory_id`, `territories` (every territory within 100 m), `rank` (position among the
 named peaks of its territory) and `label`.
 
+`rivers.gpkg`, `rivers.geojson` — `waterway=river` ways and relations, merged into one
+feature per river and clipped to Euskal Herria, with `name`, `name:eu` and `wikidata` from
+OSM, plus `label`, `length_km` and `territories` computed here.
+
 If you publish a database derived from these files, it must be under the ODbL too
 (share-alike). Maps and images made from them need the credit "© OpenStreetMap contributors".
 Errors are best fixed in OpenStreetMap itself, so everyone benefits.

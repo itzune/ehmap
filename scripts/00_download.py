@@ -52,6 +52,11 @@ OVERPASS = "https://overpass-api.de/api/interpreter"
 PEAKS_QUERY = """[out:json][timeout:180];
 node["natural"="peak"](41.85,-3.55,43.65,-0.55);
 out body;"""
+RIVERS_QUERY = """[out:json][timeout:300];
+way["waterway"="river"](41.85,-3.55,43.65,-0.55)->.w;
+.w out geom;
+rel["type"="waterway"](bw.w);
+out body;"""
 
 # Wikidata (CC0): Basque labels of Spanish municipalities by INE code (P772).
 # Iparralde Basque names live in data/reference/iparralde_territories.csv.
@@ -121,6 +126,7 @@ def main() -> None:
     ghsl()
     copdem()
     fetch("osm/peaks.json", OVERPASS, {"data": PEAKS_QUERY})
+    fetch("osm/rivers.json", OVERPASS, {"data": RIVERS_QUERY})
 
 
 if __name__ == "__main__":
