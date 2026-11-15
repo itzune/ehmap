@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="eu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa interaktiboa · Euskal Herria mapetan · ehmap</title>
+<meta name="description" content="Euskal Herriko zazpi lurraldeen eta 706 udalerrien mapa interaktiboa: egin klik udalerri baten gainean haren datuak ikusteko. Bektore-lauzak (PMTiles) GitHub Pages-etik bertatik.">
+<meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Mapa interaktiboa · Euskal Herria">
+<meta property="og:description" content="Zazpi lurraldeak eta 706 udalerria, klik eginda.">
+<meta property="og:image" content="https://itzune.eus/ehmap/maps/lurraldeak-1200.webp">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/Fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/SourceSans3.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<style>
+  /* Full-height map below the top bar; the page does not scroll. */
+  body:has(.mapmain) { display: flex; flex-direction: column; min-height: 100dvh; overflow: hidden; }
+  .mapmain { position: relative; flex: 1; min-height: 0; height: calc(100dvh - 2.95rem); }
+  body:has(.mapmain) .mapmain { height: auto; }
+  #map { position: absolute; inset: 0; }
+
+  /* Info card over the map, collapsible on small screens. */
+  .map-card {
+    position: absolute; z-index: 6; top: 0.9rem; left: 0.9rem; max-width: 21rem;
+    background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(6px);
+    border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 0.95rem 1.15rem 1.05rem;
+  }
+  .map-card summary { list-style: none; cursor: pointer; }
+  .map-card summary::-webkit-details-marker { display: none; }
+  .map-card summary::after { content: "–"; float: right; margin-left: 0.6rem; color: var(--muted); font-weight: 600; }
+  .map-card:not([open]) summary::after { content: "+"; }
+  .map-card[open] summary { margin-bottom: 0.55rem; }
+  .map-card h1 { font: 500 var(--step-1)/1.1 var(--serif); letter-spacing: -0.01em; margin: 0.15rem 0 0; }
+  .map-card p { margin: 0 0 0.65rem; font-size: var(--step--1); line-height: 1.5; color: var(--ink-2); max-width: none; }
+  .map-card .fine { font-size: 0.78rem; color: var(--muted); margin: 0.7rem 0 0; }
+  .status { min-height: 1.2em; font-size: var(--step--1); color: var(--muted); margin: 0; }
+  .status.ok { transition: opacity 1.2s ease 1.5s; }
+  .status.fade { opacity: 0; }
+  .status.err { color: var(--accent); }
+
+  /* MapLibre controls and popup in the site's colours. */
+  .maplibregl-ctrl-group {
+    background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .maplibregl-ctrl-group button { width: 2.2rem; height: 2.2rem; }
+  .maplibregl-ctrl-group button:hover { background: color-mix(in srgb, var(--rule) 35%, var(--card)); }
+  .maplibregl-ctrl-attrib, .maplibregl-ctrl-attrib.maplibregl-compact, .maplibregl-ctrl-scale {
+    background: color-mix(in srgb, var(--card) 88%, transparent); border-radius: var(--radius);
+    color: var(--muted); font-size: 0.72rem;
+  }
+  .maplibregl-ctrl-attrib.maplibregl-compact { border-radius: 12px; color: var(--muted); }
+  .maplibregl-ctrl-attrib a { color: var(--link); }
+  .maplibregl-ctrl-scale { border-color: var(--muted); }
+  .maplibregl-popup-content {
+    background: var(--card); color: var(--ink); border: 1px solid var(--rule);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 0.8rem 1rem 0.9rem; font: 400 var(--step--1)/1.55 var(--sans); min-width: 13rem;
+  }
+  .maplibregl-popup-tip { border-top-color: var(--rule); }
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--card); }
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--card); }
+  .maplibregl-popup h3 { font: 500 1.2rem/1.15 var(--serif); margin: 0 0 0.15rem; }
+  .maplibregl-popup .official { margin: 0 0 0.55rem; color: var(--muted); font-style: italic; font-size: 0.8rem; }
+  .maplibregl-popup dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.9rem; margin: 0; }
+  .maplibregl-popup dt { color: var(--muted); }
+  .maplibregl-popup dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .maplibregl-popup-close-button { color: var(--muted); font-size: 1rem; padding: 0 0.35rem; }
+</style>
+</head>
+<body>
+<a class="skip" href="#map">Mapara joan</a>
+
+<header class="bar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><use href="favicon.svg#mark"/></svg>
+    ehmap
+  </a>
+  <nav aria-label="Nagusia">
+    <a href="./">Atlasa</a>
+    <a href="mapa.html" aria-current="page">Mapa</a>
+    <a href="datuak.html">Datuak</a>
+    <a href="https://github.com/itzune/ehmap">GitHub</a>
+  </nav>
+</header>
+
+<main id="edukia" class="mapmain">
+  <div id="map" role="application" aria-label="Euskal Herriko mapa interaktiboa"></div>
+
+  <details class="map-card" open>
+    <summary>
+      <p class="eyebrow">Mapa interaktiboa</p>
+      <h1>Udalerriak eta lurraldeak</h1>
+    </summary>
+    <p>Zazpi lurraldeak eta 706 udal-unitateak, mapa bakarrean. Egin klik udalerri
+      baten gainean haren datuak ikusteko; saguarekin gainetik igarotzean nabarmenduko da.</p>
+    <p class="status" id="status" role="status" aria-live="polite">Kargatzen…</p>
+    <noscript><p class="status err">Mapa interaktiboak JavaScript behar du.
+      Datuak deskarga daitezke <a href="datuak.html">Datuak</a> orrian.</p></noscript>
+    <p class="fine">Datuak: <a href="datuak.html">CC BY 4.0</a> ·
+      <a href="https://github.com/itzune/ehmap">ehmap</a> ·
+      bektore-lauzak (PMTiles) GitHub Pages-etik bertatik zerbitzatuta.</p>
+  </details>
+</main>
+
+<script src="vendor/maplibre-gl.js"></script>
+<script src="vendor/pmtiles.js"></script>
+<script src="mapa.js" defer></script>
+</body>
+</html>

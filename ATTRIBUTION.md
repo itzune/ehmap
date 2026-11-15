@@ -43,6 +43,22 @@ attribution, under CC BY 4.0.
 | Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` (elevation, statistics, DEM-derived streams and drainage basins) — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md) |
 | `natural=peak` nodes and `waterway=river` ways and relations, via the Overpass API | © OpenStreetMap contributors | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | `dist/osm/` — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md) |
 
+## Software and fonts in `site/`
+
+The interactive map (`site/mapa.html`) keeps the site no-build: its JavaScript dependencies are
+vendored under `site/vendor/`, and it loads only ehmap's own tiles.
+
+| Software | Version | Licence | Path |
+|---|---|---|---|
+| [MapLibre GL JS](https://maplibre.org) | 5.24.1 | [BSD-3-Clause](https://github.com/maplibre/maplibre-gl-js/blob/v5.24.1/LICENSE.txt) | `site/vendor/maplibre-gl.js` / `.css` |
+| [PMTiles](https://pmtiles.io) browser client | 4.5.0 | BSD-3-Clause | `site/vendor/pmtiles.js` |
+| [Open Sans](https://fonts.google.com/specimen/Open+Sans), as SDF glyph pages | — | [SIL OFL 1.1](site/fonts/OFL-OpenSans.txt) | `site/fonts/glyphs/` |
+
+`site/data/euskal_herria.pmtiles` (2.9 MB, 2 509 tiles, zooms 4–13) holds only ehmap's own
+CC BY 4.0 layers — Euskal Herria, the 7 territories, the 706 municipal units and their
+boundary lines — built from `dist/geojson/simplified/` by `scripts/11_pmtiles.py`, with the
+attribution string embedded in the archive metadata. No OpenStreetMap data is included.
+
 ## Not redistributed
 
 - **OpenStreetMap tiles** — `ehmap.rgis` only references the standard tile server as a

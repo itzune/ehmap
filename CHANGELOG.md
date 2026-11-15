@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.7.0 — 2026-11-16
+
+The atlas becomes interactive: **mapa.html**, a panning, zooming map of everything ehmap
+publishes, served as plain files from GitHub Pages.
+
+- **Interactive map** (`site/mapa.html` + `site/mapa.js`): the whole of Euskal Herria — the
+  7 territories and 706 municipal units — with the printed map's look: warm paper land, pale
+  sea, thick territory borders, hairline municipal borders, uppercase letter-spaced labels.
+  Hover highlights a municipality; clicking opens its card (lurraldea, kodea, biztanleria,
+  dentsitatea), or the territory's at country scale. Deep links (`#zoom/lat/lon`) are kept in
+  sync with the view; dark mode follows the colour scheme.
+- **Vector tiles** (`scripts/11_pmtiles.py` → `site/data/euskal_herria.pmtiles`, 2.9 MB,
+  2 509 tiles, zooms 4–13): ehmap's own CC BY 4.0 layers as PMTiles, built with
+  shapely + mapbox-vector-tile — per-zoom simplification, tile clipping, one label point per
+  feature, and dedicated boundary-line layers (clipping polygons to tiles leaves straight
+  clip edges that would otherwise show as a grid). Range requests keep a session to a few MB.
+- **No build step, no server**: MapLibre GL JS 5.24.1 and the PMTiles client 4.5.0 are
+  vendored in `site/vendor/`; Open Sans SDF glyphs in `site/fonts/glyphs/`; tiles load
+  straight off GitHub Pages. Licences in `ATTRIBUTION.md`.
+- **Navigation**: Mapa link in the header of every page.
+
+Assets added: `site/mapa.html`, `site/mapa.js`, `site/data/euskal_herria.pmtiles`,
+`site/vendor/` (maplibre-gl.js, maplibre-gl.css, pmtiles.js), `site/fonts/glyphs/`.
+
 ## v0.6.0 — 2026-10-26
 
 How climate change is felt: heat, rivers and the sea.
