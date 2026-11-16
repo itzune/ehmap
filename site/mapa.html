@@ -38,6 +38,44 @@
   .map-card h1 { font: 500 var(--step-1)/1.1 var(--serif); letter-spacing: -0.01em; margin: 0.15rem 0 0; }
   .map-card p { margin: 0 0 0.65rem; font-size: var(--step--1); line-height: 1.5; color: var(--ink-2); max-width: none; }
   .map-card .fine { font-size: 0.78rem; color: var(--muted); margin: 0.7rem 0 0; }
+
+  /* Theme ("gaia") pills inside the card. */
+  .themes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.35rem; margin: 0 0 0.7rem; }
+  .themes-label { font-size: 0.78rem; color: var(--muted); margin-right: 0.1rem; }
+  .themes button {
+    font: 600 0.78rem/1 var(--sans); color: var(--ink-2);
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    border: 1px solid var(--rule); border-radius: 999px; padding: 0.34rem 0.62rem;
+    cursor: pointer;
+  }
+  .themes button:hover { border-color: var(--ink-2); color: var(--ink); }
+  .themes button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--card); }
+
+  /* Theme legend over the map, above the scale control. */
+  .map-legend {
+    position: absolute; z-index: 6; left: 0.9rem; bottom: 3.15rem; max-width: 15rem;
+    background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(6px);
+    border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 0.6rem 0.8rem 0.65rem;
+  }
+  .map-legend .title { margin: 0 0 0.45rem; font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+  .map-legend ul.legend { list-style: none; display: grid; gap: 0.24rem; margin: 0; padding: 0; }
+  .map-legend ul.legend li {
+    display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;
+    color: var(--ink-2); font-variant-numeric: tabular-nums;
+  }
+  .map-legend .sw {
+    width: 1rem; height: 0.8rem; border-radius: 3px; flex: none;
+    border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  }
+  .map-legend .ramp {
+    height: 0.7rem; border-radius: 3px;
+    border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  }
+  .map-legend .ramp-labels {
+    display: flex; justify-content: space-between; margin-top: 0.22rem;
+    font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
   .status { min-height: 1.2em; font-size: var(--step--1); color: var(--muted); margin: 0; }
   .status.ok { transition: opacity 1.2s ease 1.5s; }
   .status.fade { opacity: 0; }
@@ -91,6 +129,7 @@
 
 <main id="edukia" class="mapmain">
   <div id="map" role="application" aria-label="Euskal Herriko mapa interaktiboa"></div>
+  <div class="map-legend" id="map-legend" hidden></div>
 
   <details class="map-card" open>
     <summary>
@@ -98,7 +137,16 @@
       <h1>Udalerriak eta lurraldeak</h1>
     </summary>
     <p>Zazpi lurraldeak eta 706 udal-unitateak, mapa bakarrean. Egin klik udalerri
-      baten gainean haren datuak ikusteko; saguarekin gainetik igarotzean nabarmenduko da.</p>
+      baten gainean haren datuak ikusteko; saguarekin gainetik igarotzean nabarmenduko da.
+      Gaia aldatuz gero, udalerriak koloreztatzen dira atlas inprimatuko mapen arabera.</p>
+    <div class="themes" role="group" aria-label="Gaia">
+      <span class="themes-label">Gaia:</span>
+      <button type="button" data-gaia="lurraldeak" aria-pressed="true">Lurraldeak</button>
+      <button type="button" data-gaia="erliebea" aria-pressed="false">Erliebea</button>
+      <button type="button" data-gaia="basoa" aria-pressed="false">Basoa</button>
+      <button type="button" data-gaia="jendea" aria-pressed="false">Jendea</button>
+      <button type="button" data-gaia="beroa" aria-pressed="false">Beroa</button>
+    </div>
     <p class="status" id="status" role="status" aria-live="polite">Kargatzen…</p>
     <noscript><p class="status err">Mapa interaktiboak JavaScript behar du.
       Datuak deskarga daitezke <a href="datuak.html">Datuak</a> orrian.</p></noscript>

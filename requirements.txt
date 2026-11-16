@@ -17,4 +17,4 @@ brotli>=1.1
 # vector tiles for the interactive map (scripts/11_pmtiles.py)
 numpy>=2.0
 mapbox-vector-tile>=2.2
-pmtiles>=4.0
+pmtiles>=3.8

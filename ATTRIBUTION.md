@@ -54,10 +54,14 @@ vendored under `site/vendor/`, and it loads only ehmap's own tiles.
 | [PMTiles](https://pmtiles.io) browser client | 4.5.0 | BSD-3-Clause | `site/vendor/pmtiles.js` |
 | [Open Sans](https://fonts.google.com/specimen/Open+Sans), as SDF glyph pages | — | [SIL OFL 1.1](site/fonts/OFL-OpenSans.txt) | `site/fonts/glyphs/` |
 
-`site/data/euskal_herria.pmtiles` (2.9 MB, 2 509 tiles, zooms 4–13) holds only ehmap's own
-CC BY 4.0 layers — Euskal Herria, the 7 territories, the 706 municipal units and their
-boundary lines — built from `dist/geojson/simplified/` by `scripts/11_pmtiles.py`, with the
-attribution string embedded in the archive metadata. No OpenStreetMap data is included.
+`site/data/euskal_herria.pmtiles` (3.3 MB, 2 509 tiles, zooms 4–13) holds only ehmap's own
+layers — Euskal Herria, the 7 territories, the 706 municipal units and their boundary lines,
+built from `dist/geojson/simplified/` by `scripts/11_pmtiles.py`, with the attribution string
+embedded in the archive metadata. No OpenStreetMap data is included. The municipality layer
+also carries the small per-municipality figures the map's theme ("gaia") choropleths read:
+tree cover (ESA WorldCover, CC BY 4.0), warming between climate normals (ERA5-Land,
+CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevation row above
+and `dist/elevation/LICENSE.md`).
 
 ## Not redistributed
 

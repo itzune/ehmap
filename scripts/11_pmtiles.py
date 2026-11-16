@@ -11,9 +11,15 @@ Layers (Mapbox Vector Tile, gzip, extent 4096):
   euskal_herria       z4-13  the union, for the land/sea fill
   territories         z4-8   the 7 territories
   municipalities      z7-13  706 municipal units: code, names, population, density
+                             + theme figures (forest %, warming, mean elevation)
   eh-outline          z4-13  Euskal Herria's outer boundary, as lines
   territory-borders   z4-8   boundaries between the 7 territories, as lines
   municipality-borders z7-13 municipal boundaries, as lines
+
+The municipality layer also carries the per-municipality figures the interactive
+map's "gaia" (theme) choropleths read — tree cover (forest_pct), warming between
+the 1961-1990 and 1991-2020 climate normals (temperature_change_c) and mean
+elevation (elev_mean) — joined in from the dist/ CSVs; a few KB in total.
 
 The *-borders layers exist because polygons clipped to a tile carry straight clip
 edges: drawn through a line layer they would show as a spurious charcoal grid along
@@ -37,6 +43,7 @@ directory (`pmtiles serve site/data --port 7999 --cors='*'`) and read tiles from
 http://localhost:7999/euskal_herria/{z}/{x}/{y}. A range-capable plain static
 server works too: the viewer fetches only the tiles it needs.
 """
+import csv
 import gzip
 import json
 import math
@@ -62,6 +69,14 @@ CENTER_ZOOM = 8
 # in the single tile that contains it, keeps labels singular.
 LABELED = frozenset(("territories", "municipalities"))
 
+# Thematic per-municipality figures, joined into the municipalities layer at
+# build time so the interactive map can recolour fills without new tiles:
+# property -> (CSV under dist/, column)
+THEME_PROPS = {
+    "forest_pct": ("forest/forest_by_municipality.csv", "forest_pct"),
+    "temperature_change_c": ("climate/climate_by_municipality.csv", "temperature_change_c"),
+    "elev_mean": ("elevation/elevation_by_municipality.csv", "elev_mean"),
+}
 LAYERS = {  # name: (file under dist/geojson/simplified/, minzoom, maxzoom, properties)
     "euskal_herria": ("euskal_herria.geojson", 4, 13, ("population", "area_km2")),
     "territories": ("territories.geojson", 4, 8,
@@ -69,7 +84,7 @@ LAYERS = {  # name: (file under dist/geojson/simplified/, minzoom, maxzoom, prop
                      "population", "area_km2", "density_km2")),
     "municipalities": ("municipalities.geojson", 7, 13,
                        ("code", "country", "type", "name", "name_eu", "territory",
-                        "population", "density_km2")),
+                        "population", "density_km2", *THEME_PROPS)),
 }
 
 # Boundary-line layers, derived from the polygon layers above. Lines are
@@ -81,7 +96,22 @@ BORDERS = {                                 # line layer -> (source, zmin, zmax)
     "territory-borders": ("territories", 4, 8),
     "municipality-borders": ("municipalities", 7, 13),
 }
-NUMERIC = frozenset(("population", "area_km2", "density_km2"))
+
+NUMERIC = frozenset(("population", "area_km2", "density_km2", *THEME_PROPS))
+
+
+def load_themes() -> dict[str, dict[str, float]]:
+    """{code: {theme property: value}} joined from the per-municipality CSVs."""
+    out: dict[str, dict[str, float]] = {}
+    for prop, (path, col) in THEME_PROPS.items():
+        with open(ROOT / "dist" / path, newline="") as fh:
+            for row in csv.DictReader(fh):
+                raw = row.get(col)
+                try:
+                    out.setdefault(row["code"], {})[prop] = float(raw)
+                except (TypeError, ValueError):
+                    pass   # blank / NA rows keep the property absent
+    return out
 
 
 def norm_y(lat: float) -> float:
@@ -117,7 +147,12 @@ def load(name: str) -> list[tuple[object, dict]]:
 def main() -> None:
     t0 = time.time()
     feats = {name: load(name) for name in LAYERS}
+    themes = load_themes()
+    for _, props in feats["municipalities"]:
+        if props.get("code") in themes:
+            props.update(themes[props["code"]])
     print(" · " + ", ".join(f"{n}: {len(v)} features" for n, v in feats.items()))
+    print(f" · theme figures joined for {len(themes)} municipalities")
 
     # Euskal Herria's bounds, for the archive header
     bounds = [f.bounds for fs in feats.values() for f, _ in fs]

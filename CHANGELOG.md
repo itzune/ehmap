@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.7.1 — 2026-11-16
+
+The interactive map gets **themes** ("gaia"): the printed chapter maps' choropleths,
+recoloured live over the same tiles.
+
+- **Theme switcher** in the map card: Lurraldeak (the plain map), Erliebea, Basoa, Jendea
+  and Beroa. Each recolours the 706 municipality fills with the printed atlas's own classes
+  and ramps (`site/palette.json`): mean elevation (hypsometric), tree cover % (10/30/50/70/90),
+  population density (25/100/500/2500/10000) and warming between the 1961-1990 and 1991-2020
+  climate normals (0.7/0.8/0.9/1.0 °C). Switching is instant — the figures ride along in the
+  tiles, so no new requests.
+- **Per-municipality figures baked into the tiles** (`scripts/11_pmtiles.py` joins the
+  `dist/` CSVs by INE/INSEE code): `forest_pct`, `temperature_change_c`, `elev_mean` — about
+  0.4 MB more in `site/data/euskal_herria.pmtiles` (3.3 MB).
+- **Legend** over the map (bottom left, above the scale bar): the theme's classes or a
+  gradient bar, in the site's card style; hidden for the plain map.
+- **Popups** pick up the active theme (Basoa 34 %, Beroa +0,8 °C, Altitudea 596 m…);
+  Jendea already showed density. Theme fills are visible from z7, one zoom short of the
+  hairline municipal borders, so the choropleth owns the country view too.
+- **Deep links** gain a theme segment — `#gaia/zoom/lat/lon` (e.g. `#beroa/9.5/42.85/-2.67`);
+  old `#zoom/lat/lon` links still work. Dark mode re-applies the theme with a lifted
+  below-threshold tone so low values read as land, not void.
+
+Assets changed: `site/mapa.html`, `site/mapa.js`, `site/data/euskal_herria.pmtiles`,
+`scripts/11_pmtiles.py`, `ATTRIBUTION.md`, `requirements.txt` (pmtiles pin corrected to 3.8).
+
 ## v0.7.0 — 2026-11-16
 
 The atlas becomes interactive: **mapa.html**, a panning, zooming map of everything ehmap
