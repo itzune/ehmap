@@ -9,10 +9,12 @@ site/topo.html serves as a separate, experimental map until the style is ready.
 Why raster and not vector contours: Euskal Herria carries ~403 000 km of
 contour line at 10 m equidistance (measured with scripts/13_topo_tiles.py
 --measure), which is far too much to ship as vector tiles. Baked into the
-raster, the equidistance can follow the zoom — 100 m at z11, 50 m at z12,
-25 m at z13 — and the lines keep a constant pixel weight, like a printed sheet.
+raster, the equidistance can follow the zoom — 200 m at z10, 100 m at z11,
+50 m at z12, 20 m at z13 — and the lines keep a constant pixel weight, like a
+printed sheet.
 
-The DEM is the same 5 m LiDAR mosaic as scripts/12_relief_tiles.py. Stages:
+The DEM is the same 5 m LiDAR mosaic as scripts/12_relief_tiles.py, cached for
+the tiles at 10 m (finer than any pixel up to z13, which is ~14 m here). Stages:
 this file is stage 1 (relief + contours + rock); vegetation, hydrography, trails
 and labels come next, from ESA WorldCover and OpenStreetMap.
 
@@ -173,8 +175,13 @@ def render(dem: np.ndarray, px_m: float, interval: float, every: int,
         shade = np.array(sh.resize((w, h), Image.BOX))
     rgb = tint * ((1 - SHADE_K) + SHADE_K * shade[..., None])
 
-    dem_c = gaussian_filter(np.nan_to_num(dem, nan=np.nanmedian(dem)), CONTOUR_SMOOTH)
+    # the sea is 0 m: filling it with anything higher (e.g. the tile's median) would
+    # pull the shore up through the blur and stack false contours along the coast
+    dem_c = gaussian_filter(np.nan_to_num(dem, nan=0.0), CONTOUR_SMOOTH)
     thin, thick = contours(dem_c, px_m, interval, every)
+    shore = dem_c < interval / 2                # no "0 m contour" tracing the coastline
+    thin[shore] = 0
+    thick[shore] = 0
     for mask, colour, op in ((thin, CONTOUR, 0.85), (thick, INDEX, 1.0)):
         a = (mask * op)[..., None]
         rgb = rgb * (1 - a) + to_rgb(colour) * a
@@ -195,11 +202,15 @@ def hachures(rgba: np.ndarray, dem: np.ndarray, px_m: float,
     from PIL import ImageDraw
     gy, gx = np.gradient(dem, px_m)
     slope = np.degrees(np.arctan(np.hypot(gx, gy)))
-    strong = slope > ROCK_SLOPE
+    strong = (slope > ROCK_SLOPE) & (rgba[..., 3] > 0)     # rock is drawn on land only
     if not strong.any():
         return rgba
     img = Image.fromarray(rgba, "RGBA")
-    d = ImageDraw.Draw(img)
+    # strokes go on their own layer and are composited: drawing a translucent colour
+    # straight into an RGBA image replaces the pixel, alpha included, which would
+    # leave the sheet 80 % opaque under every stroke
+    ink = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(ink)
     h, w = dem.shape
     colour = tuple(int(c * 255) for c in to_rgb(ROCK)) + (205,)
     # the stroke grid is anchored to absolute tile pixels, so neighbouring tiles
@@ -219,7 +230,9 @@ def hachures(rgba: np.ndarray, dem: np.ndarray, px_m: float,
             length = 1.8 + 2.6 * min(1.0, (slope[y, x] - ROCK_SLOPE) / 18.0)
             ux, uy = dx / n * length, dy / n * length
             d.line([(x - ux, y - uy), (x + ux, y + uy)], fill=colour, width=1)
-    return np.array(img)
+    out = np.array(Image.alpha_composite(img, ink))
+    out[..., 3] = rgba[..., 3]                  # strokes never spill onto the sea
+    return out
 
 
 def sheet(bounds, size: int, z: int) -> np.ndarray:
@@ -335,6 +348,10 @@ def main() -> None:
     min_lon, min_lat, max_lon, max_lat = relief.mercator_bounds(
         Affine(res, 0, bounds[0], 0, -res, bounds[3]), shape)
 
+    buf = io.BytesIO()
+    Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0)).save(buf, "WEBP", lossless=True)
+    EMPTY = buf.getvalue()
+
     count = 0
     with OUT.open("wb") as f:
         wr = Writer(f)
@@ -356,7 +373,11 @@ def main() -> None:
                     # so window the cache on the *transformed* padded box: mixing a
                     # mercator halo with a UTM window starves the tile edges of source
                     from pyproj import Transformer
-                    pad = PAD * px_m
+                    # the halo lives on the mercator grid, so it is PAD *mercator*
+                    # pixels: anything else makes the padded box's pixels a different
+                    # size from the tile's, and the cropped centre no longer lines up
+                    # with the tile (it lost ~4.6 px of ground on every edge)
+                    pad = PAD * (2 * 20037508.342789244 / n) / TILE
                     inv = Transformer.from_crs("EPSG:3857", CRS, always_xy=True)
                     mbox = mercator_box(z, x, y, pad)
                     xs_, ys_ = inv.transform([mbox[0], mbox[2], mbox[0], mbox[2]],
@@ -365,10 +386,12 @@ def main() -> None:
                     r0 = max(0, int((bounds[3] - max(ys_)) / res) - 1)
                     c1 = min(shape[1], int((max(xs_) - bounds[0]) / res) + 2)
                     r1 = min(shape[0], int((bounds[3] - min(ys_)) / res) + 2)
-                    if c1 - c0 < 3 or r1 - r0 < 3:
-                        continue
-                    src = np.array(dem[r0:r1, c0:c1])
-                    if not (src > 0).any():
+                    src = np.array(dem[r0:r1, c0:c1]) if c1 - c0 >= 3 and r1 - r0 >= 3 else None
+                    if src is None or not (src > 0).any():
+                        # sea (or beyond the frame): MapLibre keeps tiles the archive
+                        # lacks "pending" forever, so write the shared transparent one
+                        wr.write_tile(zxy_to_tileid(z, x, y), EMPTY)
+                        count += 1
                         continue
                     src[src <= 0] = np.nan
                     st = Affine(res, 0, bounds[0] + c0 * res, 0, -res, bounds[3] - r0 * res)

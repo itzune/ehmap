@@ -1,5 +1,39 @@
 # Changelog
 
+## v0.9.1 — 2026-11-17
+
+Fixes to the 5 m LiDAR relief of v0.9.0, and to the topographic test page.
+
+- **Northern Nafarroa had lost its LiDAR.** The French service is not void outside
+  France: it answers with a coarse, blocky filler DEM well into Nafarroa, and because the
+  French blocks were merged last with "positive values win", that filler replaced the
+  PNOA 5 m surface around Bera, Elizondo and the Baztan (22–38 m mean error against PNOA).
+  The merge now lets PNOA always win and RGE ALTI only fill what PNOA left empty; the
+  42 affected PNOA blocks were re-fetched, and the mosaic now matches PNOA exactly there.
+- **South Landes was sea.** The French request grid stopped at 43.55°N while the frame
+  reaches ~43.62°N, so Labenne–Capbreton and the land south of Dax were 0 m (sea). A
+  fifth row was added; a corner of ~4 × 8 km north-east of Orthez, outside Euskal Herria,
+  is still empty (the service refuses those requests).
+- **No dark rim along the coast**: transparent sea pixels kept black RGB, which each tile's
+  resampling blended into the shoreline; they now carry the sea colour.
+- RGE ALTI heights are rounded, not truncated, when stored as whole metres.
+- **Topographic test page** (`site/topo.html`, `scripts/13_topo_tiles.py`): every tile was
+  rendered ~4.6 px short of its own edges (the halo was sized in UTM metres on a mercator
+  grid), so contours and shading jumped at every tile boundary — edge steps fall from
+  15.3 to 8.6 levels at z13, against 7.8 inside a tile. All-sea tiles are now written as a
+  shared transparent placeholder (coastal views never finished loading); the sea is 0 m
+  before the contour blur, not the tile's median height, and no 0 m contour traces the
+  shore; rock hachures are composited instead of punching alpha into the sheet. The
+  attribution starts folded so it no longer runs under the legend.
+- **Trails** (`scripts/14_bideak.py`): pavements, crossings and paved footways are dropped
+  unless a marked route follows them (115 291 → 48 817 footways), which clears the dashes
+  off every town; the Overpass query was broken on a fresh run (a variable shadowed the
+  output clause) and only worked from the local cache.
+
+Assets changed: `scripts/00_download.py`, `scripts/12_relief_tiles.py`,
+`scripts/13_topo_tiles.py`, `scripts/14_bideak.py`, `site/data/erliebea.pmtiles`,
+`site/data/topo.pmtiles`, `site/data/bideak.pmtiles`, `site/topo.html`.
+
 ## v0.9.0 — 2026-11-19
 
 Erliebea now shades the map from the **national LiDAR bare-earth DTMs at 5 m**, so the

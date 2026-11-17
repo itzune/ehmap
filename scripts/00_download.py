@@ -145,6 +145,11 @@ def lidar() -> None:
     a single `> 0` rule marks the sea. Blocks are merged rather than overwritten, which
     lets the two national triangulations meet cleanly along the Bidasoa instead of one
     reprojection punching holes in the other.
+
+    PNOA always wins; RGE ALTI only fills cells PNOA left empty. The French service is
+    not void outside France: it answers with a coarse, blocky filler DEM well into
+    Nafarroa (tens of metres off the LiDAR near Bera and Elizondo), which must never
+    replace the Spanish 5 m surface.
     """
     import numpy as np
     import rasterio
@@ -190,8 +195,9 @@ def lidar() -> None:
         with rasterio.open(out, "w", **profile) as dst:
             dst.write(np.zeros(shape, "int16"), 1)      # 0 stands for the sea
 
-    def put(dst, arr, bbox, bbox_crs, src_crs, src_transform) -> None:
-        """Reproject a block onto the mosaic grid and merge it, positive values winning."""
+    def put(dst, arr, bbox, bbox_crs, src_crs, src_transform, fill_only: bool = False) -> None:
+        """Reproject a block onto the mosaic grid and merge it: positive values win, or
+        with `fill_only` they only fill cells that are still empty (<= 0)."""
         from rasterio.warp import transform_bounds
         if bbox_crs != dst.crs:
             try:
@@ -212,8 +218,12 @@ def lidar() -> None:
                   dst_nodata=np.nan, resampling=Resampling.bilinear)
         block[block < -1000] = np.nan                     # the French encoding's void
         old = dst.read(1, window=win).astype("float32")
-        merged = np.where(np.isfinite(block) & (block > 0), block, old)
-        dst.write(np.nan_to_num(merged, nan=0).astype("int16"), 1, window=win)
+        take = np.isfinite(block) & (block > 0)
+        if fill_only:
+            take &= old <= 0
+        merged = np.where(take, block, old)
+        # rint, not astype: a cast truncates, so RGE ALTI's decimetres would all drop
+        dst.write(np.rint(np.nan_to_num(merged, nan=0)).astype("int16"), 1, window=win)
 
     with rasterio.open(out, "r+") as dst:
         # --- Spain first: 20 km WCS windows, already on our grid ---
@@ -241,10 +251,12 @@ def lidar() -> None:
                 mark(key)
                 print(f"  pnoa {bx},{by}", flush=True)
 
-        # --- France last, so each side's own triangulation wins at the border ---
+        # --- France second, filling only what PNOA left empty (see the docstring) ---
         step = 0.2
         n_img = int(round(step * 111320 / 4.5))           # ~4.5 m cells at this latitude
-        for lat in (42.75, 42.95, 43.15, 43.35):
+        # rows of 0.2° up to 43.75°N: the frame reaches ~43.62°N (south Landes); a
+        # row short, Labenne-Capbreton came out as 0 m, i.e. as sea
+        for lat in (42.75, 42.95, 43.15, 43.35, 43.55):
             for lon in (-1.95, -1.75, -1.55, -1.35, -1.15, -0.95, -0.75, -0.55, -0.35):
                 key = f"fr:{lon}:{lat}"
                 if key in done:
@@ -267,7 +279,8 @@ def lidar() -> None:
                 elev = -10000 + (px[..., 0] * 65536 + px[..., 1] * 256 + px[..., 2]) * 0.1
                 put(dst, elev.astype("float32"), (lon, lat, lon + step, lat + step),
                     "EPSG:4326", "EPSG:4326",
-                    Affine(step / n_img, 0, lon, 0, -step / n_img, lat + step))
+                    Affine(step / n_img, 0, lon, 0, -step / n_img, lat + step),
+                    fill_only=True)
                 mark(key)
                 print(f"  rge-alti {lon:+.2f},{lat:+.2f}", flush=True)
     print(f"lidar/{out.name}: {out.stat().st_size / 1e6:.0f} MB, "

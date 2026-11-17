@@ -35,7 +35,7 @@
   .legend .ticks { display: flex; justify-content: space-between; color: var(--ink-soft); font-size: .68rem; }
   .legend .row { display: flex; align-items: center; gap: .4rem; margin-top: .3rem; }
   .legend .swatch { width: 26px; height: 0; border-top: 2px solid #6E3D24; }
-  .legend .swatch.thin { border-top: 1px solid #C79A78; }
+  .legend .swatch.thin { border-top: 1px solid #CFA98C; }
   .legend .swatch.rock { border: 0; width: 26px; height: 10px;
     background: repeating-linear-gradient(65deg, #6B6157 0 1px, transparent 1px 4px); }
   .legend .swatch.path { border-top: 1.5px dashed #4A4137; }
@@ -180,6 +180,9 @@
 
     const legend = document.getElementById("legend");
     legend.hidden = false;
+    // the compact attribution opens expanded and runs under the legend; the legend
+    // already carries the credits, so start it folded to its (i) button
+    document.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
     document.getElementById("ramp").style.background =
       "linear-gradient(to right," + TINT.map(([z, c]) => `${c} ${(z / 2400 * 100).toFixed(1)}%`).join(",") + ")";
     const setEq = () => {

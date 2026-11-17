@@ -8,10 +8,13 @@ map shows its attribution only while these layers are on screen.
 
 Layers (Mapbox Vector Tile, gzip, extent 4096):
   trails   z11-13  highway=track, then path/footway/steps/bridleway from z12,
-                   with sac_scale where OSM records it
-  routes   z10-13  relation route=hiking, carrying network (nwn/rwn/lwn) and ref
-                   (GR 121, ...), drawn as an overlay on the ways they follow
-  pois     z12-13  refuges, wilderness huts, shelters, viewpoints, campsites, springs
+                   with sac_scale where OSM records it. Ways that belong to a
+                   route=hiking relation also carry route_net (iwn/nwn/rwn/lwn) and
+                   route_ref (GR 121, ...); there is no separate routes layer, so a
+                   marked stretch along a road (not one of these classes) is absent.
+                   Urban footways are dropped: pavements, crossings and paved
+                   footways, unless they are part of a marked route.
+  pois    z12-13  refuges, wilderness huts, shelters, viewpoints, campsites, springs
 
 Queries are split by highway class: a single Overpass call for the whole 373 533-way
 network times out. Responses are cached under data/raw/osm/bideak/ (gitignored).
@@ -47,6 +50,17 @@ EXTENT = 4096
 SIMPLIFY_PX = 2
 
 TRAIL_CLASSES = (("track", 11), ("path", 12), ("footway", 12), ("steps", 12), ("bridleway", 12))
+# town footways are street furniture, not trails: drawn as paths they bury every
+# town under dashes (pavements and crossings alone are ~45 % of all footways)
+URBAN_FOOTWAY = {"sidewalk", "crossing", "access_aisle", "traffic_island", "link"}
+PAVED = {"paving_stones", "asphalt", "concrete", "paved", "sett", "concrete:plates"}
+
+
+def is_urban(tags: dict) -> bool:
+    """A pavement, crossing or paved footway that no marked route follows."""
+    if tags.get("highway") != "footway" or tags.get("route_net"):
+        return False
+    return tags.get("footway") in URBAN_FOOTWAY or tags.get("surface") in PAVED
 # one union query: four separate ones multiply the odds of hitting a busy server
 POI_QUERY = ("(",
              'nwr["tourism"~"^(alpine_hut|wilderness_hut|camp_site|viewpoint)$"]',
@@ -71,10 +85,10 @@ def merc_px(arr, n: int, tx: int, ty: int):
 def overpass(name: str, query: str, out: str = "out tags geom;",
              union: tuple[str, ...] | None = None) -> dict | None:
     """Run one Overpass query, cached under data/raw/osm/bideak/."""
-    out = RAW / f"{name}.json"
-    if out.exists():
-        return json.loads(out.read_text())
-    out.parent.mkdir(parents=True, exist_ok=True)
+    cache = RAW / f"{name}.json"
+    if cache.exists():
+        return json.loads(cache.read_text())
+    cache.parent.mkdir(parents=True, exist_ok=True)
     bb = f"{BBOX[0]},{BBOX[1]},{BBOX[2]},{BBOX[3]}"
     if union:
         lines = "\n".join(f"  {part}({bb});" for part in union if part not in ("(", ")"))
@@ -86,7 +100,7 @@ def overpass(name: str, query: str, out: str = "out tags geom;",
         try:
             r = requests.post(url, data={"data": q}, headers=UA, timeout=1200)
             if r.status_code == 200 and r.text.lstrip().startswith("{"):
-                out.write_text(r.text)
+                cache.write_text(r.text)
                 print(f"  {name}: {len(r.content) / 1e6:.0f} MB", flush=True)
                 return json.loads(r.text)
             print(f"  {name}: HTTP {r.status_code} from {url.split('/')[2]}", flush=True)
@@ -200,6 +214,8 @@ def main() -> None:
             if oid in marked:
                 t["route_net"] = marked[oid]["net"]
                 t["route_ref"] = marked[oid]["ref"]
+            if is_urban(t):
+                continue
             feats.append((g, t))
         print(f" · {cls}: {len(feats)} ways "
               f"({sum(1 for _, t in feats if t.get('route_net'))} marked)", flush=True)

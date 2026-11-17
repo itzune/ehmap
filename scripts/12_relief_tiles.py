@@ -170,8 +170,9 @@ def render(dem: np.ndarray, transform: Affine, res: float, eh) -> np.ndarray:
     land = (inside & ~sea)[..., None]
     rgb = np.where(land, np.clip(lit, 0, 1), rgb)
 
+    # transparent sea keeps the sea colour, not black: warp_tile resamples each band
+    # on its own, and black under alpha 0 bled into every coastal pixel as a dark rim
     rgba = np.dstack([np.clip(rgb, 0, 1) * 255, np.where(sea, 0, 255)]).astype("uint8")
-    rgba[..., :3] *= ~sea[..., None]                        # keep transparent pixels black
     return rgba
 
 
