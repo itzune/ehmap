@@ -63,6 +63,14 @@ tree cover (ESA WorldCover, CC BY 4.0), warming between climate normals (ERA5-La
 CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevation row above
 and `dist/elevation/LICENSE.md`).
 
+`site/data/erliebea.pmtiles` (9.1 MB, 5 501 WebP tiles, zooms 5–13) is the Erliebea theme's
+shaded-relief raster: the printed atlas's background — NW-weighted hillshade over the
+Copernicus DEM at 100 m, hypsometric ramp, paper-toned relief ring, transparent sea —
+composed in EPSG:25830 and warped to Web Mercator by `scripts/12_relief_tiles.py`. It is
+loaded lazily, only when a theme asks for it. WorldDEM-30 is not CC BY: the map's
+attribution and the theme legend carry the DEM credit, and the notices live in
+[`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md).
+
 ## Not redistributed
 
 - **OpenStreetMap tiles** — `ehmap.rgis` only references the standard tile server as a

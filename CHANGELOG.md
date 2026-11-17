@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.7.2 — 2026-11-17
+
+Erliebea stops being a choropleth of mean elevation and becomes the printed atlas's actual
+**shaded relief** on screen, and the other themes gain its shadow.
+
+- **Erliebea = the printed relief raster** (`scripts/12_relief_tiles.py` →
+  `site/data/erliebea.pmtiles`, 9.1 MB of WebP tiles, z5–13): the exact recipe from
+  `07_site_maps.py` — NW-weighted multi-directional hillshade over the Copernicus DEM at
+  100 m, the hypsometric ramp, the paper-toned relief ring around Euskal Herria, transparent
+  sea — composed once in EPSG:25830 and warped to Web Mercator. It is fetched lazily: the
+  plain map never requests it, and a theme that needs it pays for it once.
+- **Shaded choropleths**: Basoa, Jendea and Beroa lay a faint desaturated relief over their
+  fills (opacity 0.22), like the printed chapter maps.
+- **Relief legend** with the printed ramp (0–1.000–2.300 m) and a WorldDEM-30 credit line;
+  legend cards can now carry credits and gradient bars. Municipality and territory cards
+  still pop up under the relief (transparent fills stay queryable).
+- **Fixes along the way**: the raster is rebuilt from the raw 1° GLO-30 tiles (the Release
+  DEM had holes in eastern Nafarroa); raster tiles missing over in-frame sea now ship as
+  shared transparent placeholders, so coastal views reach "Kargatuta ✓" instead of
+  idling on tiles the archive never answers.
+
+Assets added: `scripts/12_relief_tiles.py`, `site/data/erliebea.pmtiles`.
+Assets changed: `site/mapa.html`, `site/mapa.js`, `ATTRIBUTION.md`, `requirements.txt`
+(rasterio, pyproj).
+
 ## v0.7.1 — 2026-11-16
 
 The interactive map gets **themes** ("gaia"): the printed chapter maps' choropleths,

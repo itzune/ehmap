@@ -11,6 +11,7 @@ netcdf4>=1.6
 scipy>=1.11
 # website maps (scripts/07_site_maps.py)
 matplotlib>=3.9
+rasterio>=1.4
 pillow>=10
 fonttools>=4.50
 brotli>=1.1
@@ -18,3 +19,5 @@ brotli>=1.1
 numpy>=2.0
 mapbox-vector-tile>=2.2
 pmtiles>=3.8
+# relief raster tiles (scripts/12_relief_tiles.py)
+pyproj>=3.6

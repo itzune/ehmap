@@ -4,7 +4,11 @@
 // MapLibre GL JS and the pmtiles adapter are vendored in vendor/.
 // "Gaia" (theme) buttons recolour the municipality fills into the printed
 // chapter maps' choropleths (same classes, same ramps); the figures ride
-// along in the tiles, so switching is instant and adds no requests.
+// along in the tiles, so switching is instant and adds no requests. Erliebea
+// swaps the fills for the printed relief map itself — a shaded-relief raster
+// pyramid (site/data/erliebea.pmtiles, built by scripts/12_relief_tiles.py)
+// loaded only when a theme first needs it; the other choropleths get the same
+// relief as a faint neutral shading, like the printed chapter maps.
 (() => {
   const status = document.getElementById("status");
   const say = (msg, err = false) => {
@@ -40,25 +44,29 @@
 
   // "Gaia" themes: choropleths over the municipality fills, using the same
   // classes and ramps as the printed chapter maps (07_site_maps.py).
+  // `raster` (Erliebea) swaps the fills for the printed relief map itself;
+  // `shade` lays the same relief over the choropleth, as the printed maps do.
   const THEMES = {
     lurraldeak: { label: "Lurraldeak" },
     erliebea: {
-      label: "Erliebea", prop: "elev_mean", continuous: true,
-      stops: [0, 150, 300, 500, 750, 1050, 1350],
-      colors: ["land", "#E3D5B3", ...R.earth],   // hypsometric, like the printed map
-      legendTitle: "Batez besteko garaiera", ends: ["0 m", "1.400 m"],
+      label: "Erliebea", raster: true, prop: "elev_mean",
+      legendTitle: "Garaiera",                              // as on the printed map
+      gradient: ["#FAF7F0", "#E3D5B3", ...R.earth],        // hypsometric ramp, 0–2.300 m
+      labels: ["0 m", "1.000", "2.300 m"],
+      credit: "Erliebea: Copernicus WorldDEM-30",
       row: "Altitudea", value: (v) => `${fmt.format(Math.round(v))} m`,
     },
     basoa: {
-      label: "Basoa", prop: "forest_pct", colors: R.forest,
+      label: "Basoa", prop: "forest_pct", colors: R.forest, shade: true,
       edges: [10, 30, 50, 70, 90],                 // printed Basoa classes
       legendTitle: "Zuhaitz-estaldura (udalerria)",
       legend: [[-1, "%10 baino gutxiago"], [0, "%10–30"], [1, "%30–50"],
                [2, "%50–70"], [3, "%70–90"], [4, "%90–100"]],
+      credit: "Basoa: ESA WorldCover 2021 (CC BY 4.0)",
       row: "Basoa", value: (v) => `${Math.round(v)} %`,
     },
     jendea: {
-      label: "Jendea", prop: "density_km2", colors: R.people,
+      label: "Jendea", prop: "density_km2", colors: R.people, shade: true,
       edges: [25, 100, 500, 2500, 10000],          // printed Jendea bins
       legendTitle: "Biztanleria-dentsitatea",
       legend: [[-1, "25 baino gutxiago"], [0, "25–100"], [1, "100–500"],
@@ -66,12 +74,13 @@
       row: null,   // Dentsitatea is already in the municipality card
     },
     beroa: {
-      label: "Beroa", prop: "temperature_change_c", colors: R.heat,
+      label: "Beroa", prop: "temperature_change_c", colors: R.heat, shade: true,
       edges: [0.7, 0.8, 0.9, 1.0],                 // printed Klima classes
       base: "first",                               // every place warmed ≥ +0.6 °C
       legendTitle: "Tenperaturaren igoera, 1961–1990etik 1991–2020ra",
       legend: [[0, "+0,6–0,7 °C"], [1, "+0,7–0,8 °C"], [2, "+0,8–0,9 °C"],
                [3, "+0,9–1,0 °C"], [4, "+1,0 °C baino gehiago"]],
+      credit: "Beroa: ERA5-Land · Copernicus (CC BY 4.0)",
       row: "Beroa", value: (v) => `${v >= 0 ? "+" : ""}${fmt.format(Math.round(v * 10) / 10)} °C`,
     },
   };
@@ -80,13 +89,9 @@
     // In dark mode the paper-toned base would sink into the background, so
     // below-threshold areas get a slightly lifted tone instead.
     const below = dark.matches ? "#3F3A31" : c.land;
-    const col = (k) => (k === "land" ? below : k);
-    return t.continuous
-      ? ["interpolate", ["linear"], ["get", t.prop],
-         ...t.stops.flatMap((s, i) => [s, col(t.colors[i])])]
-      : ["step", ["get", t.prop],
-         t.base === "first" ? t.colors[0] : below,
-         ...t.edges.flatMap((e, i) => [e, t.colors[t.base === "first" ? i + 1 : i]])];
+    return ["step", ["get", t.prop],
+      t.base === "first" ? t.colors[0] : below,
+      ...t.edges.flatMap((e, i) => [e, t.colors[t.base === "first" ? i + 1 : i]])];
   };
 
   const style = (c) => ({
@@ -179,32 +184,65 @@
   const sw = (color, label) =>
     `<li><span class="sw" style="background:${color}"></span>${esc(label)}</li>`;
   const renderLegend = (t) => {
+    if (!t.prop) { legend.hidden = true; return; }
     const c = colors();
     const base = dark.matches ? "#3F3A31" : c.land;   // match the map's below-tone
-    legend.innerHTML = t.continuous
-      ? `<p class="title">${esc(t.legendTitle)}</p>
-         <div class="ramp" style="background:linear-gradient(90deg, ${t.colors.map((k) => k === "land" ? base : k).join(", ")})"></div>
-         <div class="ramp-labels"><span>${esc(t.ends[0])}</span><span>${esc(t.ends[1])}</span></div>`
-      : `<p class="title">${esc(t.legendTitle)}</p>
-         <ul class="legend">${t.legend.map(([i, label]) => sw(i < 0 ? base : t.colors[i], label)).join("")}</ul>`;
+    legend.innerHTML =
+      `<p class="title">${esc(t.legendTitle)}</p>` +
+      (t.gradient
+        ? `<div class="ramp" style="background:linear-gradient(90deg, ${t.gradient.join(", ")})"></div>
+           <div class="ramp-labels">${t.labels.map((l) => `<span>${esc(l)}</span>`).join("")}</div>`
+        : `<ul class="legend">${t.legend.map(([i, label]) => sw(i < 0 ? base : t.colors[i], label)).join("")}</ul>`) +
+      (t.credit ? `<p class="credit">${esc(t.credit)}</p>` : "");
     legend.hidden = false;
   };
+
+  // The relief raster (site/data/erliebea.pmtiles): added on first use, then
+  // reused by every theme — as the printed map's base by Erliebea, and as a
+  // faint desaturated shading over the choropleths by the others.
+  let reliefReady = false;
+  const ensureRelief = () => {
+    if (reliefReady || !styleReady) return;
+    reliefReady = true;
+    map.addSource("erliebea", {
+      type: "raster", url: "pmtiles://data/erliebea.pmtiles", tileSize: 256,
+      attribution: 'Copernicus WorldDEM-30 · DLR · Airbus DS · ESA',
+    });
+    map.addLayer({ id: "relief", type: "raster", source: "erliebea",
+      layout: { visibility: "none" },
+      paint: { "raster-fade-duration": 250 } }, "territories");
+    map.addLayer({ id: "relief-shade", type: "raster", source: "erliebea",
+      layout: { visibility: "none" },
+      paint: { "raster-opacity": 0.22, "raster-saturation": -1,
+               "raster-fade-duration": 250 } }, "territory-lines");
+  };
+
   let styleReady = false;
   const applyGaia = (id, sync = true) => {
     gaia = THEMES[id] ? id : "lurraldeak";
     const t = THEMES[gaia], c = colors();
     for (const b of themeButtons) b.setAttribute("aria-pressed", String(b.dataset.gaia === gaia));
-    if (t.prop) {
-      renderLegend(t);
-      if (styleReady) {
-        map.setPaintProperty("municipalities", "fill-color", gaiaPaint(t, c));
-        map.setLayerZoomRange("municipalities", 7, 24);
+    renderLegend(t);
+    if (styleReady && (t.raster || t.shade)) {   // the raster only loads once a
+      ensureRelief();                            // theme actually asks for it
+      map.setPaintProperty("municipalities", "fill-color",
+                           t.prop && !t.raster ? gaiaPaint(t, c) : c.land);
+      map.setLayerZoomRange("municipalities", t.prop && !t.raster ? 7 : 8, 24);
+      // Erliebea: the relief raster replaces the fills, so they step aside.
+      map.setPaintProperty("territories", "fill-opacity", t.raster ? 0 : 1);
+      map.setPaintProperty("municipalities", "fill-opacity", t.raster ? 0 : 1);
+      if (reliefReady) {
+        map.setLayoutProperty("relief", "visibility", t.raster ? "visible" : "none");
+        map.setLayoutProperty("relief-shade", "visibility", t.shade ? "visible" : "none");
       }
-    } else {
-      legend.hidden = true;
-      if (styleReady) {
-        map.setPaintProperty("municipalities", "fill-color", c.land);
-        map.setLayerZoomRange("municipalities", 8, 24);
+    } else if (styleReady) {   // Lurraldeak: plain paper fills
+      map.setPaintProperty("municipalities", "fill-color", c.land);
+      map.setLayerZoomRange("municipalities", 8, 24);
+      map.setPaintProperty("territories", "fill-opacity", 1);
+      map.setPaintProperty("municipalities", "fill-opacity", 1);
+      if (reliefReady) {
+        map.setLayoutProperty("relief", "visibility", "none");
+        map.setLayoutProperty("relief-shade", "visibility", "none");
       }
     }
     if (sync) syncHash();

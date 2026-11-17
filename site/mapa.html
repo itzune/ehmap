@@ -76,6 +76,10 @@
     display: flex; justify-content: space-between; margin-top: 0.22rem;
     font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums;
   }
+  .map-legend .credit {
+    margin: 0.5rem 0 0; padding-top: 0.42rem; font-size: 0.68rem; color: var(--muted);
+    border-top: 1px solid var(--rule);
+  }
   .status { min-height: 1.2em; font-size: var(--step--1); color: var(--muted); margin: 0; }
   .status.ok { transition: opacity 1.2s ease 1.5s; }
   .status.fade { opacity: 0; }
@@ -138,7 +142,8 @@
     </summary>
     <p>Zazpi lurraldeak eta 706 udal-unitateak, mapa bakarrean. Egin klik udalerri
       baten gainean haren datuak ikusteko; saguarekin gainetik igarotzean nabarmenduko da.
-      Gaia aldatuz gero, udalerriak koloreztatzen dira atlas inprimatuko mapen arabera.</p>
+      Gaia aldatuz gero, udalerriak koloreztatzen dira atlas inprimatuko mapen arabera —
+      eta <em>Erliebea</em> aukeratzean mapa inprimatuaren erliebe-itzaletua bera agertzen da.</p>
     <div class="themes" role="group" aria-label="Gaia">
       <span class="themes-label">Gaia:</span>
       <button type="button" data-gaia="lurraldeak" aria-pressed="true">Lurraldeak</button>
