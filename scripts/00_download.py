@@ -5,6 +5,7 @@ Sources and licences are listed in ATTRIBUTION.md.
 import csv
 import io
 import json
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -46,6 +47,11 @@ GHSL_TILE = "GHS_POP_E2020_GLOBE_R2023A_54009_100_V1_0_R4_C18"
 COPDEM = "https://copernicus-dem-30m.s3.amazonaws.com/{0}/{0}.tif"
 COPDEM_TILE = "Copernicus_DSM_COG_10_N{lat:02d}_00_W{lon:03d}_00_DEM"
 COPDEM_LATS, COPDEM_LONS = (41, 42, 43), (4, 3, 2, 1)  # 41-44°N, 4-0°W
+
+# GEM-15 bare-earth DTM (CC BY 4.0), COGs on Google Cloud Storage; the navigational
+# cells of the static STAC catalog are w<lon>s<lat> (1° cells, EPSG:32630 mosaics)
+GEM15 = "https://storage.googleapis.com/climate-and-sustainability/gem-15/p40_m10/{cell}/dtm/zall/mosaic.tif"
+GEM15_CELLS = [f"wm{lon}s{lat}" for lon in (1, 2, 3, 4) for lat in (41, 42, 43)]
 
 # ESA WorldCover 2021 v200 (CC BY 4.0), 3°x3° tiles covering Euskal Herria
 WORLDCOVER = ("https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/"
@@ -125,6 +131,20 @@ def worldcover() -> None:
             fetch(f"worldcover/{tile}.tif", WORLDCOVER.format(tile), {})
 
 
+def gem15() -> None:
+    """The 12 GEM-15 DTM mosaics covering Euskal Herria (~190 MB each)."""
+    for cell in GEM15_CELLS:
+        out = RAW / "gem15" / f"{cell}.tif"
+        if out.exists():
+            continue
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with requests.get(GEM15.format(cell=cell), headers=UA, stream=True, timeout=600) as r:
+            r.raise_for_status()
+            with out.open("wb") as f:
+                shutil.copyfileobj(r.raw, f, length=1 << 22)
+        print(f"gem15/{cell}.tif: {out.stat().st_size / 1e6:.1f} MB")
+
+
 def main() -> None:
     for path, (url, params) in DOWNLOADS.items():
         fetch(path, url, params)
@@ -139,6 +159,7 @@ def main() -> None:
     fetch("osm/peaks.json", OVERPASS, {"data": PEAKS_QUERY})
     fetch("osm/rivers.json", OVERPASS, {"data": RIVERS_QUERY})
     worldcover()
+    gem15()
 
 
 if __name__ == "__main__":

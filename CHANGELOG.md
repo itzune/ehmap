@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.8.0 — 2026-11-18
+
+Erliebea gets **high-definition relief** where it matters: the map now draws its own
+hillshade from a 15 m bare-earth DEM, so the theme holds up at street zoom instead of
+smoothing into mush.
+
+- **GEM-15 as the relief's DEM** (`scripts/12_relief_tiles.py`): Google's 15 m near-global
+  `dtm` band — bare earth, canopy removed, CC BY 4.0 — replaces the 30 m surface model the
+  raster was resampled from. At zoom 13 a tile is 18 m per pixel, so the printed atlas's
+  100 m grid was five times too coarse there; now the karst crags, gullies and ridge lines
+  of Anboto read as landforms rather than as blobs.
+- **Two tiers in one archive**: z5–10 stay on the 100 m composition (unchanged look, a few
+  bytes), z11–13 are composed at 15 m. Frame, ramp, lighting, context ring and sea are the
+  same recipe at both tiers, and measured tone across the z10/z11 seam differs by under 1 %
+  (mean luminance 172.7 vs 172.5) — the only visible change is detail, as intended.
+- **GEM-15's masked water bodies are filled from Copernicus GLO-30**, which also still
+  defines the sea at 30 m; the ~49 km² of reservoirs and river defiles GEM-15 leaves empty
+  are invisible (Ullibarri-Ganboa checked). GLO-30 keeps the elevation figures the atlas
+  quotes — GEM-15 is orthometric EGM96 with metre-scale bias, so it drives the picture
+  only.
+- `site/data/erliebea.pmtiles`: **9.1 → 23 MB**, 5 428 tiles, still lazy-loaded (the plain
+  map requests none of it). Legend credit now reads "Erliebea: GEM-15 (Google) · ura
+  Copernicus DEM"; the archive metadata and `ATTRIBUTION.md` carry both licences.
+- `scripts/00_download.py` fetches the 12 mosaics (`gem15()`, streamed, ~1.8 GB, gitignored).
+
+Assets added: none. Assets changed: `scripts/00_download.py`, `scripts/12_relief_tiles.py`,
+`site/data/erliebea.pmtiles`, `site/mapa.html`, `site/mapa.js`, `ATTRIBUTION.md`,
+`requirements.txt` (comment only).
+
 ## v0.7.2 — 2026-11-17
 
 Erliebea stops being a choropleth of mean elevation and becomes the printed atlas's actual

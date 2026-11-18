@@ -40,7 +40,8 @@ attribution, under CC BY 4.0.
 
 | Data | Provider | Licence | Used for |
 |---|---|---|---|
-| Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` (elevation, statistics, DEM-derived streams and drainage basins) — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md) |
+| GEM-15 v1, near-global 15 m surface and terrain elevation models (experimental), Google Research, STAC catalog at [gs://climate-and-sustainability/gem-15](https://storage.googleapis.com/climate-and-sustainability/gem-15/stac/catalog.json): Batchu, V. V. et al. (2026), *GEM-15: Near-Global Surface and Terrain Elevation Models (15 m)*, EarthArXiv preprint, [doi:10.31223/X55N75](https://doi.org/10.31223/X55N75) | This dataset is produced by Google | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | `site/data/erliebea.pmtiles` (the map's relief raster). **Changes:** the `dtm` band of the 12 one-degree mosaics covering Euskal Herria, reprojected from EPSG:32630 to EPSG:25830, colourised hypsometrically and hillshaded. Orthometric EGM96 heights; used for the picture only, never for the elevation figures the atlas quotes |
+| Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` (elevation, statistics, DEM-derived streams and drainage basins) — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md). Also `site/data/erliebea.pmtiles`: it defines the sea and fills the inland water bodies that GEM-15 masks, at 30 m |
 | `natural=peak` nodes and `waterway=river` ways and relations, via the Overpass API | © OpenStreetMap contributors | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | `dist/osm/` — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md) |
 
 ## Software and fonts in `site/`
@@ -63,13 +64,14 @@ tree cover (ESA WorldCover, CC BY 4.0), warming between climate normals (ERA5-La
 CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevation row above
 and `dist/elevation/LICENSE.md`).
 
-`site/data/erliebea.pmtiles` (9.1 MB, 5 501 WebP tiles, zooms 5–13) is the Erliebea theme's
-shaded-relief raster: the printed atlas's background — NW-weighted hillshade over the
-Copernicus DEM at 100 m, hypsometric ramp, paper-toned relief ring, transparent sea —
-composed in EPSG:25830 and warped to Web Mercator by `scripts/12_relief_tiles.py`. It is
-loaded lazily, only when a theme asks for it. WorldDEM-30 is not CC BY: the map's
-attribution and the theme legend carry the DEM credit, and the notices live in
-[`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md).
+`site/data/erliebea.pmtiles` (23 MB, 5 428 WebP tiles, zooms 5–13) is the Erliebea theme's
+shaded-relief raster: the printed atlas's background — NW-weighted hillshade, hypsometric
+ramp, paper-toned relief ring, transparent sea — composed by `scripts/12_relief_tiles.py`,
+sampled at 100 m for zooms 5–10 and at **15 m from GEM-15** (CC BY 4.0, produced by Google)
+for zooms 11–13. It is loaded lazily, only when a theme asks for it. Copernicus GLO-30
+defines the sea and fills GEM-15's masked inland water bodies; the elevation figures the
+atlas quotes stay on GLO-30, under the WorldDEM-30 licence (notices in
+[`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md)).
 
 ## Not redistributed
 

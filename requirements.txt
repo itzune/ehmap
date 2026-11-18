@@ -9,7 +9,8 @@ cdsapi>=0.7
 xarray>=2024.1
 netcdf4>=1.6
 scipy>=1.11
-# website maps (scripts/07_site_maps.py)
+# website maps (scripts/07_site_maps.py) — rasterio and pillow also serve the
+# relief tiles below
 matplotlib>=3.9
 rasterio>=1.4
 pillow>=10

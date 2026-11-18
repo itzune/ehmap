@@ -53,7 +53,7 @@
       legendTitle: "Garaiera",                              // as on the printed map
       gradient: ["#FAF7F0", "#E3D5B3", ...R.earth],        // hypsometric ramp, 0–2.300 m
       labels: ["0 m", "1.000", "2.300 m"],
-      credit: "Erliebea: Copernicus WorldDEM-30",
+      credit: "Erliebea: GEM-15 (Google) · ura Copernicus DEM",
       row: "Altitudea", value: (v) => `${fmt.format(Math.round(v))} m`,
     },
     basoa: {
@@ -206,7 +206,7 @@
     reliefReady = true;
     map.addSource("erliebea", {
       type: "raster", url: "pmtiles://data/erliebea.pmtiles", tileSize: 256,
-      attribution: 'Copernicus WorldDEM-30 · DLR · Airbus DS · ESA',
+      attribution: 'GEM-15, Google (CC BY 4.0) · Copernicus DEM (DLR, Airbus DS, ESA)',
     });
     map.addLayer({ id: "relief", type: "raster", source: "erliebea",
       layout: { visibility: "none" },
