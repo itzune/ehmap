@@ -40,8 +40,9 @@ attribution, under CC BY 4.0.
 
 | Data | Provider | Licence | Used for |
 |---|---|---|---|
-| GEM-15 v1, near-global 15 m surface and terrain elevation models (experimental), Google Research, STAC catalog at [gs://climate-and-sustainability/gem-15](https://storage.googleapis.com/climate-and-sustainability/gem-15/stac/catalog.json): Batchu, V. V. et al. (2026), *GEM-15: Near-Global Surface and Terrain Elevation Models (15 m)*, EarthArXiv preprint, [doi:10.31223/X55N75](https://doi.org/10.31223/X55N75) | This dataset is produced by Google | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | `site/data/erliebea.pmtiles` (the map's relief raster). **Changes:** the `dtm` band of the 12 one-degree mosaics covering Euskal Herria, reprojected from EPSG:32630 to EPSG:25830, colourised hypsometrically and hillshaded. Orthometric EGM96 heights; used for the picture only, never for the elevation figures the atlas quotes |
-| Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` (elevation, statistics, DEM-derived streams and drainage basins) — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md). Also `site/data/erliebea.pmtiles`: it defines the sea and fills the inland water bodies that GEM-15 masks, at 30 m |
+| **PNOA-LiDAR, MDT05** (Modelo Digital del Terreno, 5 m, 3rd coverage 2022-2025), via the INSPIRE WCS coverage `Elevacion25830_5` at [servicios.idee.es](https://servicios.idee.es/wcs-inspire/mdt) | © Instituto Geográfico Nacional de España (ign.es) | [CC BY 4.0](https://www.ign.es/resources/licencia/Condiciones_licenciaUso_IGN.pdf) | `site/data/erliebea.pmtiles` (the map's relief raster, south of the Bidasoa). **Changes:** windows fetched on our own EPSG:25830 5 m grid, lightly blurred, colourised hypsometrically and hillshaded |
+| **RGE ALTI® 2.0**, 5 m / 1 m DTM, via the Géoplateforme WMS layer `RGEALTI-MNT_PYR-ZIP_FXX_LAMB93_WMS` in its `terrainrgb` style, [data.geopf.fr](https://data.geopf.fr) | © IGN France | [Licence Ouverte / Open Licence 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/) | `site/data/erliebea.pmtiles` (the relief raster north of the Bidasoa: Lapurdi, Nafarroa Beherea, Zuberoa and the ring beyond). **Changes:** elevation decoded from the terrain-RGB tiles, reprojected from LAMB93/IGN69 to EPSG:25830 at 5 m, then as above |
+| Copernicus DEM GLO-30, 1° tiles from the [AWS Open Data registry](https://registry.opendata.aws/copernicus-dem/) | © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | [Copernicus WorldDEM-30 licence](https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf) | `dist/elevation/` (elevation, statistics, DEM-derived streams and drainage basins) — notices and changes in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md) |
 | `natural=peak` nodes and `waterway=river` ways and relations, via the Overpass API | © OpenStreetMap contributors | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) | `dist/osm/` — see [`dist/osm/LICENSE.md`](dist/osm/LICENSE.md) |
 
 ## Software and fonts in `site/`
@@ -64,14 +65,14 @@ tree cover (ESA WorldCover, CC BY 4.0), warming between climate normals (ERA5-La
 CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevation row above
 and `dist/elevation/LICENSE.md`).
 
-`site/data/erliebea.pmtiles` (23 MB, 5 428 WebP tiles, zooms 5–13) is the Erliebea theme's
+`site/data/erliebea.pmtiles` (34 MB, 5 428 WebP tiles, zooms 5–13) is the Erliebea theme's
 shaded-relief raster: the printed atlas's background — NW-weighted hillshade, hypsometric
 ramp, paper-toned relief ring, transparent sea — composed by `scripts/12_relief_tiles.py`,
-sampled at 100 m for zooms 5–10 and at **15 m from GEM-15** (CC BY 4.0, produced by Google)
-for zooms 11–13. It is loaded lazily, only when a theme asks for it. Copernicus GLO-30
-defines the sea and fills GEM-15's masked inland water bodies; the elevation figures the
-atlas quotes stay on GLO-30, under the WorldDEM-30 licence (notices in
-[`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md)).
+sampled at 100 m for zooms 5–10 and at the **5 m of the national LiDAR DTMs** for zooms
+11–13: PNOA-LiDAR MDT05 south of the Bidasoa, RGE ALTI north of it. It is loaded lazily,
+only when a theme asks for it. Both LiDAR products are covered by their own licences (see
+the rows above); the elevation figures the atlas quotes stay on Copernicus GLO-30, under
+the WorldDEM-30 licence (notices in [`dist/elevation/LICENSE.md`](dist/elevation/LICENSE.md)).
 
 ## Not redistributed
 

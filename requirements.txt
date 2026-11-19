@@ -20,5 +20,5 @@ brotli>=1.1
 numpy>=2.0
 mapbox-vector-tile>=2.2
 pmtiles>=3.8
-# relief raster tiles (scripts/12_relief_tiles.py)
+# relief raster tiles (scripts/12_relief_tiles.py) — uses rasterio, pillow and scipy
 pyproj>=3.6

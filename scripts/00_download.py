@@ -5,7 +5,7 @@ Sources and licences are listed in ATTRIBUTION.md.
 import csv
 import io
 import json
-import shutil
+import time
 import zipfile
 from pathlib import Path
 
@@ -48,10 +48,17 @@ COPDEM = "https://copernicus-dem-30m.s3.amazonaws.com/{0}/{0}.tif"
 COPDEM_TILE = "Copernicus_DSM_COG_10_N{lat:02d}_00_W{lon:03d}_00_DEM"
 COPDEM_LATS, COPDEM_LONS = (41, 42, 43), (4, 3, 2, 1)  # 41-44°N, 4-0°W
 
-# GEM-15 bare-earth DTM (CC BY 4.0), COGs on Google Cloud Storage; the navigational
-# cells of the static STAC catalog are w<lon>s<lat> (1° cells, EPSG:32630 mosaics)
-GEM15 = "https://storage.googleapis.com/climate-and-sustainability/gem-15/p40_m10/{cell}/dtm/zall/mosaic.tif"
-GEM15_CELLS = [f"wm{lon}s{lat}" for lon in (1, 2, 3, 4) for lat in (41, 42, 43)]
+# National LiDAR DTMs at 5 m, both free and keyless:
+#  · Spain, PNOA-LiDAR MDT05 (IGN, CC BY 4.0) through the INSPIRE WCS coverage
+#    Elevacion25830_5 — already in our working CRS, native COG, windowed SUBSET
+#  · France, RGE ALTI (IGN, Licence Ouverte 2.0) as WMS ``terrainrgb`` (elevation
+#    encoded in the PNG channels), which spares unpacking the 10 GB department archive
+LIDAR_BOX = (450000, 4630000, 705000, 4835000)   # EPSG:25830: the relief frame + slack
+LIDAR_RES = 5
+LIDAR_WCS = "https://servicios.idee.es/wcs-inspire/mdt"
+LIDAR_WCS_COVERAGE = "Elevacion25830_5"
+LIDAR_WMS = "https://data.geopf.fr/wms-r/wms"
+LIDAR_WMS_LAYER = "RGEALTI-MNT_PYR-ZIP_FXX_LAMB93_WMS"
 
 # ESA WorldCover 2021 v200 (CC BY 4.0), 3°x3° tiles covering Euskal Herria
 WORLDCOVER = ("https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/"
@@ -131,18 +138,140 @@ def worldcover() -> None:
             fetch(f"worldcover/{tile}.tif", WORLDCOVER.format(tile), {})
 
 
-def gem15() -> None:
-    """The 12 GEM-15 DTM mosaics covering Euskal Herria (~190 MB each)."""
-    for cell in GEM15_CELLS:
-        out = RAW / "gem15" / f"{cell}.tif"
-        if out.exists():
-            continue
-        out.parent.mkdir(parents=True, exist_ok=True)
-        with requests.get(GEM15.format(cell=cell), headers=UA, stream=True, timeout=600) as r:
-            r.raise_for_status()
-            with out.open("wb") as f:
-                shutil.copyfileobj(r.raw, f, length=1 << 22)
-        print(f"gem15/{cell}.tif: {out.stat().st_size / 1e6:.1f} MB")
+def lidar() -> None:
+    """One 5 m bare-earth DTM over the relief frame: PNOA-LiDAR plus RGE ALTI.
+
+    Both sources store water as flat values (Spain 0, the French encoding's -10000 m), so
+    a single `> 0` rule marks the sea. Blocks are merged rather than overwritten, which
+    lets the two national triangulations meet cleanly along the Bidasoa instead of one
+    reprojection punching holes in the other.
+    """
+    import numpy as np
+    import rasterio
+    from PIL import Image
+    from rasterio.enums import Resampling
+    from rasterio.transform import Affine
+    from rasterio.warp import reproject
+    from rasterio.windows import Window
+    from rasterio.windows import from_bounds as window_from_bounds
+
+    x0, y0, x1, y1 = LIDAR_BOX
+    res = LIDAR_RES
+    out = RAW / "lidar" / f"eh_lidar_{res}m.tif"
+    progress = RAW / "lidar" / "blocks.json"
+    if out.exists():
+        done = set(json.loads(progress.read_text())) if progress.exists() else set()
+    else:
+        done = set()
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    def fetch(url: str, params, tries: int = 3):
+        """The two national services hiccup (502s, truncated bodies, sporadic 400s);
+        retry before deciding a block is genuinely absent."""
+        for k in range(tries):
+            try:
+                r = requests.get(url, headers=UA, timeout=900, params=params)
+                if r.status_code == 200:
+                    return r.content
+            except requests.RequestException:
+                pass
+            time.sleep(2 + 3 * k)
+        return None
+
+    def mark(key: str) -> None:
+        done.add(key)
+        progress.write_text(json.dumps(sorted(done)))
+    transform = Affine(res, 0, x0, 0, -res, y1)
+    shape = (int((y1 - y0) / res), int((x1 - x0) / res))
+    profile = dict(driver="GTiff", width=shape[1], height=shape[0], count=1, dtype="int16",
+                   crs="EPSG:25830", transform=transform, tiled=True, blockxsize=512,
+                   blockysize=512, compress="DEFLATE", zlevel=6, BIGTIFF="IF_SAFER")
+    if not out.exists():
+        with rasterio.open(out, "w", **profile) as dst:
+            dst.write(np.zeros(shape, "int16"), 1)      # 0 stands for the sea
+
+    def put(dst, arr, bbox, bbox_crs, src_crs, src_transform) -> None:
+        """Reproject a block onto the mosaic grid and merge it, positive values winning."""
+        from rasterio.warp import transform_bounds
+        if bbox_crs != dst.crs:
+            try:
+                bbox = transform_bounds(bbox_crs, dst.crs, *bbox)
+            except Exception:
+                return
+        try:
+            win = window_from_bounds(*bbox, dst.transform)
+            win = win.intersection(Window(0, 0, dst.width, dst.height))
+        except rasterio.errors.WindowError:
+            return
+        if win.width < 2 or win.height < 2:
+            return
+        win = win.round_offsets().round_lengths()
+        block = np.full((int(win.height), int(win.width)), np.nan, "float32")
+        reproject(arr, block, src_transform=src_transform, src_crs=src_crs,
+                  dst_transform=dst.window_transform(win), dst_crs=dst.crs,
+                  dst_nodata=np.nan, resampling=Resampling.bilinear)
+        block[block < -1000] = np.nan                     # the French encoding's void
+        old = dst.read(1, window=win).astype("float32")
+        merged = np.where(np.isfinite(block) & (block > 0), block, old)
+        dst.write(np.nan_to_num(merged, nan=0).astype("int16"), 1, window=win)
+
+    with rasterio.open(out, "r+") as dst:
+        # --- Spain first: 20 km WCS windows, already on our grid ---
+        for by in range(y0, y1, 20000):
+            for bx in range(x0, x1, 20000):
+                key = f"es:{bx}:{by}"
+                if key in done:
+                    continue
+                body = fetch(LIDAR_WCS, [
+                    ("SERVICE", "WCS"), ("VERSION", "2.0.1"), ("REQUEST", "GetCoverage"),
+                    ("COVERAGEID", LIDAR_WCS_COVERAGE), ("FORMAT", "image/tiff"),
+                    ("SUBSET", f"x({bx},{min(bx + 20000, x1)})"),
+                    ("SUBSET", f"y({by},{min(by + 20000, y1)})")])
+                if body is None:
+                    print(f"  pnoa {bx},{by}: no data", flush=True)
+                    continue
+                try:
+                    with rasterio.io.MemoryFile(body) as mf:
+                        with mf.open() as src:
+                            put(dst, src.read(1).astype("float32"), tuple(src.bounds),
+                                src.crs, src.crs, src.transform)
+                except Exception as e:
+                    print(f"  pnoa {bx},{by}: {e}", flush=True)
+                    continue
+                mark(key)
+                print(f"  pnoa {bx},{by}", flush=True)
+
+        # --- France last, so each side's own triangulation wins at the border ---
+        step = 0.2
+        n_img = int(round(step * 111320 / 4.5))           # ~4.5 m cells at this latitude
+        for lat in (42.75, 42.95, 43.15, 43.35):
+            for lon in (-1.95, -1.75, -1.55, -1.35, -1.15, -0.95, -0.75, -0.55, -0.35):
+                key = f"fr:{lon}:{lat}"
+                if key in done:
+                    continue
+                body = fetch(LIDAR_WMS, {
+                    "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap",
+                    "LAYERS": LIDAR_WMS_LAYER, "STYLES": "terrainrgb", "CRS": "CRS:84",
+                    "BBOX": f"{lon},{lat},{lon + step},{lat + step}",
+                    "WIDTH": n_img, "HEIGHT": n_img, "FORMAT": "image/png"})
+                if body is None:
+                    print(f"  rge-alti {lon:+.2f},{lat:+.2f}: no data", flush=True)
+                    continue
+                try:
+                    im = Image.open(io.BytesIO(body))
+                    im.load()                                  # a truncated PNG raises here
+                    px = np.asarray(im.convert("RGB"), "float64")
+                except Exception as e:
+                    print(f"  rge-alti {lon:+.2f},{lat:+.2f}: {e}", flush=True)
+                    continue
+                elev = -10000 + (px[..., 0] * 65536 + px[..., 1] * 256 + px[..., 2]) * 0.1
+                put(dst, elev.astype("float32"), (lon, lat, lon + step, lat + step),
+                    "EPSG:4326", "EPSG:4326",
+                    Affine(step / n_img, 0, lon, 0, -step / n_img, lat + step))
+                mark(key)
+                print(f"  rge-alti {lon:+.2f},{lat:+.2f}", flush=True)
+    print(f"lidar/{out.name}: {out.stat().st_size / 1e6:.0f} MB, "
+          f"{shape[1]}x{shape[0]} at {res} m")
 
 
 def main() -> None:
@@ -159,7 +288,7 @@ def main() -> None:
     fetch("osm/peaks.json", OVERPASS, {"data": PEAKS_QUERY})
     fetch("osm/rivers.json", OVERPASS, {"data": RIVERS_QUERY})
     worldcover()
-    gem15()
+    lidar()
 
 
 if __name__ == "__main__":

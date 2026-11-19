@@ -11,33 +11,32 @@ web-mercator tiles packed as site/data/erliebea.pmtiles.
 The relief maths is copied from 07_site_maps.py (regional_dem, hillshade, ramp,
 Base.background); keep the two in sync if the printed look ever changes.
 
-The DEM is GEM-15 (Google, CC BY 4.0): a 15 m bare-earth DTM, which is what makes
-the map's own relief hold up at street zoom — at zoom 13 a tile is 18 m per pixel,
-so the printed maps' 100 m grid looked blurred there. Below HD_Z the relief is
-sampled at 100 m (the printed grid, cheap to ship); from HD_Z up it is composed at
-15 m. GEM-15 masks inland water bodies with a 9 m buffer, and Copernicus GLO-30
-(fetched by scripts/00_download.py) fills those holes and defines the sea.
+The DEM is the national **LiDAR bare earth at 5 m**: PNOA-LiDAR MDT05 (IGN España,
+CC BY 4.0) south of the Bidasoa and RGE ALTI (IGN France, Licence Ouverte 2.0)
+north of it, fetched onto one grid by scripts/00_download.py. Both store water as
+a flat value, so `dem <= 0` is the sea. Below HD_Z the relief is sampled at 100 m
+(the printed grid, cheap to ship); from HD_Z up it is composed at the LiDAR's own
+5 m — at zoom 13 a tile is 18 m per pixel, where anything coarser blurs.
 
-GEM-15 is orthometric EGM96 with metre-scale regional bias, so it drives this
-picture only: the elevation figures the map quotes (dist/elevation) stay on
-Copernicus GLO-30. See ATTRIBUTION.md for both licences.
+These LiDAR products carry their own notices and are not CC BY (RGE ALTI is
+Licence Ouverte), so they drive this picture only: the elevation figures the atlas
+quotes (dist/elevation) stay on Copernicus GLO-30. See ATTRIBUTION.md.
 
 Preview like the vector archive: `pmtiles serve site/data --port 7999 --cors='*'`.
 """
 import importlib.util
 import io
 import math
-import tempfile
 import time
 from pathlib import Path
 
 import numpy as np
 import rasterio
 from PIL import Image
+from rasterio.enums import Resampling
 from rasterio.features import geometry_mask
-from rasterio.merge import merge
 from rasterio.transform import Affine
-from rasterio.warp import Resampling, reproject
+from rasterio.warp import reproject
 from rasterio.windows import Window
 from rasterio.windows import from_bounds as window_from_bounds
 
@@ -46,16 +45,18 @@ from pmtiles.writer import Writer
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "data" / "erliebea.pmtiles"
-RAW = ROOT / "data" / "raw"
-GEM15 = RAW / "gem15"
+LIDAR_TIF = ROOT / "data" / "raw" / "lidar" / "eh_lidar_5m.tif"
+SCRATCH = ROOT / "out" / "erliebea_5m.rgba"
 
 RES = 100          # m per cell below HD_Z, as in the printed maps
-HD_RES = 15        # m per cell of the GEM-15 source, from HD_Z up
-HD_Z = 11          # first zoom composed from the 15 m DEM
+HD_RES = 5         # m per cell of the LiDAR source, from HD_Z up
+HD_Z = 11          # first zoom composed from the 5 m DEM
+SMOOTH = 0.8       # cells of blur that hide the LiDAR's integer-metre terracing
 CRS = "EPSG:25830"  # UTM 30N, the project's working CRS
 RELIEF = 1.15      # Erliebea's shading strength in 07_site_maps.map_relief
 ZMIN, ZMAX = 5, 13
 TILE = 256
+FLAT_BYTES = 5120  # tiles encoding under this at q85 are re-encoded at q95 (no blocking)
 
 PAL = {  # from site/palette.json
     "paper": "#F3EEE3", "card": "#FAF7F0", "sea": "#DCE3E1",
@@ -69,12 +70,11 @@ def to_rgb(hexstr: str) -> np.ndarray:
 
 
 def ensure_sources() -> None:
-    """Fetch the GLO-30 and GEM-15 tiles into data/raw/, reusing 00_download.py."""
+    """Fetch the 5 m LiDAR mosaic into data/raw/, reusing 00_download.py."""
     spec = importlib.util.spec_from_file_location("dl", ROOT / "scripts" / "00_download.py")
     dl = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dl)
-    dl.copdem()   # skips tiles already on disk
-    dl.gem15()
+    dl.lidar()   # skips the mosaic if it is already on disk
 
 
 def outline():
@@ -90,53 +90,53 @@ def frame(eh) -> tuple[float, float, float, float]:
     return x0 - dx, y0 - dy, x1 + dx, y1 + dy
 
 
-def glodem(bounds, shape, transform) -> np.ndarray:
-    """Copernicus GLO-30 on the given grid: the sea, and a patch for GEM's holes."""
-    from pyproj import Transformer
-    fwd = Transformer.from_crs(CRS, "EPSG:4326", always_xy=True)
-    x0, y0, x1, y1 = bounds
-    lons, lats = fwd.transform([x0, x1], [y0, y1])
-    tiles = [rasterio.open(p) for p in sorted((RAW / "copdem").glob("*.tif"))]
-    try:
-        src, src_t = merge(tiles, bounds=(min(lons), min(lats), max(lons), max(lats)),
-                           res=1 / 3600)
-        crs = tiles[0].crs
-    finally:
-        for t in tiles:
-            t.close()
+def dem_window(transform: Affine, shape: tuple[int, int], res: float) -> np.ndarray:
+    """The LiDAR bare earth on the given grid; water (<= 0) becomes NaN."""
+    x0, y1 = transform.c, transform.f
+    x1, y0 = x0 + shape[1] * res, y1 - shape[0] * res
     dem = np.full(shape, np.nan, "float32")
-    reproject(src[0].astype("float32"), dem, src_transform=src_t, src_crs=crs,
-              dst_transform=transform, dst_crs=CRS, dst_nodata=np.nan,
-              resampling=Resampling.bilinear)
-    dem[dem <= 0.5] = np.nan        # sea
+    with rasterio.open(LIDAR_TIF) as src:
+        try:
+            win = window_from_bounds(x0, y0, x1, y1, src.transform)
+            win = win.intersection(Window(0, 0, src.width, src.height))
+        except rasterio.errors.WindowError:          # the whole strip is sea
+            return dem
+        if win.width < 2 or win.height < 2:
+            return dem
+        # sample straight to the target cell size; averaging keeps 5 m detail from
+        # aliasing into the 100 m tier, and is a no-op at 5 m
+        ow = max(2, int(round(win.width * abs(src.res[0]) / res)))
+        oh = max(2, int(round(win.height * abs(src.res[1]) / res)))
+        a = src.read(1, window=win, out_shape=(oh, ow),
+                     resampling=Resampling.average if res > abs(src.res[0]) else Resampling.bilinear
+                     ).astype("float32")
+        a[a < -1000] = np.nan                        # RGE ALTI's void encoding
+        st = src.window_transform(win) * Affine.scale(win.width / ow, win.height / oh)
+        reproject(a, dem, src_transform=st, src_crs=src.crs, dst_transform=transform,
+                  dst_crs=CRS, dst_nodata=np.nan, resampling=Resampling.bilinear)
+    dem[dem <= 0] = np.nan                           # both sources store water as 0
+    if res < 10:
+        dem = smooth(dem)
     return dem
 
 
-def gerdem(bounds, shape, transform, res, glo) -> np.ndarray:
-    """GEM-15 DTM on the given grid, its masked water bodies filled from GLO-30."""
-    dem = np.full(shape, np.nan, "float32")
-    x0, y0, x1, y1 = bounds
-    for path in sorted(GEM15.glob("*.tif")):
-        with rasterio.open(path) as src:
-            try:
-                win = window_from_bounds(x0, y0, x1, y1, src.transform)
-                win = win.intersection(Window(0, 0, src.width, src.height))
-            except rasterio.errors.WindowError:      # no overlap with this mosaic
-                continue
-            if win.width < 2 or win.height < 2:
-                continue
-            # sample straight to about the target cell size; the mosaics overlap
-            # each other and carry zero-filled sea, hence the merge by first value
-            ow = max(2, int(round(win.width * abs(src.res[0]) / res)))
-            oh = max(2, int(round(win.height * abs(src.res[1]) / res)))
-            a = src.read(1, window=win, out_shape=(oh, ow)).astype("float32")
-            st = src.window_transform(win) * Affine.scale(win.width / ow, win.height / oh)
-            tmp = np.full(shape, np.nan, "float32")
-            reproject(a, tmp, src_transform=st, src_crs=src.crs, dst_transform=transform,
-                      dst_crs=CRS, dst_nodata=np.nan, resampling=Resampling.bilinear)
-            take = np.isfinite(tmp) & (tmp > 0) & ~np.isfinite(dem)
-            dem[take] = tmp[take]
-    return np.where(np.isfinite(dem), dem, glo)      # GLO-30 patches the holes
+def smooth(dem: np.ndarray, sigma: float = SMOOTH) -> np.ndarray:
+    """Kill the terracing of integer-metre heights without touching the landforms.
+
+    PNOA stores whole metres at 5 m, so a 3° slope steps 0.26 m per cell: rounding
+    turns gentle ground into flat facets separated by one-cell cliffs, which the
+    hillshade then draws as a staircase. A sub-cell blur (a normalised convolution,
+    so the sea never bleeds inland) restores the continuous surface.
+    """
+    from scipy.ndimage import gaussian_filter
+    ok = np.isfinite(dem)
+    if not ok.any():
+        return dem
+    num = gaussian_filter(np.where(ok, dem, 0.0).astype("float64"), sigma)
+    den = gaussian_filter(ok.astype("float64"), sigma)
+    out = np.where(den > 0.02, num / np.maximum(den, 1e-9), dem).astype("float32")
+    out[~ok] = np.nan
+    return out
 
 
 def render(dem: np.ndarray, transform: Affine, res: float, eh) -> np.ndarray:
@@ -175,39 +175,27 @@ def render(dem: np.ndarray, transform: Affine, res: float, eh) -> np.ndarray:
     return rgba
 
 
-def relief(res: float, bounds, eh) -> tuple[np.ndarray, Affine]:
-    """The whole frame at one cell size, as one RGBA array."""
+def relief(bounds, eh, res: float, scratch: Path | None = None):
+    """The whole frame at one cell size; `scratch` keeps a big one off the RAM."""
     x0, y0, x1, y1 = bounds
     transform = Affine(res, 0, x0, 0, -res, y1)
     shape = (int(round((y1 - y0) / res)), int(round((x1 - x0) / res)))
-    glo = glodem(bounds, shape, transform)
-    return render(gerdem(bounds, shape, transform, res, glo), transform, res, eh), transform
-
-
-def relief_hd(bounds, eh) -> tuple[np.memmap, Affine, tuple[int, int], Path]:
-    """The frame at 15 m, composed strip by strip into a scratch memmap (not RAM)."""
-    x0, y0, x1, y1 = bounds
-    transform = Affine(HD_RES, 0, x0, 0, -HD_RES, y1)
-    shape = (int(round((y1 - y0) / HD_RES)), int(round((x1 - x0) / HD_RES)))
-    glo30 = glodem(bounds, shape=(int(round((y1 - y0) / 30)), int(round((x1 - x0) / 30))),
-                   transform=Affine(30, 0, x0, 0, -30, y1))
-    path = Path(tempfile.gettempdir()) / "ehmap_erliebea_hd.u8"
-    band = 288                                        # rows per strip, +2 halo rows
-    hd = np.memmap(path, dtype="uint8", mode="w+", shape=(*shape, 4))
+    band = 256 if scratch else shape[0]
+    if scratch:
+        scratch.parent.mkdir(parents=True, exist_ok=True)
+        rgba = np.memmap(scratch, dtype="uint8", mode="w+", shape=(*shape, 4))
+    else:
+        rgba = np.empty((*shape, 4), "uint8")
     for r0 in range(0, shape[0], band):
         r1 = min(shape[0], r0 + band)
-        h0, h1 = max(0, r0 - 2), min(shape[0], r1 + 2)
-        st = Affine(HD_RES, 0, x0, 0, -HD_RES, y1 - h0 * HD_RES)
-        sub = (h1 - h0, shape[1])
-        # GLO-30 at 30 m, nearest-neighbour doubled onto the 15 m grid
-        g = glo30[h0 * HD_RES // 30:h1 * HD_RES // 30]
-        glo = np.repeat(np.repeat(g, 2, axis=0), 2, axis=1)[:sub[0], :shape[1]]
-        if glo.shape[0] < sub[0]:
-            glo = np.vstack([glo, np.full((sub[0] - glo.shape[0], shape[1]), np.nan, "float32")])
-        dem = gerdem((x0, y1 - h1 * HD_RES, x1, y1 - h0 * HD_RES), sub, st, HD_RES, glo)
-        hd[r0:r1] = render(dem, st, HD_RES, eh)[r0 - h0:r1 - h0]
-    hd.flush()
-    return hd, transform, shape, path
+        halo = 5 if scratch else 2                     # 5 rows cover the blur footprint
+        h0, h1 = max(0, r0 - halo), min(shape[0], r1 + halo)
+        st = Affine(res, 0, x0, 0, -res, y1 - h0 * res)
+        dem = dem_window(st, (h1 - h0, shape[1]), res)
+        rgba[r0:r1] = render(dem, st, res, eh)[r0 - h0:r1 - h0]
+    if scratch:
+        rgba.flush()
+    return rgba, transform, shape
 
 
 def tile_bounds(z: int, x: int, y: int) -> tuple[float, float, float, float]:
@@ -263,14 +251,14 @@ def main() -> None:
     bounds = frame(eh)
     print(f" · frame: {bounds[0]:.0f},{bounds[1]:.0f} – {bounds[2]:.0f},{bounds[3]:.0f} ({CRS})")
 
-    coarse, coarse_t = relief(RES, bounds, eh)
-    print(f" · composed {coarse.shape[1]}×{coarse.shape[0]} relief at {RES} m "
+    coarse, coarse_t, coarse_shape = relief(bounds, eh, RES)
+    print(f" · composed {coarse_shape[1]}×{coarse_shape[0]} relief at {RES} m "
           f"for z{ZMIN}-{HD_Z - 1} ({time.time() - t0:.0f} s)")
-    hd, hd_t, hd_shape, hd_path = relief_hd(bounds, eh)
+    hd, hd_t, hd_shape = relief(bounds, eh, HD_RES, scratch=SCRATCH)
     print(f" · composed {hd_shape[1]}×{hd_shape[0]} relief at {HD_RES} m "
           f"for z{HD_Z}-{ZMAX} ({time.time() - t0:.0f} s)")
 
-    min_lon, min_lat, max_lon, max_lat = mercator_bounds(coarse_t, coarse.shape[:2])
+    min_lon, min_lat, max_lon, max_lat = mercator_bounds(coarse_t, coarse_shape)
     count = 0
     with OUT.open("wb") as f:
         wr = Writer(f)
@@ -283,8 +271,7 @@ def main() -> None:
                 return max(0, min(n - 1, int((1 - math.asinh(math.tan(math.radians(la))) / math.pi) / 2 * n)))
             x0, x1 = tx(min_lon), tx(math.nextafter(max_lon, min_lon))
             y0, y1 = ty(max_lat), ty(math.nextafter(min_lat, max_lat))
-            hd_level = z >= HD_Z
-            src, src_t, res = (hd, hd_t, HD_RES) if hd_level else (coarse, coarse_t, RES)
+            src, src_t, res = (hd, hd_t, HD_RES) if z >= HD_Z else (coarse, coarse_t, RES)
             for x in range(x0, x1 + 1):
                 for y in range(y0, y1 + 1):
                     dst = warp_tile(src, src_t, res, z, x, y)
@@ -298,7 +285,13 @@ def main() -> None:
                         # transparent placeholder they all share.
                         img = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
                     buf = io.BytesIO()
-                    img.save(buf, "WEBP", quality=85, method=4)
+                    img.save(buf, "WEBP", quality=85, method=6)
+                    if len(buf.getvalue()) < FLAT_BYTES:
+                        # A low-entropy tile (a valley floor, a calm sea horizon) is cheap
+                        # even at high quality, and at q85 WebP flattens its gradient into
+                        # visible 16 px blocks with straight edges.
+                        buf = io.BytesIO()
+                        img.save(buf, "WEBP", quality=95, method=6)
                     wr.write_tile(zxy_to_tileid(z, x, y), buf.getvalue())
                     count += 1
             print(f" · z{z}: cumulated {count} tiles ({(time.time() - t0):.0f} s)")
@@ -315,13 +308,13 @@ def main() -> None:
             {
                 "name": "erliebea",
                 "description": "ehmap: shaded relief and hypsometric colour of Euskal Herria",
-                "attribution": "Relief: GEM-15, produced by Google (CC BY 4.0) — "
-                               "inland water bodies filled from Copernicus WorldDEM-30: "
-                               "© DLR e.V. 2010-2014, © Airbus Defence and Space GmbH 2014-2018",
+                "attribution": "Relief: 5 m LiDAR bare-earth DTMs — PNOA-LiDAR MDT05, "
+                               "© IGN España (CC BY 4.0) and RGE ALTI®, © IGN France "
+                               "(Licence Ouverte 2.0)",
             },
         )
     del hd
-    hd_path.unlink(missing_ok=True)
+    SCRATCH.unlink(missing_ok=True)
     print(f" · {OUT.name}: {OUT.stat().st_size / 1e6:.1f} MB, {count} tiles, "
           f"z{ZMIN}-{ZMAX}, {(time.time() - t0):.0f} s")
 

@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.9.0 — 2026-11-19
+
+Erliebea now shades the map from the **national LiDAR bare-earth DTMs at 5 m**, so the
+relief is a genuine survey of the ground rather than a 15 m photogrammetric estimate —
+and the French Basque country stops being the soft spot it was.
+
+- **One 5 m LiDAR DTM across the whole map** (`scripts/00_download.py` →
+  `data/raw/lidar/eh_lidar_5m.tif`, 679 MB, 51 000 × 41 000): PNOA-LiDAR **MDT05** south of
+  the Bidasoa (IGN España, CC BY 4.0) fetched as 20 km WCS windows on our own EPSG:25830
+  grid, and **RGE ALTI®** north of it (IGN France, Licence Ouverte 2.0) decoded from the
+  Géoplateforme's `terrainrgb` PNG tiles — no 10 GB archive to unpack. Both store water as
+  a flat value, so `<= 0` is the sea, and blocks merge rather than overwrite so the two
+  triangulations meet cleanly: the largest step across the border is 4 m, invisible here.
+- **5 m everywhere it shows**: zooms 5–10 keep the printed 100 m grid, 11–13 are composed
+  at the LiDAR's own 5 m (a z13 tile is 18 m per pixel). Anboto's crags and gullies gain
+  roughly three times the detail; Iparralde gains it from nothing.
+- **Two artifacts found and fixed on the way**: PNOA stores whole metres, which on gentle
+  ground rounds into flat facets separated by one-cell cliffs — a sub-cell normalised blur
+  (σ 0.8) restores a continuous surface without touching landforms; and WebP at q85 puts
+  up to 8/255 of error into low-entropy tiles (valley floors), so tiles that encode under
+  5 KB are re-encoded at q95 (3.3/255).
+- `site/data/erliebea.pmtiles`: 23 → **34 MB**, same 5 428 tiles, still lazy-loaded. Legend
+  credit reads "Erliebea: LiDAR 5 m · PNOA / RGE ALTI"; the archive metadata and
+  `ATTRIBUTION.md` carry both licences.
+- GEM-15 is dropped (it was the v0.8.0 stopgap); the elevation figures the atlas quotes
+  still come from Copernicus GLO-30.
+
+Assets changed: `scripts/00_download.py`, `scripts/12_relief_tiles.py`,
+`site/data/erliebea.pmtiles`, `site/mapa.html`, `site/mapa.js`, `ATTRIBUTION.md`.
+
 ## v0.8.0 — 2026-11-18
 
 Erliebea gets **high-definition relief** where it matters: the map now draws its own
