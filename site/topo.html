@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="eu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probako orria — topografia · ehmap</title>
+<meta name="robots" content="noindex">
+<meta name="description" content="ehmap-en proba: IGN estiloko orri topografikoa, LiDAR eredutik marraztua.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; background: var(--paper); }
+  header.test {
+    display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline;
+    padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--card);
+  }
+  header.test h1 { font-size: 1rem; margin: 0; letter-spacing: .01em; }
+  header.test p { margin: 0; font-size: .82rem; color: var(--ink-soft); }
+  header.test .badge {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+    border: 1px solid var(--rule); border-radius: 999px; padding: .1rem .5rem;
+    color: var(--accent); border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+  #topo { flex: 1 1 auto; min-height: 0; }
+  .legend {
+    position: absolute; left: 12px; bottom: 34px; z-index: 2;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 8px;
+    padding: .6rem .7rem; font-size: .74rem; line-height: 1.35; max-width: 15rem;
+    box-shadow: 0 1px 6px rgb(0 0 0 / .12);
+  }
+  .legend h2 { font-size: .74rem; margin: 0 0 .35rem; letter-spacing: .06em; text-transform: uppercase; }
+  .legend .ramp { height: 10px; border-radius: 3px; border: 1px solid var(--rule); margin: .1rem 0 .15rem; }
+  .legend .ticks { display: flex; justify-content: space-between; color: var(--ink-soft); font-size: .68rem; }
+  .legend .row { display: flex; align-items: center; gap: .4rem; margin-top: .3rem; }
+  .legend .swatch { width: 26px; height: 0; border-top: 2px solid #6E3D24; }
+  .legend .swatch.thin { border-top: 1px solid #C79A78; }
+  .legend .swatch.rock { border: 0; width: 26px; height: 10px;
+    background: repeating-linear-gradient(65deg, #6B6157 0 1px, transparent 1px 4px); }
+  .legend .credit { margin-top: .45rem; color: var(--ink-soft); font-size: .66rem; }
+  @media (prefers-color-scheme: dark) {
+    .legend { box-shadow: 0 1px 6px rgb(0 0 0 / .5); }
+  }
+</style>
+</head>
+<body>
+<header class="test">
+  <h1>Orri topografikoa — proba</h1>
+  <span class="badge">lana egiten</span>
+  <p>IGN estiloko lehen zirriborroa: 5 m-ko LiDAR eredua, kurba-maiztasuna zoomen arabera.
+     Oraindik ez du bideak, ura ezta izenik ere.</p>
+</header>
+
+<div id="topo"></div>
+
+<div class="legend" id="legend" hidden>
+  <h2>Garaiera</h2>
+  <div class="ramp" id="ramp"></div>
+  <div class="ticks"><span>0 m</span><span>1.000</span><span>2.000 m</span></div>
+  <div class="row"><span class="swatch thin"></span><span id="eq">Kurba arrunta</span></div>
+  <div class="row"><span class="swatch"></span><span>Kurba nagusia (5.a)</span></div>
+  <div class="row"><span class="swatch rock"></span><span>Haitzak (malda &gt; 50°)</span></div>
+  <div class="credit">Erliebea: PNOA-LiDAR (IGN España) · RGE ALTI (IGN France)</div>
+</div>
+
+<script src="vendor/maplibre-gl.js"></script>
+<script src="vendor/pmtiles.js"></script>
+<script>
+(() => {
+  "use strict";
+  const DARK = matchMedia("(prefers-color-scheme: dark)").matches;
+  const SEA = DARK ? "#22272A" : "#DCE3E1";
+  const TINT = [
+    [0, "#F4F4E3"], [150, "#EAEED0"], [300, "#E6E6BD"], [500, "#E3DCAA"],
+    [700, "#E2D096"], [900, "#E0C282"], [1100, "#DEB36E"], [1300, "#DCA158"],
+    [1500, "#D68D46"], [1800, "#C5783B"], [2100, "#A86334"], [2400, "#8C502E"],
+  ];
+  const CONTOURS = { 11: 100, 12: 50, 13: 20, 14: 10 };
+
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocol.tile);
+
+  const map = new maplibregl.Map({
+    container: "topo",
+    style: {
+      version: 8,
+      glyphs: "fonts/glyphs/{fontstack}/{range}.pbf",
+      sources: {},
+      layers: [{ id: "sea", type: "background", paint: { "background-color": SEA } }],
+    },
+    bounds: [-3.35, 42.05, -0.55, 43.55],
+    fitBoundsOptions: { padding: 24 },
+    maxZoom: 13,
+    attributionControl: false,
+  });
+  window.ehmap = map;
+
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+  map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
+  map.addControl(new maplibregl.AttributionControl({
+    compact: true,
+    customAttribution: "Erliebea: 5 m LiDAR — PNOA-LiDAR MDT05 © IGN España (CC BY 4.0) · "
+                     + "RGE ALTI® © IGN France (Licence Ouverte 2.0)",
+  }));
+
+  map.on("load", () => {
+    map.addSource("topo", {
+      type: "raster", url: "pmtiles://data/topo.pmtiles", tileSize: 256,
+      attribution: "PNOA-LiDAR · RGE ALTI",
+    });
+    // the raster is transparent over the sea: keep it under nothing else
+    map.addLayer({ id: "topo", type: "raster", source: "topo",
+                   paint: { "raster-opacity": 1, "raster-fade-duration": 120 } });
+
+    const legend = document.getElementById("legend");
+    legend.hidden = false;
+    document.getElementById("ramp").style.background =
+      "linear-gradient(to right," + TINT.map(([z, c]) => `${c} ${(z / 2400 * 100).toFixed(1)}%`).join(",") + ")";
+    const setEq = () => {
+      const z = Math.round(Math.min(13, map.getZoom()));
+      document.getElementById("eq").textContent =
+        `Kurba arrunta: ${CONTOURS[Math.min(13, Math.max(11, z))]} m`;
+    };
+    setEq();
+    map.on("zoom", setEq);
+  });
+
+  // deep links: #zoom/lat/lon, as on mapa.html
+  const applyHash = () => {
+    const m = /^#(\d+(?:\.\d+)?)\/([-\d.]+)\/([-\d.]+)$/.exec(location.hash);
+    if (m) map.jumpTo({ center: [+m[3], +m[2]], zoom: +m[1] });
+  };
+  applyHash();
+  map.on("moveend", () => {
+    const c = map.getCenter();
+    history.replaceState(null, "", `#${map.getZoom().toFixed(2)}/${c.lat.toFixed(4)}/${c.lng.toFixed(4)}`);
+  });
+})();
+</script>
+</body>
+</html>
