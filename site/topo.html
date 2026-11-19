@@ -38,6 +38,9 @@
   .legend .swatch.thin { border-top: 1px solid #C79A78; }
   .legend .swatch.rock { border: 0; width: 26px; height: 10px;
     background: repeating-linear-gradient(65deg, #6B6157 0 1px, transparent 1px 4px); }
+  .legend .swatch.path { border-top: 1.5px dashed #4A4137; }
+  .legend .swatch.track { border-top: 1.5px dashed #9A7550; }
+  .legend .swatch.gr { border-top: 3px dashed #C4362E; }
   .legend .credit { margin-top: .45rem; color: var(--ink-soft); font-size: .66rem; }
   @media (prefers-color-scheme: dark) {
     .legend { box-shadow: 0 1px 6px rgb(0 0 0 / .5); }
@@ -48,8 +51,8 @@
 <header class="test">
   <h1>Orri topografikoa — proba</h1>
   <span class="badge">lana egiten</span>
-  <p>IGN estiloko lehen zirriborroa: 5 m-ko LiDAR eredua, kurba-maiztasuna zoomen arabera.
-     Oraindik ez du bideak, ura ezta izenik ere.</p>
+  <p>IGN estiloko zirriborroa: 5 m-ko LiDAR erliebea, kurba-maiztasuna zoomen arabera,
+     eta OSM-ko bide-sarea. Oraindik ez du urik ezta izenik ere.</p>
 </header>
 
 <div id="topo"></div>
@@ -61,7 +64,11 @@
   <div class="row"><span class="swatch thin"></span><span id="eq">Kurba arrunta</span></div>
   <div class="row"><span class="swatch"></span><span>Kurba nagusia (5.a)</span></div>
   <div class="row"><span class="swatch rock"></span><span>Haitzak (malda &gt; 50°)</span></div>
-  <div class="credit">Erliebea: PNOA-LiDAR (IGN España) · RGE ALTI (IGN France)</div>
+  <div class="row"><span class="swatch path"></span><span>Bidea (oinezko bidea)</span></div>
+  <div class="row"><span class="swatch track"></span><span>Pista</span></div>
+  <div class="row"><span class="swatch gr"></span><span>GR / PR ibilbide markatua</span></div>
+  <div class="credit">Erliebea: PNOA-LiDAR (IGN España) · RGE ALTI (IGN France)<br>
+     Bideak: © OpenStreetMap contributors (ODbL)</div>
 </div>
 
 <script src="vendor/maplibre-gl.js"></script>
@@ -100,7 +107,8 @@
   map.addControl(new maplibregl.AttributionControl({
     compact: true,
     customAttribution: "Erliebea: 5 m LiDAR — PNOA-LiDAR MDT05 © IGN España (CC BY 4.0) · "
-                     + "RGE ALTI® © IGN France (Licence Ouverte 2.0)",
+                     + "RGE ALTI® © IGN France (Licence Ouverte 2.0) · "
+                     + "Bideak: © OpenStreetMap contributors (ODbL)",
   }));
 
   map.on("load", () => {
@@ -111,6 +119,64 @@
     // the raster is transparent over the sea: keep it under nothing else
     map.addLayer({ id: "topo", type: "raster", source: "topo",
                    paint: { "raster-opacity": 1, "raster-fade-duration": 120 } });
+
+    // --- ODbL: OpenStreetMap trails, in their own archive -------------------
+    map.addSource("bideak", { type: "vector", url: "pmtiles://data/bideak.pmtiles" });
+    const dash = (a) => ({ "line-dasharray": a });
+    // tracks: firm, solid — the walkable backbone
+    map.addLayer({ id: "trails-track", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 11,
+      filter: ["all", ["==", ["get", "highway"], "track"], ["!=", ["get", "route_net"], "nwn"]],
+      paint: { "line-color": "#9A7550", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.8, 13, 1.7],
+               "line-opacity": 0.9, ...dash([5, 2]) } });
+    // footpaths: dashed, darker
+    for (const cls of ["path", "footway", "bridleway"]) {
+      map.addLayer({ id: `trails-${cls}`, type: "line", source: "bideak", "source-layer": "trails",
+        minzoom: 12,
+        filter: ["all", ["==", ["get", "highway"], cls], ["!=", ["get", "route_net"], "nwn"]],
+        paint: { "line-color": "#4A4137", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.95, 14, 1.5],
+                 ...dash([2.5, 2]) } });
+    }
+    map.addLayer({ id: "trails-steps", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 13, filter: ["==", ["get", "highway"], "steps"],
+      paint: { "line-color": "#4A4137", "line-width": 1.2, ...dash([1, 1.5]) } });
+    // hard ground, where OSM records a difficulty
+    map.addLayer({ id: "trails-hard", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 12,
+      filter: ["all", ["in", ["get", "sac_scale"], ["literal", ["alpine_hiking", "demanding_alpine_hiking",
+                                                               "difficult_alpine_hiking"]]],
+               ["!=", ["get", "route_net"], "nwn"]],
+      paint: { "line-color": "#8C3B2F", "line-width": 1.1, ...dash([1.5, 1.5]) } });
+    // marked itineraries: white blaze under a red (GR) or yellow (PR) dash
+    const marked = ["in", ["get", "route_net"], ["literal", ["iwn", "nwn", "rwn", "lwn"]]];
+    map.addLayer({ id: "routes-blaze", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 11, filter: marked,
+      paint: { "line-color": "#FBFAF5", "line-width": 3.2, "line-opacity": 0.9 } });
+    map.addLayer({ id: "routes-gr", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 11, filter: ["in", ["get", "route_net"], ["literal", ["iwn", "nwn"]]],
+      paint: { "line-color": "#C4362E", "line-width": 3.2, ...dash([2, 2]) } });
+    map.addLayer({ id: "routes-pr", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 12, filter: ["in", ["get", "route_net"], ["literal", ["rwn", "lwn"]]],
+      paint: { "line-color": "#E0A32E", "line-width": 3.0, ...dash([2, 2]) } });
+    // trail-side points
+    const poi = (id, filt, colour, r) => map.addLayer({ id, type: "circle", source: "bideak",
+      "source-layer": "pois", minzoom: 12, filter: filt,
+      paint: { "circle-radius": r, "circle-color": colour, "circle-stroke-color": "#FBFAF5",
+               "circle-stroke-width": 1.2 } });
+    poi("poi-hut", ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], "#7A2E24", 4.6);
+    poi("poi-camp", ["==", ["get", "tourism"], "camp_site"], "#4C6B3C", 3.4);
+    poi("poi-view", ["==", ["get", "tourism"], "viewpoint"], "#B5573C", 3.4);
+    poi("poi-shelter", ["==", ["get", "amenity"], "shelter"], "#6B5B4A", 3.2);
+    poi("poi-spring", ["==", ["get", "natural"], "spring"], "#3D7FC1", 2.6);
+
+    map.addLayer({ id: "poi-label", type: "symbol", source: "bideak", "source-layer": "pois",
+      minzoom: 13,
+      filter: ["all", ["has", "name"],
+               ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut", "camp_site"]]]],
+      layout: { "text-field": ["get", "name"], "text-font": ["OpenSansRegular"],
+                "text-size": 10.5, "text-offset": [0, 0.9], "text-anchor": "top",
+                "text-max-width": 8, "text-optional": true },
+      paint: { "text-color": "#3A3128", "text-halo-color": "#FBFAF5", "text-halo-width": 1.3 } });
 
     const legend = document.getElementById("legend");
     legend.hidden = false;
