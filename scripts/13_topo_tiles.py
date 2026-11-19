@@ -34,6 +34,7 @@ import rasterio
 from PIL import Image
 from rasterio.enums import Resampling
 from rasterio.transform import Affine
+from rasterio.transform import from_bounds
 from rasterio.warp import reproject
 
 from pmtiles.tile import Compression, TileType, zxy_to_tileid
@@ -162,14 +163,14 @@ def render(dem: np.ndarray, px_m: float, interval: float, every: int,
            origin: tuple[int, int] = (0, 0), *, with_rock: bool = True) -> np.ndarray:
     """One sheet at output resolution: tints x shade, contours, hachures, sea clear."""
     from scipy.ndimage import gaussian_filter
-    size = dem.shape[0]
+    h, w = dem.shape
     sea = ~np.isfinite(dem)
     tint = tint_of(dem)
     if shade_src is None:
         shade = hillshade(dem, px_m)
     else:                                  # finer-grid shade, box-filtered down
         sh = Image.fromarray(hillshade(shade_src, shade_px).astype("float32"), mode="F")
-        shade = np.array(sh.resize((size, size), Image.BOX))
+        shade = np.array(sh.resize((w, h), Image.BOX))
     rgb = tint * ((1 - SHADE_K) + SHADE_K * shade[..., None])
 
     dem_c = gaussian_filter(np.nan_to_num(dem, nan=np.nanmedian(dem)), CONTOUR_SMOOTH)
@@ -277,6 +278,16 @@ def tile_bbox(z: int, x: int, y: int) -> tuple[float, float, float, float]:
     return min(xs), min(ys), max(xs), max(ys)
 
 
+def mercator_box(z: int, x: int, y: int, pad_m: float) -> tuple[float, float, float, float]:
+    """EPSG:3857 extent of a tile, grown by `pad_m` on every side."""
+    n = 2 ** z
+    world = 2 * 20037508.342789244
+    side = world / n
+    left = -20037508.342789244 + x * side
+    top = 20037508.342789244 - y * side
+    return left - pad_m, top - side - pad_m, left + side + pad_m, top + pad_m
+
+
 def mercator_to_lonlat_bounds(z: int, x: int, y: int):
     n = 2 ** z
     lon0, lon1 = x / n * 360 - 180, (x + 1) / n * 360 - 180
@@ -341,13 +352,38 @@ def main() -> None:
                 for y in range(y0, y1 + 1):
                     bb = tile_bbox(z, x, y)
                     px_m = (bb[2] - bb[0]) / TILE
+                    # a mercator tile is a rotated quad in UTM (meridian convergence),
+                    # so window the cache on the *transformed* padded box: mixing a
+                    # mercator halo with a UTM window starves the tile edges of source
+                    from pyproj import Transformer
                     pad = PAD * px_m
-                    wide = (bb[0] - pad, bb[1] - pad, bb[2] + pad, bb[3] + pad)
-                    dem_t = sample(dem, res, bounds, wide, TILE + 2 * PAD)
-                    if not np.isfinite(dem_t).any():
+                    inv = Transformer.from_crs("EPSG:3857", CRS, always_xy=True)
+                    mbox = mercator_box(z, x, y, pad)
+                    xs_, ys_ = inv.transform([mbox[0], mbox[2], mbox[0], mbox[2]],
+                                             [mbox[1], mbox[1], mbox[3], mbox[3]])
+                    c0 = max(0, int((min(xs_) - bounds[0]) / res) - 1)
+                    r0 = max(0, int((bounds[3] - max(ys_)) / res) - 1)
+                    c1 = min(shape[1], int((max(xs_) - bounds[0]) / res) + 2)
+                    r1 = min(shape[0], int((bounds[3] - min(ys_)) / res) + 2)
+                    if c1 - c0 < 3 or r1 - r0 < 3:
                         continue
-                    # shade from a 2x finer grid: texture without tile-dependent seams
-                    fine = sample(dem, res, bounds, wide, 2 * (TILE + 2 * PAD))
+                    src = np.array(dem[r0:r1, c0:c1])
+                    if not (src > 0).any():
+                        continue
+                    src[src <= 0] = np.nan
+                    st = Affine(res, 0, bounds[0] + c0 * res, 0, -res, bounds[3] - r0 * res)
+                    box = TILE + 2 * PAD
+                    dst_tr = from_bounds(*mercator_box(z, x, y, pad * 1.0), box, box)
+                    dem_t = np.full((box, box), np.nan, "float32")
+                    reproject(src, dem_t, src_transform=st, src_crs=CRS, dst_transform=dst_tr,
+                              dst_crs="EPSG:3857", dst_nodata=np.nan,
+                              resampling=Resampling.bilinear)
+                    fine = np.full((2 * box, 2 * box), np.nan, "float32")
+                    reproject(src, fine, src_transform=st, src_crs=CRS,
+                              dst_transform=from_bounds(*mercator_box(z, x, y, pad),
+                                                        2 * box, 2 * box),
+                              dst_crs="EPSG:3857", dst_nodata=np.nan,
+                              resampling=Resampling.bilinear)
                     big = render(dem_t, px_m, interval, every,
                                  shade_src=fine, shade_px=px_m / 2,
                                  origin=(x * TILE - PAD, y * TILE - PAD))
