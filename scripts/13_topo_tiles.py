@@ -44,7 +44,7 @@ OUT = ROOT / "site" / "data" / "topo.pmtiles"
 LIDAR_TIF = ROOT / "data" / "raw" / "lidar" / "eh_lidar_5m.tif"
 CRS = "EPSG:25830"
 TILE = 256
-ZMIN, ZMAX = 11, 13
+ZMIN, ZMAX = 10, 13
 
 # --- the sheet's palette -------------------------------------------------
 TINT = [                      # hypsometric tints, metres -> colour (IGN-like)
@@ -64,7 +64,7 @@ PAD = 20                      # tile pixels of halo: must exceed the blur suppor
 # --- equidistance per zoom (m) and the index rule ---------------------------------
 # IGN equips 1:50 000 with 20 m contours and a 100 m index, 1:100 000 with 50 m.
 # z13 is about 1:54 000 on a 96 dpi screen, z12 about 1:108 000, z11 about 1:216 000.
-CONTOURS = {11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5), 15: (10, 5)}
+CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5)}
 # line half-widths in pixels: printed sheets draw contours at about 0.1 mm, which is
 # 0.4 px on screen — thick enough to read, thin enough not to merge on steep ground
 CONTOUR_PX, INDEX_PX = 0.30, 0.75

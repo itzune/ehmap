@@ -76,7 +76,7 @@
     [700, "#E2D096"], [900, "#E0C282"], [1100, "#DEB36E"], [1300, "#DCA158"],
     [1500, "#D68D46"], [1800, "#C5783B"], [2100, "#A86334"], [2400, "#8C502E"],
   ];
-  const CONTOURS = { 11: 100, 12: 50, 13: 20, 14: 10 };
+  const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20 };
 
   const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -89,9 +89,8 @@
       sources: {},
       layers: [{ id: "sea", type: "background", paint: { "background-color": SEA } }],
     },
-    bounds: [-3.35, 42.05, -0.55, 43.55],
-    fitBoundsOptions: { padding: 24 },
-    maxZoom: 13,
+    center: [-1.75, 42.95], zoom: 10.6,
+    minZoom: 10, maxZoom: 13,
     attributionControl: false,
   });
   window.ehmap = map;
@@ -120,7 +119,7 @@
     const setEq = () => {
       const z = Math.round(Math.min(13, map.getZoom()));
       document.getElementById("eq").textContent =
-        `Kurba arrunta: ${CONTOURS[Math.min(13, Math.max(11, z))]} m`;
+        `Kurba arrunta: ${CONTOURS[Math.min(13, Math.max(10, z))]} m`;
     };
     setEq();
     map.on("zoom", setEq);
