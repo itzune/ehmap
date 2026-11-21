@@ -25,6 +25,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # Tile archives over GitHub's 100 MB push limit live as assets of the `tiles`
+      # release, not in git; they are copied into the site here, so the browser
+      # reads them from Pages like any other file (release downloads send no CORS
+      # headers, so a page cannot read them directly). After replacing an asset,
+      # re-run this workflow: `gh workflow run pages.yml`.
+      - name: Fetch large tile archives from the tiles release
+        # a missing release must not take the whole site down with the test page
+        run: |
+          gh release download tiles --repo "$GITHUB_REPOSITORY" --pattern '*.pmtiles' \
+            --dir site/data --clobber \
+            || echo "::warning::tiles release not found: topo.html is deployed without its sheet"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased
+
+The topographic test page (`site/topo.html`, still unlinked) gains a zoom and a redrawn sheet.
+
+- **Zoom 14, with 10 m contours.** The sheet is now baked for z10–14 from a 5 m DEM cache
+  (it was z10–13 from 10 m). MapLibre counts zooms on 512 px tiles, so the sheet's z14 is
+  pixel for pixel at map zoom 13 and the page lets you go two zooms past it (15), stretched.
+  The legend's "Kurba arrunta" was one zoom off for the same reason and now names the
+  equidistance actually on screen.
+- **Contours that read as contours.** Intermediate curves were almost invisible (0.6 px,
+  pale); they are darker and 1 px wide. Where they would merge into a brown wash (under
+  1.6 px apart) they fade out and the index curves carry the slope, as on a printed sheet.
+- **Rock is an area, not a ladder.** Steep ground (> 45°) is measured on the unsmoothed
+  fine grid instead of the blurred contour surface, where a cliff shrank to a one-pixel
+  thread with a row of ticks on it. It is drawn as greyed ground under antialiased,
+  jittered fall-line strokes; contours fade inside it.
+- **Lighter high ground.** The tints above 1 100 m were dark enough to drown the contours
+  in the Pyrenees; the ramp now stays light to the top.
+- **Low zooms average the ground** instead of point-sampling it, on blocks anchored to the
+  DEM grid so neighbouring tiles agree along their shared edge.
+- **Build**: tiles are rendered by a process pool (`--jobs`, ~14 min for 21 644 tiles on
+  six workers), written to a `.part` file so a failed build keeps the old archive, and
+  `--keep-cache` keeps the 8 GB DEM scratch for restyling.
+- **Page**: GR / PR references along the itineraries, line and point sizes that follow the
+  zoom, a collapsible legend (folded on phones) that now lists every symbol on the map,
+  panning limited to the sheet's frame. A PR route's white blaze no longer shows one zoom
+  before its yellow dash.
+- **Hosting**: `site/data/topo.pmtiles` (~310 MB) is over GitHub's 100 MB push limit and
+  leaves git; it is an asset of the `tiles` release, which the Pages workflow copies into
+  the site before deploying (a missing release is a warning, not a failed deploy).
+
 ## v0.9.1 — 2026-11-17
 
 Fixes to the 5 m LiDAR relief of v0.9.0, and to the topographic test page.

@@ -9,7 +9,12 @@ data/raw/
 # Scratch output (published maps go to dist/)
 out/
 
+# Tile archives over the 100 MB push limit: assets of the `tiles` release, copied
+# into the site by .github/workflows/pages.yml (see scripts/13_topo_tiles.py)
+site/data/topo.pmtiles
+
 # Large / binary outputs are published as GitHub Release assets (scripts/release.sh)
 ehmap.rgis
 dist/**/*.tif
 dist/sea/sea_level_annual.csv
+site/data/*.part
