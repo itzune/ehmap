@@ -2,8 +2,19 @@
 
 ## Unreleased
 
-The topographic test page (`site/topo.html`, still unlinked) gains a zoom and a redrawn sheet.
+The topographic test page (`site/topo.html`, still unlinked) becomes a full hiking sheet in
+the manner of IGN's TOP 25 *cartes de randonnée*.
 
+- **An IGN palette.** The hypsometric tints are gone: open ground is white paper, woodland
+  a light green (ESA WorldCover 2021 tree cover, smoothed to wood edges), the hillshade a
+  soft grey that only darkens shaded slopes, contours orange. Marked itineraries are a
+  translucent magenta overprint with the path showing through (GR wider than PR), tracks a
+  thin black line, paths black dashes, tourist points magenta, water cyan.
+- **Water, roads, rail and names** (`scripts/15_topo_osm.py` → `site/data/topo_osm.pmtiles`,
+  18.6 MB, ODbL): lakes and reservoirs, rivers and streams with their names, the road
+  network cased and coloured by rank with road numbers, railways, cities to hamlets, and
+  9 686 named summits and passes with their heights (at low zooms only the highest of each
+  ~5 km cell). Names prefer `name:eu`.
 - **Zoom 14, with 10 m contours.** The sheet is now baked for z10–14 from a 5 m DEM cache
   (it was z10–13 from 10 m). MapLibre counts zooms on 512 px tiles, so the sheet's z14 is
   pixel for pixel at map zoom 13 and the page lets you go two zooms past it (15), stretched.
@@ -16,8 +27,6 @@ The topographic test page (`site/topo.html`, still unlinked) gains a zoom and a 
   fine grid instead of the blurred contour surface, where a cliff shrank to a one-pixel
   thread with a row of ticks on it. It is drawn as greyed ground under antialiased,
   jittered fall-line strokes; contours fade inside it.
-- **Lighter high ground.** The tints above 1 100 m were dark enough to drown the contours
-  in the Pyrenees; the ramp now stays light to the top.
 - **Low zooms average the ground** instead of point-sampling it, on blocks anchored to the
   DEM grid so neighbouring tiles agree along their shared edge.
 - **Build**: tiles are rendered by a process pool (`--jobs`, ~14 min for 21 644 tiles on
@@ -27,7 +36,7 @@ The topographic test page (`site/topo.html`, still unlinked) gains a zoom and a 
   zoom, a collapsible legend (folded on phones) that now lists every symbol on the map,
   panning limited to the sheet's frame. A PR route's white blaze no longer shows one zoom
   before its yellow dash.
-- **Hosting**: `site/data/topo.pmtiles` (~310 MB) is over GitHub's 100 MB push limit and
+- **Hosting**: `site/data/topo.pmtiles` (~410 MB) is over GitHub's 100 MB push limit and
   leaves git; it is an asset of the `tiles` release, which the Pages workflow copies into
   the site before deploying (a missing release is a warning, not a failed deploy).
 

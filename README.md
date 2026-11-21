@@ -396,7 +396,7 @@ scripts/release.sh vX.Y.Z                        # publish a GitHub Release (mai
 
 The website is plain HTML/CSS in [`site/`](site/), published to GitHub Pages by
 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on every push to `site/`. Tile
-archives over GitHub's 100 MB push limit (`site/data/topo.pmtiles`, ~310 MB) are not in git:
+archives over GitHub's 100 MB push limit (`site/data/topo.pmtiles`, ~410 MB) are not in git:
 they are assets of the [`tiles`](https://github.com/itzune/ehmap/releases/tag/tiles) release,
 which the workflow copies into the site before deploying. After rebuilding one, run
 `gh release upload tiles site/data/topo.pmtiles --clobber` and `gh workflow run pages.yml`

@@ -65,6 +65,18 @@ tree cover (ESA WorldCover, CC BY 4.0), warming between climate normals (ERA5-La
 CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevation row above
 and `dist/elevation/LICENSE.md`).
 
+The topographic test page (`site/topo.html`) reads three more archives. `topo.pmtiles`
+(~410 MB, zooms 10–14, an asset of the `tiles` release rather than a file in git) is drawn by
+`scripts/13_topo_tiles.py` from the 5 m LiDAR mosaic — PNOA-LiDAR MDT05, © IGN España
+(CC BY 4.0) and RGE ALTI®, © IGN France (Licence Ouverte 2.0) — and from ESA WorldCover
+2021 tree cover (© ESA WorldCover project, CC BY 4.0; reprojected to EPSG:25830, reduced
+to a tree / no-tree mask and smoothed). `bideak.pmtiles` (trails, marked itineraries,
+trail-side points; `scripts/14_bideak.py`) and `topo_osm.pmtiles` (water, roads, railways,
+place names, summits; `scripts/15_topo_osm.py`) are derived from OpenStreetMap via the
+Overpass API: © OpenStreetMap contributors, [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+They are kept apart from ehmap's CC BY 4.0 archives for that reason, and the page credits
+all of these sources.
+
 `site/data/erliebea.pmtiles` (34 MB, 5 428 WebP tiles, zooms 5–13) is the Erliebea theme's
 shaded-relief raster: the printed atlas's background — NW-weighted hillshade, hypsometric
 ramp, paper-toned relief ring, transparent sea — composed by `scripts/12_relief_tiles.py`,

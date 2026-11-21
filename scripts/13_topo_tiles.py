@@ -1,10 +1,11 @@
 """Topographic ("rando") raster tiles of Euskal Herria, IGN-style, for a test page.
 
-The reference is an IGN TOP 25 randonnée sheet: hypsometric tints, a soft NW
-hillshade under them, brown contours every 10 m with every fifth drawn heavier,
-and rock — a grey ground under fall-line hachures — where the ground is too steep
-to read from contours alone (there, and wherever they would merge into a wash,
-the intermediate curves fade and the index curves carry the slope).
+The reference is an IGN TOP 25 randonnée sheet: white paper for open ground, a
+light green for woodland (ESA WorldCover tree cover), a soft grey NW hillshade that
+only darkens the shaded slopes, orange contours every 10 m with every fifth drawn
+heavier, and rock — a grey ground under fall-line hachures — where the ground is
+too steep to read from contours alone (there, and wherever they would merge into a
+wash, the intermediate curves fade and the index curves carry the slope).
 This script bakes all of that into WebP tiles as site/data/topo.pmtiles, which
 site/topo.html serves as a separate, experimental map until the style is ready.
 
@@ -15,7 +16,7 @@ raster, the equidistance can follow the zoom — 200 m at z10, 100 m at z11,
 50 m at z12, 20 m at z13, 10 m at z14 — and the lines keep a constant pixel
 weight, like a printed sheet.
 
-The z10-14 archive is ~310 MB, over GitHub's 100 MB per-file push limit, so it
+The z10-14 archive is ~410 MB, over GitHub's 100 MB per-file push limit, so it
 is not committed: it is published as an asset of the `tiles` release and the
 Pages workflow downloads it into site/data/ before deploying. After a rebuild:
 
@@ -28,9 +29,8 @@ The build runs on all cores but two (--jobs) and takes about 20 minutes on eight
 
 The DEM is the same 5 m LiDAR mosaic as scripts/12_relief_tiles.py, cached for
 the tiles at 5 m when z14 is built (10 m when the build stops at z13). Stages:
-this file is stage 1 (relief + contours + rock) and scripts/14_bideak.py adds the
-trails as vectors; hydrography, roads, vegetation and names come next, from
-OpenStreetMap and ESA WorldCover.
+this file is the ground (woodland, relief, contours, rock); scripts/14_bideak.py adds
+the trails and scripts/15_topo_osm.py the water, roads, rail and names, as vectors.
 
 Iterate on the look with the preview mode, which renders one area to a PNG:
 
@@ -62,24 +62,24 @@ from pmtiles.writer import Writer
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "data" / "topo.pmtiles"
 LIDAR_TIF = ROOT / "data" / "raw" / "lidar" / "eh_lidar_5m.tif"
+WORLDCOVER = ROOT / "data" / "raw" / "worldcover"
 CRS = "EPSG:25830"
 TILE = 256
 ZMIN, ZMAX = 10, 14
 
 # --- the sheet's palette -------------------------------------------------
-TINT = [                      # hypsometric tints, metres -> colour (IGN-like); they stay
-    # light all the way up, or the contours drown in the high Pyrenees
-    (0, "#F4F4E3"), (150, "#EAEED0"), (300, "#E6E6BD"), (500, "#E4DDAC"),
-    (700, "#E4D39C"), (900, "#E4C98D"), (1100, "#E4BF80"), (1300, "#E3B575"),
-    (1500, "#E1AB6C"), (1800, "#DCA066"), (2100, "#D59662"), (2400, "#CC8D60"),
-]
-CONTOUR = "#A87A55"           # intermediate contour: lighter than the index, still a line
-INDEX = "#6E3D24"             # every fifth contour, the "master curve"
-ROCK = "#5E554C"              # hachures
-ROCK_BASE = "#DAD6CE"         # bare rock under them: the tint greys out
-ROCK_TINT = 0.6               # ... by this much where a pixel is all rock
+PAPER = "#FDFCF7"             # open ground is the paper itself, as on a TOP 25
+FOREST = "#CDE5B2"            # woodland: the sheet's light green
+CONTOUR = "#DD9154"           # intermediate contour: IGN's orange bistre, thin
+INDEX = "#C46A22"             # every fifth contour, the "master curve"
+ROCK = "#6A625A"              # hachures
+ROCK_BASE = "#DAD6CE"         # bare rock under them: the paper greys out
+ROCK_TINT = 0.45              # ... by this much where a pixel is all rock
 SEA = "#DCE3E1"
-SHADE_K = 0.22                # IGN's hillshade is softer than Erliebea's
+SHADE_K = 0.27                # shadow depth: only the shaded slopes darken, flat ground
+SHADE_FLAT = 0.707            # (this shade value) and lit slopes stay paper-white
+FOREST_RES = 10.0             # ESA WorldCover's own resolution
+FOREST_SMOOTH = 1.1           # px of blur on the tree mask: wood edges, not pixels
 CONTOUR_SMOOTH = 1.8          # cells of blur before tracing: no crinkly lines
 CONTOUR_MIN_GAP = 1.6         # px between intermediate curves under which they fade out
 ROCK_SLOPE = 45               # degrees: above this the contours stop describing ground
@@ -91,7 +91,7 @@ PAD = 20                      # tile pixels of halo: must exceed the blur suppor
 CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5)}
 # line half-widths in pixels: printed sheets draw contours at about 0.1 mm, which is
 # 0.4 px on screen — thick enough to read, thin enough not to merge on steep ground
-CONTOUR_PX, INDEX_PX = 0.48, 0.80
+CONTOUR_PX, INDEX_PX = 0.48, 0.78
 
 
 def to_rgb(hexstr: str) -> np.ndarray:
@@ -99,12 +99,58 @@ def to_rgb(hexstr: str) -> np.ndarray:
     return np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)], "float32") / 255
 
 
-def tint_of(dem: np.ndarray) -> np.ndarray:
-    """Hypsometric colour for an elevation array, as float RGB in 0..1."""
-    zs = [z for z, _ in TINT]
-    cols = np.array([to_rgb(c) for _, c in TINT])
-    flat = np.clip(np.nan_to_num(dem, nan=0.0), zs[0], zs[-1])
-    return np.dstack([np.interp(flat, zs, cols[:, i]) for i in range(3)])
+def forest_cache() -> tuple[np.memmap, tuple[float, float], tuple[int, int]]:
+    """Tree cover (ESA WorldCover class 10) over the LiDAR frame at 10 m, as a 0/1 memmap.
+
+    Built once into out/topo_forest.u8 and reused while the WorldCover tiles do not change.
+    """
+    with rasterio.open(LIDAR_TIF) as src:
+        b = src.bounds
+    shape = (int((b.top - b.bottom) / FOREST_RES), int((b.right - b.left) / FOREST_RES))
+    path = ROOT / "out" / "topo_forest.u8"
+    meta = path.with_suffix(".json")
+    tiles = sorted(WORLDCOVER.glob("*.tif"))
+    if not tiles:
+        raise SystemExit(f"no WorldCover tiles in {WORLDCOVER}: run scripts/00_download.py")
+    key = json.dumps({"bounds": list(b), "tiles": [[t.name, t.stat().st_size] for t in tiles]})
+    if (path.exists() and meta.exists() and meta.read_text() == key
+            and path.stat().st_size == shape[0] * shape[1]):
+        return np.memmap(path, dtype="uint8", mode="r", shape=shape), (b.left, b.top), shape
+    path.parent.mkdir(parents=True, exist_ok=True)
+    meta.unlink(missing_ok=True)
+    mm = np.memmap(path, dtype="uint8", mode="w+", shape=shape)
+    for r0 in range(0, shape[0], 2048):
+        rows = min(2048, shape[0] - r0)
+        tr = Affine(FOREST_RES, 0, b.left, 0, -FOREST_RES, b.top - r0 * FOREST_RES)
+        acc = np.zeros((rows, shape[1]), "uint8")
+        for t in tiles:
+            with rasterio.open(t) as src:
+                tmp = np.zeros_like(acc)
+                reproject(rasterio.band(src, 1), tmp, dst_transform=tr, dst_crs=CRS,
+                          resampling=Resampling.nearest)
+                acc |= tmp == 10
+        mm[r0:r0 + rows] = acc
+    mm.flush()
+    meta.write_text(key)
+    return mm, (b.left, b.top), shape
+
+
+def forest_at(cache, utm_box, dst_transform, dst_crs: str, shape: tuple[int, int]) -> np.ndarray:
+    """Share of tree cover (0..1) on a destination grid, averaged from the 10 m mask."""
+    mm, (fx0, fy1), fshape = cache
+    c0 = max(0, int((utm_box[0] - fx0) / FOREST_RES) - 2)
+    c1 = min(fshape[1], int((utm_box[2] - fx0) / FOREST_RES) + 3)
+    r0 = max(0, int((fy1 - utm_box[3]) / FOREST_RES) - 2)
+    r1 = min(fshape[0], int((fy1 - utm_box[1]) / FOREST_RES) + 3)
+    out = np.zeros(shape, "float32")
+    if c1 - c0 < 2 or r1 - r0 < 2:
+        return out
+    src = np.asarray(mm[r0:r1, c0:c1], "float32")
+    st = Affine(FOREST_RES, 0, fx0 + c0 * FOREST_RES, 0, -FOREST_RES, fy1 - r0 * FOREST_RES)
+    coarse = abs(dst_transform.a) * (0.73 if dst_crs != CRS else 1) > 1.5 * FOREST_RES
+    reproject(src, out, src_transform=st, src_crs=CRS, dst_transform=dst_transform,
+              dst_crs=dst_crs, resampling=Resampling.average if coarse else Resampling.bilinear)
+    return out
 
 
 def hillshade(dem: np.ndarray, res: float) -> np.ndarray:
@@ -199,19 +245,26 @@ def rock_cover(fine: np.ndarray, fine_px: float, shape: tuple[int, int]) -> np.n
 
 def render(dem: np.ndarray, px_m: float, interval: float, every: int,
            shade_src: np.ndarray | None = None, shade_px: float | None = None,
-           origin: tuple[int, int] = (0, 0), *, with_rock: bool = True) -> np.ndarray:
-    """One sheet at output resolution: tints x shade, contours, rock, sea clear."""
+           origin: tuple[int, int] = (0, 0), *, forest: np.ndarray | None = None,
+           with_rock: bool = True) -> np.ndarray:
+    """One sheet at output resolution: paper, woodland, shade, contours, rock; sea clear."""
     from scipy.ndimage import gaussian_filter
     h, w = dem.shape
     sea = ~np.isfinite(dem)
-    tint = tint_of(dem)
+    base = np.empty((h, w, 3), "float32")
+    base[:] = to_rgb(PAPER)
+    if forest is not None:
+        a = np.clip((gaussian_filter(forest, FOREST_SMOOTH) - 0.35) / 0.3, 0, 1)
+        a = (a * a * (3 - 2 * a))[..., None]
+        base = base * (1 - a) + to_rgb(FOREST) * a
     if shade_src is None:
         shade_src, shade_px = dem, px_m
         shade = hillshade(dem, px_m)
     else:                                  # finer-grid shade, box-filtered down
         sh = Image.fromarray(hillshade(shade_src, shade_px).astype("float32"), mode="F")
         shade = np.array(sh.resize((w, h), Image.BOX))
-    rgb = tint * ((1 - SHADE_K) + SHADE_K * shade[..., None])
+    # a grey shade over white paper: shadows only, so the open ground stays clean
+    rgb = base * np.clip(1 + SHADE_K * (shade[..., None] - SHADE_FLAT) / SHADE_FLAT, 0, 1)
 
     rock = None
     if with_rock:
@@ -221,7 +274,7 @@ def render(dem: np.ndarray, px_m: float, interval: float, every: int,
     if rock is not None:
         # bare rock: the tint greys out and takes a harder shade than the slopes around
         a = np.clip(rock * 1.3, 0, 1)[..., None] * ROCK_TINT
-        stone = to_rgb(ROCK_BASE) * (0.62 + 0.38 * shade[..., None])
+        stone = to_rgb(ROCK_BASE) * (0.78 + 0.22 * shade[..., None])
         rgb = rgb * (1 - a) + stone * a
 
     # the sea is 0 m: filling it with anything higher (e.g. the tile's median) would
@@ -287,7 +340,7 @@ def hachures(rgba: np.ndarray, dem: np.ndarray, rock: np.ndarray, px_m: float,
         if good:
             d.line([((x - vx + .5) * S, (y - vy + .5) * S), ((x + vx + .5) * S, (y + vy + .5) * S)],
                    fill=255, width=2)
-    a = (np.asarray(ink.resize((w, h), Image.BOX), "float32") / 255 * 0.75)[..., None]
+    a = (np.asarray(ink.resize((w, h), Image.BOX), "float32") / 255 * 0.62)[..., None]
     out = rgba.copy()
     out[..., :3] = (rgba[..., :3] * (1 - a) + to_rgb(ROCK) * 255 * a).astype("uint8")
     return out                                  # alpha untouched: nothing spills on the sea
@@ -300,7 +353,8 @@ def sheet(bounds, size: int, z: int) -> np.ndarray:
     interval, every = CONTOURS[min(z, max(CONTOURS))]
     dem = read_dem(bounds, px_m)                    # output-resolution sampling
     fine = read_dem(bounds, px_m / 2)               # finer grid for the hillshade
-    return render(dem, px_m, interval, every, shade_src=fine, shade_px=px_m / 2)
+    forest = forest_at(forest_cache(), bounds, Affine(px_m, 0, x0, 0, -px_m, y1), CRS, dem.shape)
+    return render(dem, px_m, interval, every, shade_src=fine, shade_px=px_m / 2, forest=forest)
 
 
 def measure() -> None:
@@ -381,7 +435,8 @@ def _init_worker(path: str, shape: tuple[int, int], res: float, bounds) -> None:
     from pyproj import Transformer
     _W.update(dem=np.memmap(path, dtype="float32", mode="r", shape=shape), shape=shape,
               res=res, bounds=bounds,
-              inv=Transformer.from_crs("EPSG:3857", CRS, always_xy=True))
+              inv=Transformer.from_crs("EPSG:3857", CRS, always_xy=True),
+              forest=forest_cache())
 
 
 def render_tile(zxy: tuple[int, int, int]) -> tuple[int, bytes | None]:
@@ -437,8 +492,10 @@ def render_tile(zxy: tuple[int, int, int]) -> tuple[int, bytes | None]:
                   src_nodata=np.nan, dst_nodata=np.nan, resampling=Resampling.bilinear)
         return out
 
+    forest = forest_at(_W["forest"], (min(xs_), min(ys_), max(xs_), max(ys_)),
+                       from_bounds(*mbox, box, box), "EPSG:3857", (box, box))
     big = render(warp(box), px_m, interval, every, shade_src=warp(2 * box),
-                 shade_px=px_m / 2, origin=(x * TILE - PAD, y * TILE - PAD))
+                 shade_px=px_m / 2, origin=(x * TILE - PAD, y * TILE - PAD), forest=forest)
     img = big[PAD:PAD + TILE, PAD:PAD + TILE]
     if not img[..., 3].any():
         return tid, None
@@ -488,6 +545,7 @@ def main() -> None:
     # a z14 pixel is ~7 m here, so z14 needs the LiDAR's own 5 m (an 8 GB scratch
     # memmap); up to z13 (~14 m) a 10 m cache is finer than any pixel
     dem, res, shape, scratch = build_dem_cache(bounds, res=5.0 if zmax >= 14 else 10.0)
+    forest_cache()                               # built here, once, before the workers open it
     print(f" · DEM cache {shape[1]}×{shape[0]} at {res} m ({time.time()-t0:.0f} s)", flush=True)
     min_lon, min_lat, max_lon, max_lat = relief.mercator_bounds(
         Affine(res, 0, bounds[0], 0, -res, bounds[3]), shape)

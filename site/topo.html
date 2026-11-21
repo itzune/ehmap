@@ -35,18 +35,20 @@
   .legend h2 { font-size: .7rem; margin: .55rem 0 .3rem; letter-spacing: .06em; text-transform: uppercase;
     color: var(--ink-soft); }
   .legend summary + h2 { margin-top: 0; }
-  .legend .ramp { height: 10px; border-radius: 3px; border: 1px solid var(--rule); margin: .1rem 0 .15rem; }
-  .legend .ticks { display: flex; justify-content: space-between; color: var(--ink-soft); font-size: .68rem; }
+  .legend .swatch.forest { height: 10px; border: 1px solid #A9C78C; background: #CDE5B2; }
   .legend .row { display: flex; align-items: center; gap: .4rem; margin-top: .3rem; }
-  .legend .swatch { flex: none; width: 26px; height: 0; border-top: 2px solid #6E3D24; }
-  .legend .swatch.thin { border-top: 1px solid #A87A55; }
+  .legend .swatch { flex: none; width: 26px; height: 0; border-top: 2px solid #C46A22; }
+  .legend .swatch.thin { border-top: 1px solid #DD9154; }
   .legend .swatch.rock { border: 0; width: 26px; height: 10px;
-    background: repeating-linear-gradient(65deg, #5E554C 0 1px, #DAD6CE 1px 4px); }
-  .legend .swatch.path { border-top: 1.5px dashed #4A4137; }
-  .legend .swatch.track { border-top: 1.5px dashed #9A7550; }
-  .legend .swatch.hard { border-top: 1.5px dotted #8C3B2F; }
-  .legend .swatch.gr { border-top: 3px dashed #C4362E; }
-  .legend .swatch.pr { border-top: 3px dashed #E0A32E; }
+    background: repeating-linear-gradient(65deg, #6A625A 0 1px, #E6E3DD 1px 4px); }
+  .legend .swatch.water { border-top: 2px solid #2E9BD6; }
+  .legend .swatch.road { height: 3px; border: 1px solid #4A4038; border-width: 1px 0; }
+  .legend .swatch.rail { border-top: 2px solid #2E2A26; }
+  .legend .swatch.path { border-top: 1.5px dashed #26211D; }
+  .legend .swatch.track { border-top: 1.5px solid #26211D; }
+  .legend .swatch.hard { border-top: 1.5px dotted #26211D; }
+  .legend .swatch.gr { border-top: 5px solid rgb(214 0 122 / .5); }
+  .legend .swatch.pr { border-top: 3px solid rgb(214 0 122 / .5); }
   .legend .dots { flex-wrap: wrap; gap: .15rem .6rem; margin-top: .45rem; }
   .legend .dots span { display: inline-flex; align-items: center; gap: .3rem; }
   .legend .dots i { width: 8px; height: 8px; border-radius: 50%; border: 1.2px solid #FBFAF5;
@@ -64,35 +66,39 @@
 <header class="test">
   <h1>Orri topografikoa — proba</h1>
   <span class="badge">lana egiten</span>
-  <p>IGN estiloko zirriborroa: 5 m-ko LiDAR erliebea, kurba-maiztasuna zoomen arabera
-     (10 m-raino), eta OSM-ko bide-sarea. Oraindik ez du urik, errepiderik ezta izenik ere.</p>
+  <p>IGN-ren mendi-mapen estiloko zirriborroa: 5 m-ko LiDAR erliebea (10 m-rainoko kurbak),
+     ESA WorldCover-eko basoa, eta OSM-ko ura, errepideak, bide-sarea eta izenak.</p>
 </header>
 
 <div id="topo"></div>
 
 <details class="legend" id="legend" open hidden>
   <summary>Legenda</summary>
-  <h2>Garaiera</h2>
-  <div class="ramp" id="ramp"></div>
-  <div class="ticks"><span>0 m</span><span>1.000</span><span>2.000 m</span></div>
+  <h2>Lurra</h2>
+  <div class="row"><span class="swatch forest"></span><span>Basoa</span></div>
   <div class="row"><span class="swatch thin"></span><span id="eq">Kurba arrunta</span></div>
   <div class="row"><span class="swatch"></span><span>Kurba nagusia (5.a)</span></div>
   <div class="row"><span class="swatch rock"></span><span>Haitzak (malda &gt; 45°)</span></div>
+  <div class="row"><span class="swatch water"></span><span>Ibaia, erreka, urtegia</span></div>
   <h2>Bideak</h2>
+  <div class="row"><span class="swatch road" style="background:#E8733A"></span><span>Autobia / errepide nagusia</span></div>
+  <div class="row"><span class="swatch road" style="background:#F6DC5E"></span><span>Bigarren mailako errepidea</span></div>
+  <div class="row"><span class="swatch road" style="background:#FFF"></span><span>Tokiko errepidea</span></div>
+  <div class="row"><span class="swatch rail"></span><span>Trenbidea</span></div>
   <div class="row"><span class="swatch track"></span><span>Pista</span></div>
   <div class="row"><span class="swatch path"></span><span>Bidea (oinezko bidea)</span></div>
   <div class="row"><span class="swatch hard"></span><span>Bide zaila (mendiko maila)</span></div>
   <div class="row"><span class="swatch gr"></span><span>GR ibilbide markatua</span></div>
   <div class="row"><span class="swatch pr"></span><span>PR / tokiko ibilbidea</span></div>
   <div class="row dots">
-    <span><i style="background:#7A2E24"></i>Aterpetxea</span>
-    <span><i style="background:#6B5B4A"></i>Babeslekua</span>
-    <span><i style="background:#3D7FC1"></i>Iturria</span>
-    <span><i style="background:#B5573C"></i>Begiratokia</span>
-    <span><i style="background:#4C6B3C"></i>Kanpina</span>
+    <span><i style="background:#C2006E"></i>Aterpetxea</span>
+    <span><i style="background:#3A342E"></i>Babeslekua</span>
+    <span><i style="background:#2E9BD6"></i>Iturria</span>
+    <span><i style="background:#E0559E"></i>Begiratokia</span>
+    <span><i style="background:#8A2C6B"></i>Kanpina</span>
   </div>
   <div class="credit">Erliebea: PNOA-LiDAR (IGN España) · RGE ALTI (IGN France)<br>
-     Bideak: © OpenStreetMap contributors (ODbL)</div>
+     Ura, bideak, izenak: © OpenStreetMap contributors (ODbL)</div>
 </details>
 
 <script src="vendor/maplibre-gl.js"></script>
@@ -100,13 +106,7 @@
 <script>
 (() => {
   "use strict";
-  const DARK = matchMedia("(prefers-color-scheme: dark)").matches;
-  const SEA = DARK ? "#22272A" : "#DCE3E1";
-  const TINT = [
-    [0, "#F4F4E3"], [150, "#EAEED0"], [300, "#E6E6BD"], [500, "#E4DDAC"],
-    [700, "#E4D39C"], [900, "#E4C98D"], [1100, "#E4BF80"], [1300, "#E3B575"],
-    [1500, "#E1AB6C"], [1800, "#DCA066"], [2100, "#D59662"], [2400, "#CC8D60"],
-  ];
+  const SEA = "#D3ECF8";        // the sheet is printed paper: the same in light and dark
   const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20, 14: 10 };
   // topo.pmtiles holds 256 px tiles of z10-14, and MapLibre counts zooms on 512 px
   // tiles: at map zoom z it draws the sheet's z+1. So z14 (10 m curves) is pixel for
@@ -138,7 +138,7 @@
     compact: true,
     customAttribution: "Erliebea: 5 m LiDAR — PNOA-LiDAR MDT05 © IGN España (CC BY 4.0) · "
                      + "RGE ALTI® © IGN France (Licence Ouverte 2.0) · "
-                     + "Bideak: © OpenStreetMap contributors (ODbL)",
+                     + "Ura, bideak, izenak: © OpenStreetMap contributors (ODbL)",
   }));
 
   map.on("load", () => {
@@ -150,69 +150,105 @@
     map.addLayer({ id: "topo", type: "raster", source: "topo",
                    paint: { "raster-opacity": 1, "raster-fade-duration": 120 } });
 
-    // --- ODbL: OpenStreetMap trails, in their own archive -------------------
+    // --- ODbL: OpenStreetMap, in its own archives ------------------------------
+    map.addSource("osm", { type: "vector", url: "pmtiles://data/topo_osm.pmtiles" });
     map.addSource("bideak", { type: "vector", url: "pmtiles://data/bideak.pmtiles" });
     const dash = (a) => ({ "line-dasharray": a });
-    // tracks: firm, solid — the walkable backbone
+    const zw = (...stops) => ["interpolate", ["exponential", 1.5], ["zoom"], ...stops];
+    const kind = (...k) => ["in", ["get", "kind"], ["literal", k]];
+    const open = ["!", ["has", "tunnel"]];
+
+    // water: the sheet's blue
+    map.addLayer({ id: "water", type: "fill", source: "osm", "source-layer": "water",
+      paint: { "fill-color": "#B5E2F7", "fill-outline-color": "#2E9BD6" } });
+    map.addLayer({ id: "stream", type: "line", source: "osm", "source-layer": "waterways",
+      minzoom: 12, filter: ["all", kind("stream"), open],
+      paint: { "line-color": "#2E9BD6", "line-width": zw(12, 0.7, 15, 1.6) } });
+    map.addLayer({ id: "river", type: "line", source: "osm", "source-layer": "waterways",
+      filter: ["all", kind("river", "canal"), open],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#2E9BD6", "line-width": zw(9, 0.9, 12, 1.8, 15, 3.2) } });
+
+    // IGN draws what you walk on in black: a thin solid line for a track, dashes for
+    // a path, dots where the ground gets hard
+    const INKLINE = "#26211D";
     map.addLayer({ id: "trails-track", type: "line", source: "bideak", "source-layer": "trails",
-      minzoom: 11,
-      filter: ["all", ["==", ["get", "highway"], "track"], ["!=", ["get", "route_net"], "nwn"]],
-      paint: { "line-color": "#9A7550", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.8, 13, 1.7, 15, 2.6],
-               "line-opacity": 0.9, ...dash([5, 2]) } });
-    // footpaths: dashed, darker
-    for (const cls of ["path", "footway", "bridleway"]) {
-      map.addLayer({ id: `trails-${cls}`, type: "line", source: "bideak", "source-layer": "trails",
-        minzoom: 12,
-        filter: ["all", ["==", ["get", "highway"], cls], ["!=", ["get", "route_net"], "nwn"]],
-        paint: { "line-color": "#4A4137", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.95, 14, 1.5, 15, 2],
-                 ...dash([2.5, 2]) } });
-    }
-    map.addLayer({ id: "trails-steps", type: "line", source: "bideak", "source-layer": "trails",
-      minzoom: 13, filter: ["==", ["get", "highway"], "steps"],
-      paint: { "line-color": "#4A4137", "line-width": ["interpolate", ["linear"], ["zoom"], 13, 1.2, 15, 2],
-               ...dash([1, 1.5]) } });
-    // hard ground, where OSM records a difficulty
-    map.addLayer({ id: "trails-hard", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 11, filter: ["==", ["get", "highway"], "track"],
+      paint: { "line-color": INKLINE, "line-width": zw(11, 0.5, 13, 0.9, 15, 1.6), "line-opacity": 0.85 } });
+    const hard = ["in", ["get", "sac_scale"], ["literal", ["alpine_hiking", "demanding_alpine_hiking",
+                                                          "difficult_alpine_hiking"]]];
+    map.addLayer({ id: "trails-path", type: "line", source: "bideak", "source-layer": "trails",
       minzoom: 12,
-      filter: ["all", ["in", ["get", "sac_scale"], ["literal", ["alpine_hiking", "demanding_alpine_hiking",
-                                                               "difficult_alpine_hiking"]]],
-               ["!=", ["get", "route_net"], "nwn"]],
-      paint: { "line-color": "#8C3B2F", "line-width": ["interpolate", ["linear"], ["zoom"], 12, 1.1, 15, 1.8],
-               ...dash([1.5, 1.5]) } });
-    // marked itineraries: white blaze under a red (GR) or yellow (PR) dash
+      filter: ["all", ["in", ["get", "highway"], ["literal", ["path", "footway", "bridleway", "steps"]]],
+               ["!", hard]],
+      paint: { "line-color": INKLINE, "line-width": zw(12, 0.8, 14, 1.2, 15, 1.7), ...dash([4, 2.2]) } });
+    map.addLayer({ id: "trails-hard", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 12, filter: hard,
+      paint: { "line-color": INKLINE, "line-width": zw(12, 0.9, 14, 1.4, 15, 1.9), ...dash([0.6, 2]) } });
+    // roads, IGN-style: a dark casing under a fill whose colour ranks the road
+    const ROADS = [   // kind, minzoom, fill, width stops
+      ["minor",     12, "#FFFFFF", [12, 1.0, 13, 1.6, 15, 4.0]],
+      ["tertiary",  11, "#FFFFFF", [11, 1.0, 13, 2.2, 15, 5.0]],
+      ["secondary", 10, "#F6DC5E", [10, 1.0, 13, 2.6, 15, 5.5]],
+      ["primary",    9, "#EE9A45", [9, 0.9, 13, 2.6, 15, 5.5]],
+      ["trunk",      9, "#E8733A", [9, 1.0, 13, 2.8, 15, 6.0]],
+      ["motorway",   9, "#E8733A", [9, 1.2, 13, 3.2, 15, 6.5]],
+    ];
+    const cased = (w, d) => w.map((v, i) => (i % 2 ? v + d : v));
+    for (const [k, minzoom, , w] of ROADS) {
+      map.addLayer({ id: `road-${k}-case`, type: "line", source: "osm", "source-layer": "roads",
+        minzoom, filter: ["all", kind(k), open],
+        layout: { "line-cap": "butt", "line-join": "round" },
+        paint: { "line-color": "#4A4038", "line-width": zw(...cased(w, 1.3)),
+                 "line-opacity": k === "minor" ? 0.75 : 1 } });
+    }
+    for (const [k, minzoom, fill, w] of ROADS) {
+      map.addLayer({ id: `road-${k}`, type: "line", source: "osm", "source-layer": "roads",
+        minzoom, filter: ["all", kind(k), open],
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": fill, "line-width": zw(...w) } });
+    }
+    // tunnels: only a faint dashed trace of the road or the track
+    map.addLayer({ id: "road-tunnel", type: "line", source: "osm", "source-layer": "roads",
+      minzoom: 11, filter: ["has", "tunnel"],
+      paint: { "line-color": "#4A4038", "line-width": 1, "line-opacity": 0.5, ...dash([3, 3]) } });
+    map.addLayer({ id: "rail", type: "line", source: "osm", "source-layer": "rail",
+      minzoom: 10, filter: open,
+      paint: { "line-color": "#2E2A26", "line-width": zw(10, 0.9, 13, 1.6, 15, 2.4) } });
+    map.addLayer({ id: "rail-tunnel", type: "line", source: "osm", "source-layer": "rail",
+      minzoom: 11, filter: ["has", "tunnel"],
+      paint: { "line-color": "#2E2A26", "line-width": 1, "line-opacity": 0.5, ...dash([3, 3]) } });
+
+    // marked itineraries: IGN's translucent magenta overprint, the path showing through
     const marked = ["in", ["get", "route_net"], ["literal", ["iwn", "nwn", "rwn", "lwn"]]];
-    const routeW = ["interpolate", ["linear"], ["zoom"], 11, 1.6, 13, 2.4, 15, 3.2];
-    // (PR routes only appear at 12: without the step their blaze would run alone at 11)
-    map.addLayer({ id: "routes-blaze", type: "line", source: "bideak", "source-layer": "trails",
-      minzoom: 11, filter: ["step", ["zoom"], ["in", ["get", "route_net"], ["literal", ["iwn", "nwn"]]],
-                            12, marked],
-      paint: { "line-color": "#FBFAF5", "line-width": routeW, "line-opacity": 0.9 } });
-    map.addLayer({ id: "routes-gr", type: "line", source: "bideak", "source-layer": "trails",
-      minzoom: 11, filter: ["in", ["get", "route_net"], ["literal", ["iwn", "nwn"]]],
-      paint: { "line-color": "#C4362E", "line-width": routeW, ...dash([2, 2]) } });
+    const MAGENTA = "#D6007A";
     map.addLayer({ id: "routes-pr", type: "line", source: "bideak", "source-layer": "trails",
       minzoom: 12, filter: ["in", ["get", "route_net"], ["literal", ["rwn", "lwn"]]],
-      paint: { "line-color": "#E0A32E", "line-width": routeW, ...dash([2, 2]) } });
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": MAGENTA, "line-opacity": 0.42, "line-width": zw(12, 2.2, 13, 3, 15, 4.5) } });
+    map.addLayer({ id: "routes-gr", type: "line", source: "bideak", "source-layer": "trails",
+      minzoom: 11, filter: ["in", ["get", "route_net"], ["literal", ["iwn", "nwn"]]],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": MAGENTA, "line-opacity": 0.5, "line-width": zw(11, 2.6, 13, 4.5, 15, 6.5) } });
     // the itinerary's name along its line: "GR 121", "PR-BI 80"
     map.addLayer({ id: "routes-ref", type: "symbol", source: "bideak", "source-layer": "trails",
       minzoom: 12, filter: ["all", marked, ["has", "route_ref"]],
       layout: { "symbol-placement": "line", "symbol-spacing": 320,
                 "text-field": ["get", "route_ref"], "text-font": ["OpenSansBold"],
-                "text-size": ["interpolate", ["linear"], ["zoom"], 12, 9.5, 15, 11.5],
+                "text-size": zw(12, 10, 15, 12.5),
                 "text-letter-spacing": 0.04, "text-max-angle": 30 },
-      paint: { "text-color": ["match", ["get", "route_net"], ["iwn", "nwn"], "#A3241D", "#7A5200"],
-               "text-halo-color": "#FBFAF5", "text-halo-width": 1.6 } });
+      paint: { "text-color": "#C2006E", "text-halo-color": "#FBFAF5", "text-halo-width": 1.6 } });
     // trail-side points
     const poi = (id, filt, colour, r) => map.addLayer({ id, type: "circle", source: "bideak",
       "source-layer": "pois", minzoom: 12, filter: filt,
       paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, r * 0.8, 14, r, 15, r * 1.25],
                "circle-color": colour, "circle-stroke-color": "#FBFAF5",
                "circle-stroke-width": 1.2 } });
-    poi("poi-hut", ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], "#7A2E24", 4.6);
-    poi("poi-camp", ["==", ["get", "tourism"], "camp_site"], "#4C6B3C", 3.4);
-    poi("poi-view", ["==", ["get", "tourism"], "viewpoint"], "#B5573C", 3.4);
-    poi("poi-shelter", ["==", ["get", "amenity"], "shelter"], "#6B5B4A", 3.2);
-    poi("poi-spring", ["==", ["get", "natural"], "spring"], "#3D7FC1", 2.6);
+    poi("poi-hut", ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], "#C2006E", 4.6);
+    poi("poi-camp", ["==", ["get", "tourism"], "camp_site"], "#8A2C6B", 3.4);
+    poi("poi-view", ["==", ["get", "tourism"], "viewpoint"], "#E0559E", 3.4);
+    poi("poi-shelter", ["==", ["get", "amenity"], "shelter"], "#3A342E", 3.2);
+    poi("poi-spring", ["==", ["get", "natural"], "spring"], "#2E9BD6", 2.6);
 
     map.addLayer({ id: "poi-label", type: "symbol", source: "bideak", "source-layer": "pois",
       minzoom: 13,
@@ -221,7 +257,58 @@
       layout: { "text-field": ["get", "name"], "text-font": ["OpenSansRegular"],
                 "text-size": ["interpolate", ["linear"], ["zoom"], 13, 10.5, 15, 12], "text-offset": [0, 0.9], "text-anchor": "top",
                 "text-max-width": 8, "text-optional": true },
-      paint: { "text-color": "#3A3128", "text-halo-color": "#FBFAF5", "text-halo-width": 1.3 } });
+      paint: { "text-color": "#A8005F", "text-halo-color": "#FBFAF5", "text-halo-width": 1.3 } });
+
+    // --- lettering ---------------------------------------------------------------
+    const INK = "#2B2622", HALO = "#FBFAF5";
+    map.addLayer({ id: "river-name", type: "symbol", source: "osm", "source-layer": "waterways",
+      minzoom: 11, filter: ["all", ["has", "name"],
+                            ["any", kind("river", "canal"), [">=", ["zoom"], 13]]],
+      layout: { "symbol-placement": "line", "symbol-spacing": 380, "text-field": ["get", "name"],
+                "text-font": ["OpenSansRegular"], "text-size": zw(11, 10, 15, 12.5),
+                "text-letter-spacing": 0.08, "text-max-angle": 28 },
+      paint: { "text-color": "#1479B8", "text-halo-color": HALO, "text-halo-width": 1.4 } });
+    map.addLayer({ id: "water-name", type: "symbol", source: "osm", "source-layer": "water",
+      minzoom: 12, filter: ["has", "name"],
+      layout: { "text-field": ["get", "name"], "text-font": ["OpenSansRegular"], "text-size": 10.5,
+                "text-max-width": 7, "text-letter-spacing": 0.05 },
+      paint: { "text-color": "#1479B8", "text-halo-color": HALO, "text-halo-width": 1.3 } });
+    map.addLayer({ id: "road-ref", type: "symbol", source: "osm", "source-layer": "roads",
+      minzoom: 10, filter: ["all", ["has", "ref"], ["!", ["has", "link"]],
+                            kind("motorway", "trunk", "primary", "secondary", "tertiary")],
+      layout: { "symbol-placement": "line", "symbol-spacing": 420, "text-field": ["get", "ref"],
+                "text-font": ["OpenSansBold"], "text-size": 9.5, "text-rotation-alignment": "viewport",
+                "text-max-angle": 40 },
+      paint: { "text-color": "#5A3A1C", "text-halo-color": HALO, "text-halo-width": 1.8 } });
+    // summits: a dot, the name and the height under it
+    map.addLayer({ id: "summit", type: "circle", source: "osm", "source-layer": "summits",
+      minzoom: 10, filter: kind("peak"),
+      paint: { "circle-radius": zw(10, 1.6, 13, 2.4, 15, 3.2), "circle-color": "#3A2A20",
+               "circle-stroke-color": HALO, "circle-stroke-width": 0.8 } });
+    map.addLayer({ id: "summit-name", type: "symbol", source: "osm", "source-layer": "summits",
+      minzoom: 10, filter: ["any", kind("peak"), [">=", ["zoom"], 13]],
+      layout: {
+        "text-field": ["format", ["get", "name"], {},
+                       ["case", ["has", "ele"], ["concat", "\n", ["to-string", ["get", "ele"]]], ""],
+                       { "font-scale": 0.88 }],
+        "text-font": ["case", kind("peak"), ["literal", ["OpenSansBold"]], ["literal", ["OpenSansRegular"]]],
+        "text-size": zw(10, 9.5, 13, 10.5, 15, 12.5), "text-anchor": "top", "text-offset": [0, 0.35],
+        "text-max-width": 7, "text-line-height": 1.1,
+        "symbol-sort-key": ["-", 0, ["coalesce", ["get", "ele"], 0]] },
+      paint: { "text-color": "#3A2A20", "text-halo-color": HALO, "text-halo-width": 1.4 } });
+    const placeSize = (k) => ({ city: [9, 15, 13, 21], town: [9, 12, 13, 17],
+                                village: [11, 10.5, 15, 14.5], hamlet: [13, 10, 15, 12] })[k];
+    for (const k of ["hamlet", "village", "town", "city"]) {
+      map.addLayer({ id: `place-${k}`, type: "symbol", source: "osm", "source-layer": "places",
+        filter: kind(k),
+        layout: { "text-field": ["get", "name"],
+                  "text-font": [k === "hamlet" || k === "village" ? "OpenSansRegular" : "OpenSansBold"],
+                  "text-size": zw(...placeSize(k)), "text-max-width": 7,
+                  "text-transform": k === "city" ? "uppercase" : "none",
+                  "text-letter-spacing": k === "city" ? 0.06 : 0.01,
+                  "symbol-sort-key": ["-", 0, ["coalesce", ["get", "population"], 0]] },
+        paint: { "text-color": INK, "text-halo-color": HALO, "text-halo-width": 1.6 } });
+    }
 
     const legend = document.getElementById("legend");
     legend.hidden = false;
@@ -229,8 +316,6 @@
     // the compact attribution opens expanded and runs under the legend; the legend
     // already carries the credits, so start it folded to its (i) button
     document.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
-    document.getElementById("ramp").style.background =
-      "linear-gradient(to right," + TINT.map(([z, c]) => `${c} ${(z / 2400 * 100).toFixed(1)}%`).join(",") + ")";
     const setEq = () => {
       document.getElementById("eq").textContent =
         `Kurba arrunta: ${CONTOURS[sheetZoom(map.getZoom())]} m`;
