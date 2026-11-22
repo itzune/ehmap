@@ -121,6 +121,41 @@
   </table>
   </div>
 
+  <h2 id="lauzak">Mapa topografikoaren lauzak · PMTiles</h2>
+  <p><a href="topo.html">Mapa topografikoak</a> erabiltzen dituen lauza-artxiboak, bere horretan deskargatzeko.
+    <a href="https://pmtiles.io">PMTiles</a> fitxategi bakarreko formatua da: MapLibre, QGIS edo
+    <code>pmtiles</code> tresnarekin zuzenean irakur daiteke, zerbitzaririk gabe. Lehen hirurak LiDAR datuetatik
+    eratorriak dira; azken hirurak OpenStreetMap-etik, eta horregatik ODbL lizentzia dute.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Fitxategia</th><th>Edukia</th><th>Lizentzia</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://tiles.itzune.eus/topo.pmtiles">topo.pmtiles</a> <small>675 MB</small></td>
+          <td>Orri marraztua, raster (WebP), 10–15 zoomak: basoa, itzalak, haitzak eta, 13. zoomera arte, sestra-kurbak.
+            Iturriak: PNOA-LiDAR MDT05 (IGN España), RGE ALTI® (IGN France), ESA WorldCover 2021</td>
+          <td class="lic">CC BY 4.0 · Licence Ouverte 2.0</td></tr>
+      <tr><td><a href="https://tiles.itzune.eus/contours.pmtiles">contours.pmtiles</a> <small>219 MB</small></td>
+          <td>10 m-ko sestra-kurbak, bektorialak, 12–14 zoomak; garaiera (<code>ele</code>) eta kurba nagusiak (<code>idx</code>).
+            Iturriak: PNOA-LiDAR MDT05, RGE ALTI®</td>
+          <td class="lic">CC BY 4.0 · Licence Ouverte 2.0</td></tr>
+      <tr><td><a href="data/terrain.pmtiles" download>terrain.pmtiles</a> <small>32 MB</small></td>
+          <td>Garaierak 3D ikuspegirako, Terrarium kodeketan (metro osoak), 9–12 zoomak.
+            Iturriak: PNOA-LiDAR MDT05, RGE ALTI®</td>
+          <td class="lic">CC BY 4.0 · Licence Ouverte 2.0</td></tr>
+      <tr><td><a href="data/topo_osm.pmtiles" download>topo_osm.pmtiles</a> <small>19 MB</small></td>
+          <td>Ura, errepideak, trenbideak, herri-izenak, 9.686 gailur eta lepo, eta 22.692 mugarri
+            (ermitak, trikuharriak, leizeak…), 9–13 zoomak</td><td class="lic">ODbL</td></tr>
+      <tr><td><a href="data/bideak.pmtiles" download>bideak.pmtiles</a> <small>20 MB</small></td>
+          <td>Bide-sarea, GR eta PR ibilbide markatuak, aterpeak, iturriak eta begiratokiak, 11–13 zoomak</td>
+          <td class="lic">ODbL</td></tr>
+      <tr><td><a href="data/buildings.pmtiles" download>buildings.pmtiles</a> <small>27 MB</small></td>
+          <td>956.462 eraikinen oinplanoak, 13–14 zoomak</td><td class="lic">ODbL</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Lauzak sortzeko kodea <a href="https://github.com/itzune/ehmap/tree/main/scripts">scripts/</a> karpetan dago
+    (<code>13_topo_tiles.py</code>–<code>18_contours.py</code>). OpenStreetMap-eko artxiboak: © OpenStreetMap-en laguntzaileak.</p>
+
   <h2>RustGIS proiektua</h2>
   <p><a href="https://github.com/itzune/ehmap/releases/latest/download/ehmap.rgis">ehmap.rgis</a> fitxategiak
     geruza guztiak biltzen ditu, estiloekin eta inprimatzeko diseinuekin, <a href="https://rustgis.app">RustGIS</a>

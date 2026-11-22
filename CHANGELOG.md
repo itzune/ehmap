@@ -11,6 +11,8 @@ IGN's TOP 25 *cartes de randonnée*, and joins the site: it is chapter 07 of the
   link that opens the map on that very view (`site/maps/topo/`). To make room, the four
   blocks of the climate chapter that were charts and figures rather than maps are gone from
   the page ("Urtez urte", "Beroa egunerokoan", "Ibaiek ur gutxiago", "Itsasoa berotzen"); their data stays published.
+- **Downloads.** The Datuak page lists the six tile archives of the topographic map with
+  their sizes and licences; the two large ones link straight to `tiles.itzune.eus`.
 - **No longer a test page.** The "proba" header gives way to the site's own bar, `noindex`
   is dropped, deep links carry a tilted view (`#zoom/lat/lon/bearing/pitch` opens in 3D)
   and `?garbi` shows the bare sheet, for screenshots and embeds.
