@@ -20,6 +20,12 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
 - **Buildings** (`scripts/17_buildings.py` → `site/data/buildings.pmtiles`, 27 MB, ODbL):
   956 462 OpenStreetMap footprints as small dark shapes from map zoom 13, fetched from
   Overpass in 20 cells.
+- **Pictograms.** Trail-side points are no longer coloured dots: huts, shelters, campsites,
+  viewpoints and picnic sites in magenta, springs and waterfalls in blue, and — new, in the
+  `landmarks` layer of `topo_osm.pmtiles` (22 692 points) — churches and hermitages,
+  megaliths, caves, castles, ruins and towers in black. The icons are SVG drawn in the page
+  (no sprite file) and the legend shows them. Buildings are a warm grey that firms up with
+  the zoom instead of near-black.
 - **3D.** A "3D" button lifts the sheet over real heights and tilts the view
   (`scripts/16_terrain_tiles.py` → `site/data/terrain.pmtiles`, 32 MB: the LiDAR as
   Terrarium-encoded whole metres, lossless WebP, zooms 9–12, exaggerated 1.3×). Without

@@ -16,6 +16,8 @@ Layers (Mapbox Vector Tile, gzip, extent 4096; tile zoom = map zoom):
   rail         z10-13  railway=rail; tunnel
   places       z9-13   kind = city | town (z9) | village (z11) | hamlet (z13);
                        name (Basque where OSM has one), population
+  landmarks    z12-13  kind = church | cave | picnic | megalith | castle | ruins |
+                       waterfall | fountain | tower; name
   summits      z10-13  kind = peak | saddle; name, ele (m). Below z12 only the
                        summits a map of that scale would name: the highest of each
                        ~5 km cell
@@ -62,6 +64,15 @@ PLACE_ZMIN = {"city": 9, "town": 9, "village": 11, "hamlet": 13}
 WATER_QUERY = ("(", 'nwr["natural"="water"]', 'nwr["waterway"="riverbank"]',
                'nwr["landuse"="reservoir"]', ")")
 PLACE_QUERY = ("(", 'node["place"~"^(city|town|village|hamlet)$"]', ")")
+LANDMARK_QUERY = ("(",
+                  'nwr["amenity"="place_of_worship"]',
+                  'nwr["natural"="cave_entrance"]',
+                  'nwr["tourism"="picnic_site"]',
+                  'nwr["historic"~"^(archaeological_site|castle|ruins|tower)$"]',
+                  'nwr["waterway"="waterfall"]',
+                  'nwr["amenity"="drinking_water"]',
+                  'nwr["man_made"="tower"]["tower:type"~"^(communication|observation)$"]',
+                  ")")
 SUMMIT_QUERY = ("(", 'node["natural"~"^(peak|saddle)$"]', 'node["mountain_pass"="yes"]', ")")
 # water smaller than this many square pixels of a 256 px tile is not drawn at a zoom
 WATER_MIN_PX2 = 6
@@ -79,6 +90,30 @@ def number(text: str | None) -> float | None:
         return float(text.replace(",", ".").replace("m", "").replace(" ", ""))
     except ValueError:
         return None
+
+
+def landmark_kind(t: dict) -> str | None:
+    """One of church | cave | picnic | megalith | castle | ruins | waterfall | fountain | tower."""
+    if t.get("amenity") == "place_of_worship":
+        return "church"
+    if t.get("natural") == "cave_entrance":
+        return "cave"
+    if t.get("tourism") == "picnic_site":
+        return "picnic"
+    if t.get("waterway") == "waterfall":
+        return "waterfall"
+    if t.get("amenity") == "drinking_water":
+        return "fountain"
+    h = t.get("historic")
+    if h == "archaeological_site":
+        return "megalith"
+    if h in ("castle", "tower"):
+        return "castle"
+    if h == "ruins":
+        return "ruins"
+    if t.get("man_made") == "tower":
+        return "tower"
+    return None
 
 
 def polygons_from(data: dict) -> list[tuple[Polygon, dict]]:
@@ -223,6 +258,16 @@ def main() -> None:
     print(f" · summits: {len(summits)} named", flush=True)
     bideak.build_layer(summits, 12, ZMAX, tiles, ("kind", "name", "ele"), "summits")
 
+    # --- landmarks: what a walker steers by or stops at -----------------------------
+    data = bideak.overpass("landmarks", "", out="out center;", union=LANDMARK_QUERY)
+    feats = []
+    for g, t in bideak.points_from(data or {}):
+        kind = landmark_kind(t)
+        if kind:
+            feats.append((g, {"kind": kind, "name": name_of(t)}))
+    print(f" · landmarks: {len(feats)}", flush=True)
+    bideak.build_layer(feats, 12, ZMAX, tiles, ("kind", "name"), "landmarks")
+
     # --- archive -----------------------------------------------------------------
     count = 0
     tmp = OUT.with_suffix(".pmtiles.part")
@@ -254,6 +299,7 @@ def main() -> None:
                      ("waterways", "rivers, canals, streams"),
                      ("roads", "road network by class"), ("rail", "railways"),
                      ("places", "cities, towns, villages, hamlets"),
+                     ("landmarks", "churches, caves, megaliths, castles, waterfalls, ..."),
                      ("summits", "named peaks and saddles"))]})
     tmp.replace(OUT)
     print(f" · {OUT.name}: {OUT.stat().st_size / 1e6:.1f} MB, {count} tiles, "

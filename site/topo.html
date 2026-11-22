@@ -30,7 +30,7 @@
   .legend {
     position: absolute; left: 12px; bottom: 34px; z-index: 2;
     background: var(--card); border: 1px solid var(--rule); border-radius: 8px;
-    padding: .6rem .7rem; font-size: .74rem; line-height: 1.35; max-width: 15rem;
+    padding: .6rem .7rem; font-size: .74rem; line-height: 1.35; max-width: 16.5rem; max-height: calc(100% - 150px); overflow: auto;
     box-shadow: 0 1px 6px rgb(0 0 0 / .12);
   }
   .legend summary { cursor: pointer; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
@@ -45,7 +45,7 @@
   .legend .swatch.rock { border: 0; width: 26px; height: 10px;
     background: repeating-linear-gradient(65deg, #6A625A 0 1px, #E6E3DD 1px 4px); }
   .legend .swatch.bldg { border: 0; height: 9px; background:
-    linear-gradient(90deg, #4A423C 0 7px, transparent 7px 10px, #4A423C 10px 19px, transparent 19px 21px, #4A423C 21px); }
+    linear-gradient(90deg, #8B8078 0 7px, transparent 7px 10px, #8B8078 10px 19px, transparent 19px 21px, #8B8078 21px); }
   .legend .swatch.water { border-top: 2px solid #2E9BD6; }
   .legend .swatch.road { height: 3px; border: 1px solid #4A4038; border-width: 1px 0; }
   .legend .swatch.rail { border-top: 2px solid #2E2A26; }
@@ -54,10 +54,9 @@
   .legend .swatch.hard { border-top: 1.5px dotted #26211D; }
   .legend .swatch.gr { border-top: 5px solid rgb(214 0 122 / .5); }
   .legend .swatch.pr { border-top: 3px solid rgb(214 0 122 / .5); }
-  .legend .dots { flex-wrap: wrap; gap: .15rem .6rem; margin-top: .45rem; }
-  .legend .dots span { display: inline-flex; align-items: center; gap: .3rem; }
-  .legend .dots i { width: 8px; height: 8px; border-radius: 50%; border: 1.2px solid #FBFAF5;
-    box-shadow: 0 0 0 .5px rgb(0 0 0 / .25); }
+  .legend .icons { display: grid; grid-template-columns: 1fr 1fr; gap: .2rem .5rem; }
+  .legend .icons span { display: inline-flex; align-items: center; gap: .3rem; white-space: nowrap; }
+  .legend .icons svg { flex: none; }
   .legend .credit { margin-top: .45rem; color: var(--ink-soft); font-size: .66rem; }
   @media (prefers-color-scheme: dark) {
     .legend { box-shadow: 0 1px 6px rgb(0 0 0 / .5); }
@@ -96,13 +95,8 @@
   <div class="row"><span class="swatch hard"></span><span>Bide zaila (mendiko maila)</span></div>
   <div class="row"><span class="swatch gr"></span><span>GR ibilbide markatua</span></div>
   <div class="row"><span class="swatch pr"></span><span>PR / tokiko ibilbidea</span></div>
-  <div class="row dots">
-    <span><i style="background:#C2006E"></i>Aterpetxea</span>
-    <span><i style="background:#3A342E"></i>Babeslekua</span>
-    <span><i style="background:#2E9BD6"></i>Iturria</span>
-    <span><i style="background:#E0559E"></i>Begiratokia</span>
-    <span><i style="background:#8A2C6B"></i>Kanpina</span>
-  </div>
+  <h2>Ikurrak</h2>
+  <div class="icons" id="icons"></div>
   <div class="credit">Erliebea: PNOA-LiDAR (IGN España) · RGE ALTI (IGN France)<br>
      Ura, bideak, izenak: © OpenStreetMap contributors (ODbL)</div>
 </details>
@@ -124,6 +118,37 @@
   // A local preview reads the file just built in site/data/ instead.
   const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
   const SHEET = LOCAL ? "data/topo.pmtiles" : "https://tiles.itzune.eus/topo.pmtiles";
+
+  // pictograms, on a 24 × 24 grid
+  const M = "#D6007A", B = "#2E9BD6", K = "#26211D", W = "#fff";
+  const badge = (bg, line = W) =>
+    `<rect x="2" y="2" width="20" height="20" rx="4.5" fill="${bg}" stroke="${line}" stroke-width="1.5"/>`;
+  const haloed = (d, attrs) =>      // a white edge under dark line work, so it reads on green
+    `<path d="${d}" fill="none" stroke="${W}" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<path d="${d}" ${attrs}/>`;
+  const ICONS = {
+    hut: badge(M) + `<path d="M6 12.6 12 7l6 5.600V18H6z" fill="${W}"/><rect x="10.600" y="13.800" width="2.800" height="4.200" fill="${M}"/>`,
+    shelter: badge(W, K) + `<path d="M6 13 12 7.500 18 13" fill="none" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>` +
+             `<path d="M8 13v5h8v-5" fill="none" stroke="${K}" stroke-width="1.600"/>`,
+    camp: badge(M) + `<path d="M12 6.500 18.500 18h-13z" fill="${W}"/><path d="M12 12.500 14.600 18H9.400z" fill="${M}"/>`,
+    view: badge(M) + `<circle cx="12" cy="16.600" r="2.100" fill="${W}"/>` +
+          `<path d="M12 12.200V6.500M8.500 13.300 5.600 9.200M15.500 13.300l2.900-4.100" stroke="${W}" stroke-width="1.900" stroke-linecap="round"/>`,
+    picnic: badge(M) + `<path d="M6.500 9.500h11M5.500 13.500h13M9.500 9.500 7.600 18M14.500 9.500l1.900 8.500" stroke="${W}" stroke-width="1.800" stroke-linecap="round" fill="none"/>`,
+    spring: `<circle cx="12" cy="12" r="9" fill="${B}" stroke="${W}" stroke-width="1.500"/>` +
+            `<path d="M12 6.400c2.600 3.400 3.900 5.500 3.900 7.300a3.900 3.900 0 0 1-7.800 0c0-1.800 1.300-3.900 3.900-7.300z" fill="${W}"/>`,
+    waterfall: badge(B) + `<path d="M7 6.500h4.200v6M12.800 6.500H17v8.500M6.500 17.600c1.800-1.500 3.700-1.500 5.500 0s3.700 1.500 5.500 0" stroke="${W}" stroke-width="1.800" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+    church: `<path d="M12 2.500v8M9 5.300h6" stroke="${W}" stroke-width="4.400" stroke-linecap="round"/>` +
+            `<circle cx="12" cy="15.500" r="5.200" fill="${K}" stroke="${W}" stroke-width="1.400"/>` +
+            `<path d="M12 2.500v8.500M9 5.300h6" stroke="${K}" stroke-width="2.100"/>`,
+    cave: `<path d="M4.500 19v-5a7.500 7.500 0 0 1 15 0v5h-4.600v-4.500a2.900 2.900 0 0 0-5.800 0V19z" fill="${K}" stroke="${W}" stroke-width="1.400" stroke-linejoin="round"/>`,
+    megalith: `<path d="M3.800 7.500h16.400v3.800H3.800zM6.300 11.300h3.200V19H6.300zM14.500 11.300h3.200V19h-3.200z" fill="#7A4A2A" stroke="${W}" stroke-width="1.300" stroke-linejoin="round"/>`,
+    castle: `<path d="M5 19V6.500h3V9h2.500V6.500h3V9H16V6.500h3V19z" fill="${K}" stroke="${W}" stroke-width="1.300" stroke-linejoin="round"/>`,
+    ruins: `<path d="M5 19V6.500h3V9h2.500V6.500h3V11l2.500 2 3-1.500V19z" fill="${W}" stroke="${K}" stroke-width="1.700" stroke-linejoin="round"/>`,
+    tower: haloed("M12 5.500 7.500 20h9z", `fill="none" stroke="${K}" stroke-width="1.900" stroke-linejoin="round"`) +
+           `<circle cx="12" cy="5" r="2.300" fill="${K}" stroke="${W}" stroke-width="1"/>`,
+  };
+  const svgDoc = (body, px = 48) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 24 24">${body}</svg>`;
 
   const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol("pmtiles", protocol.tile);
@@ -184,7 +209,7 @@
                      + "Ura, bideak, izenak: © OpenStreetMap contributors (ODbL)",
   }));
 
-  map.on("load", () => {
+  map.on("load", async () => {
     map.addSource("topo", {
       type: "raster", url: `pmtiles://${SHEET}`, tileSize: 256,
       attribution: "PNOA-LiDAR · RGE ALTI",
@@ -206,10 +231,13 @@
       paint: { "fill-color": "#B5E2F7", "fill-antialias": false } });
     // buildings: the small dark shapes that make a town a town
     map.addSource("buildings", { type: "vector", url: "pmtiles://data/buildings.pmtiles" });
+    // a warm grey that sits back at town scale and firms up as you zoom in: drawn
+    // black, a town's blocks shout over the relief and the paths
     map.addLayer({ id: "buildings", type: "fill", source: "buildings", "source-layer": "buildings",
       minzoom: 13,
-      paint: { "fill-color": "#4A423C", "fill-antialias": true,
-               "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.75, 15, 0.9] } });
+      paint: { "fill-color": ["interpolate", ["linear"], ["zoom"], 13, "#A89E95", 15, "#8B8078", 16, "#7A6F67"],
+               "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.6, 14, 0.75, 16, 0.9],
+               "fill-outline-color": ["interpolate", ["linear"], ["zoom"], 14, "rgba(90,80,72,0)", 15.5, "rgba(90,80,72,0.9)"] } });
     map.addLayer({ id: "stream", type: "line", source: "osm", "source-layer": "waterways",
       minzoom: 12, filter: ["all", kind("stream"), open],
       paint: { "line-color": "#2E9BD6", "line-width": zw(12, 0.7, 15, 1.6) } });
@@ -287,25 +315,45 @@
                 "text-size": zw(12, 10, 15, 12.5),
                 "text-letter-spacing": 0.04, "text-max-angle": 30 },
       paint: { "text-color": "#C2006E", "text-halo-color": "#FBFAF5", "text-halo-width": 1.6 } });
-    // trail-side points
-    const poi = (id, filt, colour, r) => map.addLayer({ id, type: "circle", source: "bideak",
-      "source-layer": "pois", minzoom: 12, filter: filt,
-      paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, r * 0.8, 14, r, 15, r * 1.25],
-               "circle-color": colour, "circle-stroke-color": "#FBFAF5",
-               "circle-stroke-width": 1.2 } });
-    poi("poi-hut", ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], "#C2006E", 4.6);
-    poi("poi-camp", ["==", ["get", "tourism"], "camp_site"], "#8A2C6B", 3.4);
-    poi("poi-view", ["==", ["get", "tourism"], "viewpoint"], "#E0559E", 3.4);
-    poi("poi-shelter", ["==", ["get", "amenity"], "shelter"], "#3A342E", 3.2);
-    poi("poi-spring", ["==", ["get", "natural"], "spring"], "#2E9BD6", 2.6);
-
-    map.addLayer({ id: "poi-label", type: "symbol", source: "bideak", "source-layer": "pois",
-      minzoom: 13,
-      filter: ["all", ["has", "name"],
-               ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut", "camp_site"]]]],
-      layout: { "text-field": ["get", "name"], "text-font": ["OpenSansRegular"],
-                "text-size": ["interpolate", ["linear"], ["zoom"], 13, 10.5, 15, 12], "text-offset": [0, 0.9], "text-anchor": "top",
-                "text-max-width": 8, "text-optional": true },
+    // --- pictograms: magenta for what serves the walker, blue for water, black for
+    // landmarks, as on the printed sheet. Drawn here as SVG, so there is no sprite file
+    await Promise.all(Object.entries(ICONS).map(([name, svg]) => new Promise((done) => {
+      const img = new Image(48, 48);
+      img.onload = () => { map.addImage(name, img, { pixelRatio: 2 }); done(); };
+      img.onerror = done;
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgDoc(svg));
+    })));
+    const iconSize = zw(12, 0.62, 14, 0.85, 16, 1.1);
+    const label = (size) => ({
+      "text-field": ["step", ["zoom"], "", 13.5, ["coalesce", ["get", "name"], ""]],
+      "text-font": ["OpenSansRegular"], "text-size": size, "text-anchor": "top",
+      "text-offset": [0, 1.0], "text-max-width": 8, "text-optional": true });
+    const lm = (id, kinds, minzoom, color) => map.addLayer({ id, type: "symbol", source: "osm",
+      "source-layer": "landmarks", minzoom, filter: kind(...kinds),
+      layout: { "icon-image": ["match", ["get", "kind"], "fountain", "spring", ["get", "kind"]],
+                "icon-size": iconSize, "icon-padding": 1, ...label(10) },
+      paint: { "text-color": color, "text-halo-color": "#FBFAF5", "text-halo-width": 1.3 } });
+    lm("landmark-minor", ["fountain", "picnic", "tower", "ruins"], 13.5, "#3A342E");
+    lm("landmark-church", ["church"], 13, "#3A342E");
+    lm("landmark-major", ["megalith", "cave", "castle", "waterfall"], 12, "#3A342E");
+    map.addLayer({ id: "poi", type: "symbol", source: "bideak", "source-layer": "pois", minzoom: 12,
+      layout: {
+        "icon-image": ["case",
+          ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], "hut",
+          ["==", ["get", "tourism"], "camp_site"], "camp",
+          ["==", ["get", "tourism"], "viewpoint"], "view",
+          ["==", ["get", "amenity"], "shelter"], "shelter",
+          "spring"],
+        "symbol-sort-key": ["case",
+          ["in", ["get", "tourism"], ["literal", ["alpine_hut", "wilderness_hut"]]], 0,
+          ["==", ["get", "amenity"], "shelter"], 1,
+          ["==", ["get", "tourism"], "camp_site"], 2,
+          ["==", ["get", "tourism"], "viewpoint"], 3, 4],
+        "icon-size": iconSize, "icon-padding": 1,
+        ...label(zw(13, 10.5, 16, 12.5)),
+        "text-field": ["step", ["zoom"], "", 13,
+          ["case", ["any", ["has", "natural"], ["==", ["get", "tourism"], "viewpoint"]], "",
+           ["coalesce", ["get", "name"], ""]]] },
       paint: { "text-color": "#A8005F", "text-halo-color": "#FBFAF5", "text-halo-width": 1.3 } });
 
     // --- lettering ---------------------------------------------------------------
@@ -360,6 +408,12 @@
     }
 
     const legend = document.getElementById("legend");
+    document.getElementById("icons").innerHTML = [
+      ["hut", "Aterpetxea"], ["shelter", "Babeslekua"], ["camp", "Kanpina"], ["view", "Begiratokia"],
+      ["picnic", "Atsedenlekua"], ["spring", "Iturria"], ["waterfall", "Ur-jauzia"], ["church", "Eliza, ermita"],
+      ["megalith", "Trikuharria"], ["cave", "Leizea"], ["castle", "Gaztelua"], ["ruins", "Hondakinak"],
+      ["tower", "Dorrea"],
+    ].map(([k, t]) => `<span>${svgDoc(ICONS[k], 15)}${t}</span>`).join("");
     legend.hidden = false;
     if (matchMedia("(max-width: 640px)").matches) legend.open = false;   // a phone needs the map
     // the compact attribution opens expanded and runs under the legend; the legend
