@@ -318,3 +318,37 @@ footer p { margin: 0; }
 }
 .viewer .controls button { width: 2.6rem; height: 2.6rem; cursor: pointer; }
 .viewer .caption { position: absolute; left: 1rem; bottom: 1rem; padding: 0.6rem 1rem; font-weight: 500; max-width: calc(100% - 2rem); }
+
+/* --- topographic sheet: a gallery of places, each a link into topo.html ----------------- */
+
+.topo {
+  max-width: 78rem; margin: 0 auto; padding: clamp(3rem, 7vw, 6rem) var(--gutter);
+  border-top: 1px solid var(--rule); scroll-margin-top: 3.5rem;
+  display: grid; gap: clamp(1.5rem, 3vw, 3rem); grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 60rem) { .topo { grid-template-columns: minmax(17rem, 1fr) minmax(0, 2.4fr); align-items: start; } }
+.topo .go a {
+  display: inline-block; padding: 0.7rem 1.1rem; border-radius: 999px;
+  background: var(--ink); color: var(--card); text-decoration: none; font-weight: 600;
+}
+.topo .go a::after { content: " →"; }
+.topo .go a:hover { background: var(--accent); }
+.topo-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 36rem) { .topo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .topo-grid .lead { grid-column: 1 / -1; } }
+.topo-grid a {
+  position: relative; display: block; overflow: hidden; border-radius: var(--radius);
+  box-shadow: var(--shadow); background: #FDFCF7; color: #fff; text-decoration: none;
+}
+.topo-grid img { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; object-fit: cover;
+  transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+@media (hover: hover) { .topo-grid a:hover img { transform: scale(1.03); } }
+.topo-grid a::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 45%;
+  background: linear-gradient(to top, rgb(20 18 15 / .72), rgb(20 18 15 / 0)); pointer-events: none;
+}
+.topo-grid .t, .topo-grid .d { position: absolute; left: 0.9rem; right: 0.9rem; z-index: 1; }
+.topo-grid .t { bottom: 2.05rem; font: 500 var(--step-1)/1.1 var(--serif); }
+.topo-grid .d { bottom: 0.7rem; font-size: var(--step--1); opacity: 0.9; }
+.topo-grid .lead .t { font-size: var(--step-2); bottom: 2.2rem; }
+.topo .credit { grid-column: 1 / -1; margin: 0; font-size: var(--step--1); color: var(--muted); line-height: 1.45; }
+@media (min-width: 60rem) { .topo .text { position: sticky; top: 5rem; } }

@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Euskal Herria mapetan · ehmap</title>
-<meta name="description" content="Euskal Herriko zazpi lurraldeen geodatu irekiak mapetan: mugak, erliebea, ibaiak, basoa, biztanleria eta klima.">
+<meta name="description" content="Euskal Herriko zazpi lurraldeen geodatu irekiak mapetan: mugak, erliebea, ibaiak, basoa, biztanleria, klima eta mendi-mapa topografiko bat.">
 <meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Euskal Herria mapetan">
-<meta property="og:description" content="Zazpi lurraldeen geodatu irekiak: mugak, erliebea, ibaiak, basoa, biztanleria eta klima.">
+<meta property="og:description" content="Zazpi lurraldeen geodatu irekiak: mugak, erliebea, ibaiak, basoa, biztanleria, klima eta mendi-mapa topografiko bat.">
 <meta property="og:image" content="https://itzune.eus/ehmap/maps/erliebea-1200.webp">
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -27,6 +27,7 @@
   <nav aria-label="Nagusia">
     <a href="./" aria-current="page">Atlasa</a>
     <a href="mapa.html">Mapa</a>
+    <a href="topo.html">Topoa</a>
     <a href="datuak.html">Datuak</a>
     <a href="https://github.com/itzune/ehmap">GitHub</a>
   </nav>
@@ -38,7 +39,7 @@
     <p class="eyebrow">Atlas irekia · 2026</p>
     <h1 id="izenburua">Euskal Herria mapetan</h1>
     <p class="lede">Zazpi lurraldeen oinarrizko geodatuak, iturri publiko eta irekietatik eraikiak:
-      mugak, erliebea, ibaiak, basoa, biztanleria eta klima. Begiratzeko, ikasteko eta berrerabiltzeko.</p>
+      mugak, erliebea, ibaiak, basoa, biztanleria, klima eta mendi-mapa topografiko bat. Begiratzeko, ikasteko eta berrerabiltzeko.</p>
     </div>
     <figure class="cover">
       <img src="maps/azala-1200.webp" srcset="maps/azala-1200.webp 1200w, maps/azala.webp 2400w"
@@ -60,6 +61,7 @@
     <li><a href="#basoa"><img src="maps/basoa-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">04</span><span class="t">Basoa</span></a></li>
     <li><a href="#jendea"><img src="maps/jendea-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">05</span><span class="t">Non bizi da jendea?</span></a></li>
     <li><a href="#klima"><img src="maps/beroa-1200.webp" alt="" width="1200" height="962" loading="lazy"><span class="n">06</span><span class="t">Klima aldatzen ari da</span></a></li>
+    <li><a href="#topoa"><img src="maps/topo/anboto-640.webp" alt="" width="640" height="400" loading="lazy"><span class="n">07</span><span class="t">Mapa topografikoa</span></a></li>
   </ol>
 
   <!-- 01 -->
@@ -282,30 +284,7 @@
     </div>
   </section>
 
-  <section class="band" aria-labelledby="h-marrak">
-    <figure class="stripes" id="marrak">
-      <figcaption>
-        <h3 id="h-marrak">Urtez urte, 1950–2025</h3>
-        <p>Marra bakoitza urte bat da: 1961–1990eko batez bestekoa baino hotzagoa (urdina) edo beroagoa (gorria).</p>
-      </figcaption>
-      <div class="stripes-chart" data-src="data/stripes.json" role="img"
-           aria-label="Urteko tenperatura-anomaliak 1950etik 2025era, Euskal Herrian eta zazpi lurraldeetan: 1990 arte urdinak eta grisak nagusi, 2000tik aurrera gorriak, eta ilunenak 2020tik aurrera.">
-        <noscript><p>Grafikoak JavaScript behar du. Datuak: climate_annual.csv.</p></noscript>
-      </div>
-      <ul class="legend diverging" aria-label="Anomalia, °C">
-        <li><span class="sw" style="background:#2F5996"></span>−2</li>
-        <li><span class="sw" style="background:#4475B2"></span>−1,5</li>
-        <li><span class="sw" style="background:#6491C3"></span>−1</li>
-        <li><span class="sw" style="background:#88ADD4"></span>−0,5</li>
-        <li><span class="sw" style="background:#D8D2C6"></span>0</li>
-        <li><span class="sw" style="background:#EE8B68"></span>+0,5</li>
-        <li><span class="sw" style="background:#E25E44"></span>+1</li>
-        <li><span class="sw" style="background:#CA322B"></span>+1,5</li>
-        <li><span class="sw" style="background:#A31C22"></span>+2 °C</li>
-      </ul>
-      <p class="dl"><a href="https://github.com/itzune/ehmap/releases/latest/download/climate_annual.csv">Urteko datuak (CSV)</a></p>
-    </figure>
-
+  <section class="band" aria-labelledby="h-beroa">
     <div class="felt" aria-labelledby="h-beroa">
       <h3 id="h-beroa">Beroa egunerokoan</h3>
       <p>Estazioetan neurtua, 1961–1990etik 2016–2025era:</p>
@@ -318,61 +297,56 @@
         Météo-France, Gobierno de Navarra. Egun beroak 10etik 9tan igo dira, gau tropikalak 8tik 7tan, eta
         izotz-egunak 10etan jaitsi.</p>
     </div>
+  </section>
 
-    <div class="duo">
-      <figure class="map">
-        <button type="button" data-full="maps/ibaiak-emaria.webp" aria-label="Mapa handitu: ibaien uda-emaria">
-          <img src="maps/ibaiak-emaria-1200.webp" srcset="maps/ibaiak-emaria-1200.webp 1200w, maps/ibaiak-emaria.webp 2400w"
-               sizes="(min-width: 60rem) 62vw, 100vw" width="1200" height="962" loading="lazy"
-               alt="Ibaien mapa, udako emariaren aldaketarekin: Errobi eta Bidouze ia aldaketarik gabe, grisez; Ebro aldean marroiz, Ultzama −%44 eta Ayuda −%64.">
-        </button>
-        <figcaption>Ibaiak, gizakiak gutxi aldatutako arroetan; puntua, aforo-estazioa. Emaria: Hub'Eau (OFB, Licence Ouverte); Anuario de Aforos,
-          © Ministerio para la Transición Ecológica y el Reto Demográfico.</figcaption>
-      </figure>
-      <div class="text">
-        <h3 id="h-ibaiak2">Ibaiek ur gutxiago</h3>
-        <p>Euri kopurua aldatu ez arren, ibaiek ur gutxiago daramate, bereziki udan. Aldaketa hau batez ere
-          <strong>Mediterraneoko isurialdean</strong> nabaritzen da.</p>
-        <div class="stats">
-          <div><b>−%24</b><span>udako emaria, 1991–2020an, 1971–1990ekin alderatuta</span></div>
-          <div><b>−%58</b><span>Ebro aldeko arroetan, 2016–2022an</span></div>
-        </div>
-        <ul class="legend">
-          <li><span class="sw river-c" style="--c:#9A9284"></span>aldaketa txikia (±%10)</li>
-          <li><span class="sw river-c" style="--c:#CC9967"></span>−%10 eta −%25 artean</li>
-          <li><span class="sw river-c" style="--c:#A9733A"></span>−%25 eta −%50 artean</li>
-          <li><span class="sw river-c" style="--c:#80521F"></span>−%50 baino gehiago</li>
-        </ul>
-        <p class="note">Uztaila–iraileko batez besteko emaria. Beroak ur gehiago lurruntzen du, baina ez da
-          arrazoi bakarra: baso gehiago dago lehengo larre eta soroetan, eta ur-hartuneak ere badira.</p>
-        <p class="dl"><a href="https://github.com/itzune/ehmap/releases/latest/download/river_gauges.gpkg">Aforoak eta arroak (GeoPackage)</a></p>
+  <!-- 07 -->
+  <section class="topo" id="topoa" aria-labelledby="h-topoa">
+    <div class="text">
+      <p class="num">07</p>
+      <h2 id="h-topoa">Mapa topografikoa</h2>
+      <p>Mendira joateko mapa, IGNren ibilaldi-mapen erara marraztua eta nahi adina hurbil daitekeena:
+        <strong>5 m-ko LiDAR erliebea</strong>, 10 m-ko sestra-kurbak beren garaierarekin, basoa, haitzak,
+        ibaiak, errepideak eta eraikinak. Gainean, bide-sarea, <strong>GR eta PR ibilbideak</strong>,
+        aterpeak, iturriak eta trikuharriak.</p>
+      <p>Botoi batekin 3Dn ikus daiteke, eta beste batekin zure GPS kokapena erakusten du.</p>
+      <div class="stats">
+        <div><b>403.000 km</b><span>sestra-kurba, 10 m-tik 10 m-ra</span></div>
+        <div><b>956.000</b><span>eraikin, eta 9.700 gailur eta lepo izendun</span></div>
       </div>
+      <p class="go"><a href="topo.html">Ireki mapa topografikoa</a></p>
     </div>
-
-    <div class="duo">
-      <figure class="sea">
-        <div class="sea-chart" data-src="data/sea.json" role="img"
-             aria-label="Itsas bero-boladen egunak urtez urte, 1982tik 2025era: 1980ko hamarkadan urtean 20 inguru; 2016tik aurrera 100etik gora, eta 2023an 258."></div>
-        <figcaption>Itsas bero-boladako egunak urtean, Euskal Herriko kostaldearen aurrean (43,25–44° N, 3,5–1,25° W).
-          Bero-bolada: 5 egun edo gehiago, urteko egun horretarako ohikoa (1982–2011) baino nabarmen beroago.
-          Datuak: NOAA OISST v2.1.</figcaption>
-      </figure>
-      <div class="text">
-        <h3 id="h-itsasoa">Itsasoa berotzen</h3>
-        <p>Bizkaiko golkoa gure inguruan <strong>1,0 °C beroago</strong> dago orain 1980ko hamarkadan baino,
-          eta udan 1,2 °C. Bero-boladak ia egunerokoak dira: 2023an, urteko 258 egun.</p>
-        <div class="stats">
-          <div><b>×7</b><span>itsas bero-boladako egunak: urtean 18tik 127ra</span></div>
-          <div><b>+3 mm</b><span>itsas maila urtean, 1993tik (Bilbo, Santander, Bokale)</span></div>
-        </div>
-        <p class="note">Itsas maila lurrarekiko neurtzen da, eta kostaldeko lurra urtean 1 mm inguru hondoratzen ari da:
-          igoeraren zati bat hori da. Mareografoak: PSMSL.</p>
-        <p class="dl">
-          <a href="https://github.com/itzune/ehmap/releases/latest/download/sea_annual.csv">Itsasoa urtez urte (CSV)</a>
-          <a href="https://github.com/itzune/ehmap/releases/latest/download/tide_gauges.gpkg">Mareografoak (GeoPackage)</a>
-        </p>
-      </div>
-    </div>
+    <ul class="topo-grid" aria-label="Mapa topografikoaren adibideak">
+      <li class="lead"><a href="topo.html#12.9/42.897/-1.980/158/58">
+        <img src="maps/topo/beriain-1200.webp" srcset="maps/topo/beriain-640.webp 640w, maps/topo/beriain-1200.webp 1200w, maps/topo/beriain.webp 1800w"
+             sizes="(min-width: 60rem) 52vw, 100vw" width="1200" height="750" loading="lazy" alt="Beriain mendiaren ipar-horma 3Dn, Sakanako ibarretik gora, sestra-kurba laranjekin.">
+        <span class="t">Beriain</span><span class="d">San Donato, Sakanaren gainean · 3D</span></a></li>
+      <li><a href="topo.html#13.2/43.3160/-1.9950">
+        <img src="maps/topo/donostia-1200.webp" srcset="maps/topo/donostia-640.webp 640w, maps/topo/donostia-1200.webp 1200w, maps/topo/donostia.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Donostiako mapa topografikoa: Kontxako badia, Urgull, Igeldo eta hiriko kaleak.">
+        <span class="t">Donostia</span><span class="d">Kontxako badia, Urgull eta Igeldo</span></a></li>
+      <li><a href="topo.html#14/43.0890/-2.5960">
+        <img src="maps/topo/anboto-1200.webp" srcset="maps/topo/anboto-640.webp 640w, maps/topo/anboto-1200.webp 1200w, maps/topo/anboto.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Anbotoko gailurra, haitzak marratxoz, 10 m-ko sestra-kurbak eta GR 123 ibilbidea.">
+        <span class="t">Anboto</span><span class="d">Urkiolako haitzak eta bideak</span></a></li>
+      <li><a href="topo.html#13.3/43.012/-2.085/-150/60">
+        <img src="maps/topo/txindoki-1200.webp" srcset="maps/topo/txindoki-640.webp 640w, maps/topo/txindoki-1200.webp 1200w, maps/topo/txindoki.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Txindoki eta Aralarko larreak 3Dn, bideekin eta gailurren izenekin.">
+        <span class="t">Txindoki</span><span class="d">Aralar, Larraitzetik · 3D</span></a></li>
+      <li><a href="topo.html#14.6/43.4425/-2.7790">
+        <img src="maps/topo/gaztelugatxe-1200.webp" srcset="maps/topo/gaztelugatxe-640.webp 640w, maps/topo/gaztelugatxe-1200.webp 1200w, maps/topo/gaztelugatxe.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Gaztelugatxeko uhartea eta kostaldeko labarrak, begiratokiekin.">
+        <span class="t">Gaztelugatxe</span><span class="d">Bizkaiko kostaldea</span></a></li>
+      <li><a href="topo.html#13/42.9950/-1.0200">
+        <img src="maps/topo/irati-1200.webp" srcset="maps/topo/irati-640.webp 640w, maps/topo/irati-1200.webp 1200w, maps/topo/irati.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Iratiko basoa eta Orhi mendia: baso berde zabala, ibaiak eta mendi-bideak.">
+        <span class="t">Irati · Orhi</span><span class="d">Pagadia eta lehen bi milakoa</span></a></li>
+      <li><a href="topo.html#13/42.9550/-0.7700">
+        <img src="maps/topo/larra-1200.webp" srcset="maps/topo/larra-640.webp 640w, maps/topo/larra-1200.webp 1200w, maps/topo/larra.webp 1800w"
+             sizes="(min-width: 60rem) 26vw, (min-width: 36rem) 50vw, 100vw" width="1200" height="750" loading="lazy" alt="Larrako karsta eta Auñamendi ingurua: GR ibilbideak magentaz eta aterpeak.">
+        <span class="t">Larra · Auñamendi</span><span class="d">Pirinioetako karsta, GR 12</span></a></li>
+    </ul>
+    <p class="credit">Erliebea: PNOA-LiDAR (IGN España, CC BY 4.0) eta RGE ALTI® (IGN France, Licence Ouverte 2.0).
+      Basoa: ESA WorldCover (CC BY 4.0). Ura, bideak, eraikinak eta izenak: © OpenStreetMap-en laguntzaileak (ODbL).</p>
   </section>
 </main>
 

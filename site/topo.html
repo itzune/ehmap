@@ -3,26 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Probako orria — topografia · ehmap</title>
-<meta name="robots" content="noindex">
-<meta name="description" content="ehmap-en proba: IGN estiloko orri topografikoa, LiDAR eredutik marraztua.">
+<title>Mapa topografikoa · Euskal Herria mapetan · ehmap</title>
+<meta name="description" content="Euskal Herriko mendi-mapa, IGNren ibilaldi-mapen erara: 5 m-ko LiDAR erliebea, 10 m-ko sestra-kurbak, basoa, bideak, GR eta PR ibilbideak, 3D ikuspegia eta GPS kokapena.">
+<meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Mapa topografikoa · Euskal Herria">
+<meta property="og:description" content="Mendi-mapa irekia: LiDAR erliebea, sestra-kurbak, bideak eta ibilbide markatuak, 3Dn ere bai.">
+<meta property="og:image" content="https://itzune.eus/ehmap/maps/topo/beriain-1200.webp">
+<meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <link rel="stylesheet" href="style.css">
 <style>
   html, body { height: 100%; margin: 0; }
   body { display: flex; flex-direction: column; background: var(--paper); }
-  header.test {
-    display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline;
-    padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--card);
-  }
-  header.test h1 { font-size: 1rem; margin: 0; letter-spacing: .01em; }
-  header.test p { margin: 0; font-size: .82rem; color: var(--ink-soft); }
-  header.test .badge {
-    font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
-    border: 1px solid var(--rule); border-radius: 999px; padding: .1rem .5rem;
-    color: var(--accent); border-color: color-mix(in oklab, var(--accent) 40%, transparent);
-  }
+  /* ?garbi: the bare sheet, for screenshots and embeds */
+  .garbi .bar, .garbi .legend, .garbi .maplibregl-control-container { display: none !important; }
   #topo { flex: 1 1 auto; min-height: 0; }
   .btn-3d { font: 700 12px/1 var(--sans, system-ui, sans-serif); letter-spacing: .03em; color: #333; }
   .btn-3d[aria-pressed="true"] { background: #D6007A; color: #fff; }
@@ -67,11 +63,18 @@
 </style>
 </head>
 <body>
-<header class="test">
-  <h1>Orri topografikoa — proba</h1>
-  <span class="badge">lana egiten</span>
-  <p>IGN-ren mendi-mapen estiloko zirriborroa: 5 m-ko LiDAR erliebea (10 m-rainoko kurbak),
-     ESA WorldCover-eko basoa, eta OSM-ko ura, errepideak, bide-sarea eta izenak.</p>
+<header class="bar">
+  <a class="brand" href="./">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><use href="favicon.svg#mark"/></svg>
+    ehmap
+  </a>
+  <nav aria-label="Nagusia">
+    <a href="./">Atlasa</a>
+    <a href="mapa.html">Mapa</a>
+    <a href="topo.html" aria-current="page">Topoa</a>
+    <a href="datuak.html">Datuak</a>
+    <a href="https://github.com/itzune/ehmap">GitHub</a>
+  </nav>
 </header>
 
 <div id="topo"></div>
@@ -106,6 +109,7 @@
 <script>
 (() => {
   "use strict";
+  if (new URLSearchParams(location.search).has("garbi")) document.body.classList.add("garbi");
   const SEA = "#D3ECF8";        // the sheet is printed paper: the same in light and dark
   const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20 };   // baked into the sheet
   const TEN_M_FROM = 13.4;       // map zoom from which the vector contours are every 10 m
@@ -179,6 +183,22 @@
   // 3D: the sheet is a drawing, so tilting it alone shows a flat page. This button
   // lifts it over terrain.pmtiles (the LiDAR heights) and tilts the view.
   const EXAGGERATION = 1.3;
+  // on: lift the sheet and tilt (to `view`, a tilted deep link, or to a default 60°)
+  const set3D = (on, view) => {
+    const b = document.querySelector(".btn-3d");
+    b.setAttribute("aria-pressed", String(on));
+    if (on) {
+      if (!map.getSource("terrain")) {
+        map.addSource("terrain", { type: "raster-dem", url: "pmtiles://data/terrain.pmtiles",
+                                   tileSize: 256, encoding: "terrarium" });
+      }
+      map.setTerrain({ source: "terrain", exaggeration: EXAGGERATION });
+      if (view) map.jumpTo(view); else map.easeTo({ pitch: 60, duration: 900 });
+    } else {
+      map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
+      map.once("moveend", () => { if (b.getAttribute("aria-pressed") !== "true") map.setTerrain(null); });
+    }
+  };
   class Relief3D {
     onAdd(m) {
       this.el = document.createElement("div");
@@ -186,21 +206,7 @@
       const b = this.btn = document.createElement("button");
       b.type = "button"; b.className = "btn-3d"; b.textContent = "3D";
       b.title = "Erliebea 3Dn ikusi"; b.setAttribute("aria-pressed", "false");
-      b.addEventListener("click", () => {
-        const on = b.getAttribute("aria-pressed") !== "true";
-        b.setAttribute("aria-pressed", String(on));
-        if (on) {
-          if (!m.getSource("terrain")) {
-            m.addSource("terrain", { type: "raster-dem", url: "pmtiles://data/terrain.pmtiles",
-                                     tileSize: 256, encoding: "terrarium" });
-          }
-          m.setTerrain({ source: "terrain", exaggeration: EXAGGERATION });
-          m.easeTo({ pitch: 60, duration: 900 });
-        } else {
-          m.easeTo({ pitch: 0, bearing: 0, duration: 700 });
-          m.once("moveend", () => { if (b.getAttribute("aria-pressed") !== "true") m.setTerrain(null); });
-        }
-      });
+      b.addEventListener("click", () => set3D(b.getAttribute("aria-pressed") !== "true"));
       this.el.appendChild(b);
       return this.el;
     }
@@ -475,15 +481,18 @@
     map.on("zoom", setEq);
   });
 
-  // deep links: #zoom/lat/lon, as on mapa.html
-  const applyHash = () => {
-    const m = /^#(\d+(?:\.\d+)?)\/([-\d.]+)\/([-\d.]+)$/.exec(location.hash);
-    if (m) map.jumpTo({ center: [+m[3], +m[2]], zoom: +m[1] });
+  // deep links: #zoom/lat/lon as on mapa.html, plus /bearing/pitch for a 3D view
+  const readHash = () => {
+    const m = /^#(\d+(?:\.\d+)?)\/([-\d.]+)\/([-\d.]+)(?:\/([-\d.]+)\/([\d.]+))?$/.exec(location.hash);
+    return m && { center: [+m[3], +m[2]], zoom: +m[1], bearing: +(m[4] || 0), pitch: +(m[5] || 0) };
   };
-  applyHash();
+  const first = readHash();
+  if (first) map.jumpTo({ center: first.center, zoom: first.zoom });
+  map.once("load", () => { if (first && first.pitch > 0) set3D(true, first); });
   map.on("moveend", () => {
-    const c = map.getCenter();
-    history.replaceState(null, "", `#${map.getZoom().toFixed(2)}/${c.lat.toFixed(4)}/${c.lng.toFixed(4)}`);
+    const c = map.getCenter(), p = map.getPitch(), br = map.getBearing();
+    const tilt = p > 0.5 || Math.abs(br) > 0.5 ? `/${br.toFixed(0)}/${p.toFixed(0)}` : "";
+    history.replaceState(null, "", `${location.search}#${map.getZoom().toFixed(2)}/${c.lat.toFixed(4)}/${c.lng.toFixed(4)}${tilt}`);
   });
 })();
 </script>

@@ -2,9 +2,18 @@
 
 ## Unreleased
 
-The topographic test page (`site/topo.html`, still unlinked) becomes a full hiking sheet in
-the manner of IGN's TOP 25 *cartes de randonnée*.
+The topographic test page (`site/topo.html`) becomes a full hiking sheet in the manner of
+IGN's TOP 25 *cartes de randonnée*, and joins the site: it is chapter 07 of the atlas and a
+"Topoa" entry in the navigation.
 
+- **On the front page.** A "Mapa topografikoa" chapter shows seven places — Beriain and
+  Txindoki in 3D, Donostia, Anboto, Gaztelugatxe, Irati–Orhi, Larra–Auñamendi — each image a
+  link that opens the map on that very view (`site/maps/topo/`). To make room, the three
+  blocks of the climate chapter that were charts rather than maps are gone from the page
+  ("Urtez urte", "Ibaiek ur gutxiago", "Itsasoa berotzen"); their data stays published.
+- **No longer a test page.** The "proba" header gives way to the site's own bar, `noindex`
+  is dropped, deep links carry a tilted view (`#zoom/lat/lon/bearing/pitch` opens in 3D)
+  and `?garbi` shows the bare sheet, for screenshots and embeds.
 - **An IGN palette.** The hypsometric tints are gone: open ground is white paper, woodland
   a light green (ESA WorldCover 2021 tree cover, smoothed to wood edges), the hillshade a
   soft grey that only darkens shaded slopes, contours orange. Marked itineraries are a
