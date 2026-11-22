@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mapa topografikoa · Euskal Herria mapetan · ehmap</title>
-<meta name="description" content="Euskal Herriko mendi-mapa, IGNren ibilaldi-mapen erara: 5 m-ko LiDAR erliebea, 10 m-ko sestra-kurbak, basoa, bideak, GR eta PR ibilbideak, 3D ikuspegia eta GPS kokapena.">
+<meta name="description" content="Euskal Herriko mendi-mapa, ibilaldi-mapa klasikoen erara: 5 m-ko LiDAR erliebea, 10 m-ko sestra-kurbak, basoa, bideak, GR eta PR ibilbideak, 3D ikuspegia eta GPS kokapena.">
 <meta name="theme-color" content="#F3EEE3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Mapa topografikoa · Euskal Herria">
@@ -299,7 +299,7 @@
       layout: { "line-cap": "round", "line-join": "round" },
       paint: { "line-color": "#2E9BD6", "line-width": zw(9, 0.9, 12, 1.8, 15, 3.2) } });
 
-    // IGN draws what you walk on in black: a thin solid line for a track, dashes for
+    // a printed hiking sheet draws what you walk on in black: a thin solid line for a track, dashes for
     // a path, dots where the ground gets hard
     const INKLINE = "#26211D";
     map.addLayer({ id: "trails-track", type: "line", source: "bideak", "source-layer": "trails",
@@ -315,7 +315,7 @@
     map.addLayer({ id: "trails-hard", type: "line", source: "bideak", "source-layer": "trails",
       minzoom: 12, filter: hard,
       paint: { "line-color": INKLINE, "line-width": zw(12, 0.9, 14, 1.4, 15, 1.9), ...dash([0.6, 2]) } });
-    // roads, IGN-style: a dark casing under a fill whose colour ranks the road
+    // roads, as on a printed sheet: a dark casing under a fill whose colour ranks the road
     const ROADS = [   // kind, minzoom, fill, width stops
       ["minor",     12, "#FFFFFF", [12, 1.0, 13, 1.6, 15, 4.0]],
       ["tertiary",  11, "#FFFFFF", [11, 1.0, 13, 2.2, 15, 5.0]],
@@ -349,7 +349,7 @@
       minzoom: 11, filter: ["has", "tunnel"],
       paint: { "line-color": "#2E2A26", "line-width": 1, "line-opacity": 0.5, ...dash([3, 3]) } });
 
-    // marked itineraries: IGN's translucent magenta overprint, the path showing through
+    // marked itineraries: a translucent magenta overprint, the path showing through
     const marked = ["in", ["get", "route_net"], ["literal", ["iwn", "nwn", "rwn", "lwn"]]];
     const MAGENTA = "#D6007A";
     map.addLayer({ id: "routes-pr", type: "line", source: "bideak", "source-layer": "trails",
