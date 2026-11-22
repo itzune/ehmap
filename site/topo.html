@@ -167,6 +167,10 @@
     minZoom: 9, maxZoom: 17, maxPitch: 75,
     maxBounds: [[-3.5942, 41.8115], [-0.4952, 43.6422]],   // the sheet's frame
     attributionControl: false,
+    locale: { "GeolocateControl.FindMyLocation": "Nire kokapena erakutsi",
+              "GeolocateControl.LocationNotAvailable": "Kokapena ez dago eskuragarri",
+              "NavigationControl.ZoomIn": "Hurbildu", "NavigationControl.ZoomOut": "Urrundu",
+              "NavigationControl.ResetBearing": "Iparra gora jarri" },
   });
   window.ehmap = map;
 
@@ -203,6 +207,23 @@
     onRemove() { this.el.remove(); }
   }
   map.addControl(new Relief3D(), "top-right");
+
+  // GPS: a button, never a prompt out of the blue. The browser asks the first time it is
+  // pressed; once the walker has said yes, later visits show the position straight away
+  // (unless the link points somewhere, or they are outside the sheet).
+  const gps = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 15000 },
+    trackUserLocation: true, showUserLocation: true, showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 14 },
+  });
+  map.addControl(gps, "top-right");
+  map.once("load", async () => {
+    if (location.hash || !navigator.permissions) return;
+    try {
+      const p = await navigator.permissions.query({ name: "geolocation" });
+      if (p.state === "granted") gps.trigger();
+    } catch { /* the button is still there */ }
+  });
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
   map.addControl(new maplibregl.AttributionControl({
     compact: true,

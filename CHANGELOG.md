@@ -25,6 +25,9 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
   far you zoom (the page now goes to 17), and the index curves carry their height. The
   raster's z14–15 no longer bake contours in; lower zooms, where the equidistance follows
   the zoom, still do.
+- **GPS.** A locate button shows and follows the walker's position. It never prompts on
+  its own: the browser asks on the first press, and later visits locate straight away
+  unless the link already points somewhere.
 - **Pictograms.** Trail-side points are no longer coloured dots: huts, shelters, campsites,
   viewpoints and picnic sites in magenta, springs and waterfalls in blue, and — new, in the
   `landmarks` layer of `topo_osm.pmtiles` (22 692 points) — churches and hermitages,
