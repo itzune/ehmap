@@ -107,7 +107,8 @@
 (() => {
   "use strict";
   const SEA = "#D3ECF8";        // the sheet is printed paper: the same in light and dark
-  const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20, 14: 10, 15: 10 };
+  const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20 };   // baked into the sheet
+  const TEN_M_FROM = 13.4;       // map zoom from which the vector contours are every 10 m
   // topo.pmtiles holds 256 px tiles of z10-15, and MapLibre counts zooms on 512 px
   // tiles: at map zoom z it draws the sheet's z+1. So z15 is pixel for pixel at map
   // zoom 14; beyond it the sheet is stretched and the OSM vectors stay sharp
@@ -118,6 +119,7 @@
   // A local preview reads the file just built in site/data/ instead.
   const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
   const SHEET = LOCAL ? "data/topo.pmtiles" : "https://tiles.itzune.eus/topo.pmtiles";
+  const CONTOUR_TILES = LOCAL ? "data/contours.pmtiles" : "https://tiles.itzune.eus/contours.pmtiles";
 
   // pictograms, on a 24 × 24 grid
   const M = "#D6007A", B = "#2E9BD6", K = "#26211D", W = "#fff";
@@ -162,7 +164,7 @@
       layers: [{ id: "sea", type: "background", paint: { "background-color": SEA } }],
     },
     center: [-1.75, 42.95], zoom: 10.6,
-    minZoom: 9, maxZoom: 16, maxPitch: 75,
+    minZoom: 9, maxZoom: 17, maxPitch: 75,
     maxBounds: [[-3.5942, 41.8115], [-0.4952, 43.6422]],   // the sheet's frame
     attributionControl: false,
   });
@@ -217,6 +219,30 @@
     // the raster is transparent over the sea: keep it under nothing else
     map.addLayer({ id: "topo", type: "raster", source: "topo",
                    paint: { "raster-opacity": 1, "raster-fade-duration": 120 } });
+
+    // 10 m contours as vectors, from the map zoom where the raster swaps to its z14
+    // (which has none baked in): sharp at any zoom, with heights on the index curves
+    map.addSource("contours", { type: "vector", url: `pmtiles://${CONTOUR_TILES}` });
+    map.addLayer({ id: "contour", type: "line", source: "contours", "source-layer": "contours",
+      // every 20 m until the map is close enough for 10 m not to wash the steep ground brown
+      minzoom: 12.5,
+      filter: ["step", ["zoom"],
+               ["all", ["!", ["has", "idx"]], ["==", ["%", ["get", "ele"], 20], 0]],
+               TEN_M_FROM, ["!", ["has", "idx"]]],
+      paint: { "line-color": "#DD9154",
+               "line-width": ["interpolate", ["linear"], ["zoom"], 12.5, 0.5, 14.5, 0.7, 16, 1.1],
+               "line-opacity": ["interpolate", ["linear"], ["zoom"], 12.5, 0.7, 13.4, 0.6, 14.5, 0.9] } });
+    map.addLayer({ id: "contour-index", type: "line", source: "contours", "source-layer": "contours",
+      minzoom: 12.5, filter: ["has", "idx"],
+      paint: { "line-color": "#C46A22",
+               "line-width": ["interpolate", ["linear"], ["zoom"], 12.5, 1.0, 14, 1.4, 16, 2.0] } });
+    map.addLayer({ id: "contour-label", type: "symbol", source: "contours", "source-layer": "contours",
+      minzoom: 13.5, filter: ["has", "idx"],
+      layout: { "symbol-placement": "line", "symbol-spacing": 420,
+                "text-field": ["to-string", ["get", "ele"]], "text-font": ["OpenSansRegular"],
+                "text-size": ["interpolate", ["linear"], ["zoom"], 13.5, 9, 16, 11],
+                "text-max-angle": 25, "text-padding": 6 },
+      paint: { "text-color": "#B05A16", "text-halo-color": "#FDFCF7", "text-halo-width": 1.6 } });
 
     // --- ODbL: OpenStreetMap, in its own archives ------------------------------
     map.addSource("osm", { type: "vector", url: "pmtiles://data/topo_osm.pmtiles" });
@@ -420,8 +446,9 @@
     // already carries the credits, so start it folded to its (i) button
     document.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
     const setEq = () => {
-      document.getElementById("eq").textContent =
-        `Kurba arrunta: ${CONTOURS[sheetZoom(map.getZoom())]} m`;
+      const z = map.getZoom();
+      const eq = z >= TEN_M_FROM ? 10 : z >= 12.5 ? 20 : CONTOURS[sheetZoom(z)];
+      document.getElementById("eq").textContent = `Kurba arrunta: ${eq} m`;
     };
     setEq();
     map.on("zoom", setEq);

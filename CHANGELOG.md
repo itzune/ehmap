@@ -20,6 +20,11 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
 - **Buildings** (`scripts/17_buildings.py` → `site/data/buildings.pmtiles`, 27 MB, ODbL):
   956 462 OpenStreetMap footprints as small dark shapes from map zoom 13, fetched from
   Overpass in 20 cells.
+- **Vector contours at the deep zooms** (`scripts/18_contours.py` → `contours.pmtiles`,
+  219 MB on R2, z12–14): from map zoom 12.5 the 10 m curves are vector lines, sharp however
+  far you zoom (the page now goes to 17), and the index curves carry their height. The
+  raster's z14–15 no longer bake contours in; lower zooms, where the equidistance follows
+  the zoom, still do.
 - **Pictograms.** Trail-side points are no longer coloured dots: huts, shelters, campsites,
   viewpoints and picnic sites in magenta, springs and waterfalls in blue, and — new, in the
   `landmarks` layer of `topo_osm.pmtiles` (22 692 points) — churches and hermitages,

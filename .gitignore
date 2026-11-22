@@ -15,6 +15,7 @@ out/
 # Tile archives over the 100 MB push limit: in the Cloudflare R2 bucket behind
 # tiles.itzune.eus, uploaded by scripts/upload_tiles.sh
 site/data/topo.pmtiles
+site/data/contours.pmtiles
 
 # Large / binary outputs are published as GitHub Release assets (scripts/release.sh)
 ehmap.rgis

@@ -13,8 +13,10 @@ Why raster and not vector contours: Euskal Herria carries ~403 000 km of
 contour line at 10 m equidistance (measured with scripts/13_topo_tiles.py
 --measure), which is far too much to ship as vector tiles. Baked into the
 raster, the equidistance can follow the zoom — 200 m at z10, 100 m at z11,
-50 m at z12, 20 m at z13, 10 m from z14 — and the lines keep a constant pixel
-weight, like a printed sheet.
+50 m at z12, 20 m at z13 — and the lines keep a constant pixel weight, like a
+printed sheet. The deepest zooms (z14-15) are the exception: there the 10 m curves
+are vector lines from scripts/18_contours.py, sharp however far the sheet is
+stretched, and this raster carries only the ground under them.
 
 The z10-15 archive is ~1.4 GB, over GitHub's 100 MB per-file push limit, so it
 is not committed: it lives in a Cloudflare R2 bucket served at tiles.itzune.eus,
@@ -87,7 +89,10 @@ PAD = 20                      # tile pixels of halo: must exceed the blur suppor
 # --- equidistance per zoom (m) and the index rule ---------------------------------
 # IGN equips 1:50 000 with 20 m contours and a 100 m index, 1:100 000 with 50 m.
 # z13 is about 1:54 000 on a 96 dpi screen, z12 about 1:108 000, z11 about 1:216 000.
-CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5), 15: (10, 5)}
+CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5)}
+# from z14 on the equidistance is 10 m for good and the curves are vectors
+# (scripts/18_contours.py): sharp however far the sheet is stretched, so not baked here
+VECTOR_CONTOURS_FROM = 14
 # line half-widths in pixels: printed sheets draw contours at about 0.1 mm, which is
 # 0.4 px on screen — thick enough to read, thin enough not to merge on steep ground
 CONTOUR_PX, INDEX_PX = 0.48, 0.78
@@ -279,6 +284,9 @@ def render(dem: np.ndarray, px_m: float, interval: float, every: int,
     # the sea is 0 m: filling it with anything higher (e.g. the tile's median) would
     # pull the shore up through the blur and stack false contours along the coast
     dem_c = gaussian_filter(np.nan_to_num(dem, nan=0.0), CONTOUR_SMOOTH)
+    if interval is None:                        # vector contours take over at this zoom
+        out = np.dstack([np.clip(rgb, 0, 1) * 255, np.where(sea, 0, 255)]).astype("uint8")
+        return hachures(out, dem_c, rock, px_m, origin) if rock is not None else out
     thin, thick, spacing = contours(dem_c, px_m, interval, every)
     shore = dem_c < interval / 2                # no "0 m contour" tracing the coastline
     thin[shore] = 0
@@ -349,7 +357,7 @@ def sheet(bounds, size: int, z: int) -> np.ndarray:
     """Render one square sheet for a zoom — the preview and the tiles share this path."""
     x0, y0, x1, y1 = bounds
     px_m = (x1 - x0) / size
-    interval, every = CONTOURS[min(z, max(CONTOURS))]
+    interval, every = CONTOURS.get(z, (None, None))
     dem = read_dem(bounds, px_m)                    # output-resolution sampling
     fine = read_dem(bounds, px_m / 2)               # finer grid for the hillshade
     forest = forest_at(forest_cache(), bounds, Affine(px_m, 0, x0, 0, -px_m, y1), CRS, dem.shape)
@@ -443,7 +451,7 @@ def render_tile(zxy: tuple[int, int, int]) -> tuple[int, bytes | None]:
     z, x, y = zxy
     dem, shape, res, bounds = _W["dem"], _W["shape"], _W["res"], _W["bounds"]
     n = 2 ** z
-    interval, every = CONTOURS[min(z, max(CONTOURS))]
+    interval, every = CONTOURS.get(z, (None, None))
     bb = tile_bbox(z, x, y)
     px_m = (bb[2] - bb[0]) / TILE
     # a mercator tile is a rotated quad in UTM (meridian convergence), so window the

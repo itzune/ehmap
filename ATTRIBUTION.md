@@ -75,7 +75,8 @@ trail-side points; `scripts/14_bideak.py`) and `topo_osm.pmtiles` (water, roads,
 place names, summits; `scripts/15_topo_osm.py`) are derived from OpenStreetMap via the
 Overpass API: © OpenStreetMap contributors, [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
 They are kept apart from ehmap's CC BY 4.0 archives for that reason, and the page credits
-all of these sources. `buildings.pmtiles` (27 MB, zooms 13–14,
+all of these sources. `contours.pmtiles` (219 MB, zooms 12–14, `scripts/18_contours.py`,
+also served from `tiles.itzune.eus`) is the same LiDAR mosaic traced into 10 m contour lines. `buildings.pmtiles` (27 MB, zooms 13–14,
 `scripts/17_buildings.py`) holds 956 462 OpenStreetMap building footprints, under the same ODbL terms. `terrain.pmtiles` (32 MB, zooms 9–12, `scripts/16_terrain_tiles.py`) is the
 same LiDAR mosaic as heights, rounded to whole metres, for the page's 3D view.
 
