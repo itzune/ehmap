@@ -15,6 +15,11 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
   network cased and coloured by rank with road numbers, railways, cities to hamlets, and
   9 686 named summits and passes with their heights (at low zooms only the highest of each
   ~5 km cell). Names prefer `name:eu`.
+- **Zoom 15.** The sheet is baked one zoom deeper (z10–15, 86 168 tiles, 1.4 GB), so it is
+  pixel for pixel at map zoom 14 and the page zooms to 16.
+- **Buildings** (`scripts/17_buildings.py` → `site/data/buildings.pmtiles`, 27 MB, ODbL):
+  956 462 OpenStreetMap footprints as small dark shapes from map zoom 13, fetched from
+  Overpass in 20 cells.
 - **3D.** A "3D" button lifts the sheet over real heights and tilts the view
   (`scripts/16_terrain_tiles.py` → `site/data/terrain.pmtiles`, 32 MB: the LiDAR as
   Terrarium-encoded whole metres, lossless WebP, zooms 9–12, exaggerated 1.3×). Without
@@ -40,7 +45,7 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
   zoom, a collapsible legend (folded on phones) that now lists every symbol on the map,
   panning limited to the sheet's frame. A PR route's white blaze no longer shows one zoom
   before its yellow dash.
-- **Hosting**: `site/data/topo.pmtiles` (~410 MB) is over GitHub's 100 MB push limit and
+- **Hosting**: `site/data/topo.pmtiles` (~1.4 GB) is over GitHub's 100 MB push limit and
   leaves git; it is served from a Cloudflare R2 bucket at `tiles.itzune.eus`, which the
   page reads directly, and uploaded with `scripts/upload_tiles.sh` (credentials in a
   gitignored `.env`). A local preview still reads the file in `site/data/`.

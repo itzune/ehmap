@@ -13,17 +13,17 @@ Why raster and not vector contours: Euskal Herria carries ~403 000 km of
 contour line at 10 m equidistance (measured with scripts/13_topo_tiles.py
 --measure), which is far too much to ship as vector tiles. Baked into the
 raster, the equidistance can follow the zoom — 200 m at z10, 100 m at z11,
-50 m at z12, 20 m at z13, 10 m at z14 — and the lines keep a constant pixel
+50 m at z12, 20 m at z13, 10 m from z14 — and the lines keep a constant pixel
 weight, like a printed sheet.
 
-The z10-14 archive is ~410 MB, over GitHub's 100 MB per-file push limit, so it
+The z10-15 archive is ~1.4 GB, over GitHub's 100 MB per-file push limit, so it
 is not committed: it lives in a Cloudflare R2 bucket served at tiles.itzune.eus,
 which site/topo.html reads directly. After a rebuild:
 
     uv run --quiet --with-requirements requirements.txt python scripts/13_topo_tiles.py --tiles
     scripts/upload_tiles.sh
 
-The build runs on all cores but two (--jobs) and takes about 20 minutes on eight;
+The build runs on all cores but two (--jobs) and takes about 45 minutes on eight;
 --keep-cache leaves the DEM scratch in out/ so a restyle does not re-read the LiDAR.
 
 The DEM is the same 5 m LiDAR mosaic as scripts/12_relief_tiles.py, cached for
@@ -64,7 +64,7 @@ LIDAR_TIF = ROOT / "data" / "raw" / "lidar" / "eh_lidar_5m.tif"
 WORLDCOVER = ROOT / "data" / "raw" / "worldcover"
 CRS = "EPSG:25830"
 TILE = 256
-ZMIN, ZMAX = 10, 14
+ZMIN, ZMAX = 10, 15
 
 # --- the sheet's palette -------------------------------------------------
 PAPER = "#FDFCF7"             # open ground is the paper itself, as on a TOP 25
@@ -87,7 +87,7 @@ PAD = 20                      # tile pixels of halo: must exceed the blur suppor
 # --- equidistance per zoom (m) and the index rule ---------------------------------
 # IGN equips 1:50 000 with 20 m contours and a 100 m index, 1:100 000 with 50 m.
 # z13 is about 1:54 000 on a 96 dpi screen, z12 about 1:108 000, z11 about 1:216 000.
-CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5)}
+CONTOURS = {10: (200, 5), 11: (100, 5), 12: (50, 5), 13: (20, 5), 14: (10, 5), 15: (10, 5)}
 # line half-widths in pixels: printed sheets draw contours at about 0.1 mm, which is
 # 0.4 px on screen — thick enough to read, thin enough not to merge on steep ground
 CONTOUR_PX, INDEX_PX = 0.48, 0.78

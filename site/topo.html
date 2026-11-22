@@ -44,6 +44,8 @@
   .legend .swatch.thin { border-top: 1px solid #DD9154; }
   .legend .swatch.rock { border: 0; width: 26px; height: 10px;
     background: repeating-linear-gradient(65deg, #6A625A 0 1px, #E6E3DD 1px 4px); }
+  .legend .swatch.bldg { border: 0; height: 9px; background:
+    linear-gradient(90deg, #4A423C 0 7px, transparent 7px 10px, #4A423C 10px 19px, transparent 19px 21px, #4A423C 21px); }
   .legend .swatch.water { border-top: 2px solid #2E9BD6; }
   .legend .swatch.road { height: 3px; border: 1px solid #4A4038; border-width: 1px 0; }
   .legend .swatch.rail { border-top: 2px solid #2E2A26; }
@@ -83,6 +85,7 @@
   <div class="row"><span class="swatch"></span><span>Kurba nagusia (5.a)</span></div>
   <div class="row"><span class="swatch rock"></span><span>Haitzak (malda &gt; 45°)</span></div>
   <div class="row"><span class="swatch water"></span><span>Ibaia, erreka, urtegia</span></div>
+  <div class="row"><span class="swatch bldg"></span><span>Eraikinak</span></div>
   <h2>Bideak</h2>
   <div class="row"><span class="swatch road" style="background:#E8733A"></span><span>Autobia / errepide nagusia</span></div>
   <div class="row"><span class="swatch road" style="background:#F6DC5E"></span><span>Bigarren mailako errepidea</span></div>
@@ -110,11 +113,11 @@
 (() => {
   "use strict";
   const SEA = "#D3ECF8";        // the sheet is printed paper: the same in light and dark
-  const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20, 14: 10 };
-  // topo.pmtiles holds 256 px tiles of z10-14, and MapLibre counts zooms on 512 px
-  // tiles: at map zoom z it draws the sheet's z+1. So z14 (10 m curves) is pixel for
-  // pixel at map zoom 13; beyond it the sheet is stretched and the OSM vectors stay sharp
-  const SHEET_MIN = 10, SHEET_MAX = 14;
+  const CONTOURS = { 10: 200, 11: 100, 12: 50, 13: 20, 14: 10, 15: 10 };
+  // topo.pmtiles holds 256 px tiles of z10-15, and MapLibre counts zooms on 512 px
+  // tiles: at map zoom z it draws the sheet's z+1. So z15 is pixel for pixel at map
+  // zoom 14; beyond it the sheet is stretched and the OSM vectors stay sharp
+  const SHEET_MIN = 10, SHEET_MAX = 15;
   const sheetZoom = (z) => Math.min(SHEET_MAX, Math.max(SHEET_MIN, Math.round(z) + 1));
 
   // the sheet is too big for git and for Pages: it lives in a Cloudflare R2 bucket.
@@ -134,7 +137,7 @@
       layers: [{ id: "sea", type: "background", paint: { "background-color": SEA } }],
     },
     center: [-1.75, 42.95], zoom: 10.6,
-    minZoom: 9, maxZoom: 15, maxPitch: 75,
+    minZoom: 9, maxZoom: 16, maxPitch: 75,
     maxBounds: [[-3.5942, 41.8115], [-0.4952, 43.6422]],   // the sheet's frame
     attributionControl: false,
   });
@@ -200,7 +203,13 @@
 
     // water: the sheet's blue
     map.addLayer({ id: "water", type: "fill", source: "osm", "source-layer": "water",
-      paint: { "fill-color": "#B5E2F7", "fill-outline-color": "#2E9BD6" } });
+      paint: { "fill-color": "#B5E2F7", "fill-antialias": false } });
+    // buildings: the small dark shapes that make a town a town
+    map.addSource("buildings", { type: "vector", url: "pmtiles://data/buildings.pmtiles" });
+    map.addLayer({ id: "buildings", type: "fill", source: "buildings", "source-layer": "buildings",
+      minzoom: 13,
+      paint: { "fill-color": "#4A423C", "fill-antialias": true,
+               "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0.75, 15, 0.9] } });
     map.addLayer({ id: "stream", type: "line", source: "osm", "source-layer": "waterways",
       minzoom: 12, filter: ["all", kind("stream"), open],
       paint: { "line-color": "#2E9BD6", "line-width": zw(12, 0.7, 15, 1.6) } });
