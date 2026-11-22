@@ -17,12 +17,11 @@ raster, the equidistance can follow the zoom — 200 m at z10, 100 m at z11,
 weight, like a printed sheet.
 
 The z10-14 archive is ~410 MB, over GitHub's 100 MB per-file push limit, so it
-is not committed: it is published as an asset of the `tiles` release and the
-Pages workflow downloads it into site/data/ before deploying. After a rebuild:
+is not committed: it lives in a Cloudflare R2 bucket served at tiles.itzune.eus,
+which site/topo.html reads directly. After a rebuild:
 
     uv run --quiet --with-requirements requirements.txt python scripts/13_topo_tiles.py --tiles
-    gh release upload tiles site/data/topo.pmtiles --clobber
-    gh workflow run pages.yml
+    scripts/upload_tiles.sh
 
 The build runs on all cores but two (--jobs) and takes about 20 minutes on eight;
 --keep-cache leaves the DEM scratch in out/ so a restyle does not re-read the LiDAR.

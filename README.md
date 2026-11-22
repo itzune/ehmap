@@ -397,10 +397,9 @@ scripts/release.sh vX.Y.Z                        # publish a GitHub Release (mai
 The website is plain HTML/CSS in [`site/`](site/), published to GitHub Pages by
 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on every push to `site/`. Tile
 archives over GitHub's 100 MB push limit (`site/data/topo.pmtiles`, ~410 MB) are not in git:
-they are assets of the [`tiles`](https://github.com/itzune/ehmap/releases/tag/tiles) release,
-which the workflow copies into the site before deploying. After rebuilding one, run
-`gh release upload tiles site/data/topo.pmtiles --clobber` and `gh workflow run pages.yml`
-(if the release is missing the site still deploys, with a warning and without the sheet). The site's map
+they live in a Cloudflare R2 bucket served at `https://tiles.itzune.eus/`, which the page
+reads directly (a local preview reads `site/data/` instead). After rebuilding one, run
+`scripts/upload_tiles.sh` (credentials in `.env`, see [`.env.example`](.env.example)). The site's map
 colours are in [`site/palette.json`](site/palette.json) (checked for colour-blind safety and
 contrast); fonts are Fraunces and Source Sans 3 ([OFL](fonts/)).
 

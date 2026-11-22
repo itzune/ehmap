@@ -15,6 +15,10 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
   network cased and coloured by rank with road numbers, railways, cities to hamlets, and
   9 686 named summits and passes with their heights (at low zooms only the highest of each
   ~5 km cell). Names prefer `name:eu`.
+- **3D.** A "3D" button lifts the sheet over real heights and tilts the view
+  (`scripts/16_terrain_tiles.py` → `site/data/terrain.pmtiles`, 32 MB: the LiDAR as
+  Terrarium-encoded whole metres, lossless WebP, zooms 9–12, exaggerated 1.3×). Without
+  it the sheet is a drawing, and tilting it showed a flat page with painted shade.
 - **Zoom 14, with 10 m contours.** The sheet is now baked for z10–14 from a 5 m DEM cache
   (it was z10–13 from 10 m). MapLibre counts zooms on 512 px tiles, so the sheet's z14 is
   pixel for pixel at map zoom 13 and the page lets you go two zooms past it (15), stretched.
@@ -37,8 +41,9 @@ the manner of IGN's TOP 25 *cartes de randonnée*.
   panning limited to the sheet's frame. A PR route's white blaze no longer shows one zoom
   before its yellow dash.
 - **Hosting**: `site/data/topo.pmtiles` (~410 MB) is over GitHub's 100 MB push limit and
-  leaves git; it is an asset of the `tiles` release, which the Pages workflow copies into
-  the site before deploying (a missing release is a warning, not a failed deploy).
+  leaves git; it is served from a Cloudflare R2 bucket at `tiles.itzune.eus`, which the
+  page reads directly, and uploaded with `scripts/upload_tiles.sh` (credentials in a
+  gitignored `.env`). A local preview still reads the file in `site/data/`.
 
 ## v0.9.1 — 2026-11-17
 

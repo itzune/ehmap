@@ -66,7 +66,7 @@ CC BY 4.0) and mean elevation (Copernicus WorldDEM-30 licence — see the elevat
 and `dist/elevation/LICENSE.md`).
 
 The topographic test page (`site/topo.html`) reads three more archives. `topo.pmtiles`
-(~410 MB, zooms 10–14, an asset of the `tiles` release rather than a file in git) is drawn by
+(~410 MB, zooms 10–14, served from `tiles.itzune.eus` rather than kept in git) is drawn by
 `scripts/13_topo_tiles.py` from the 5 m LiDAR mosaic — PNOA-LiDAR MDT05, © IGN España
 (CC BY 4.0) and RGE ALTI®, © IGN France (Licence Ouverte 2.0) — and from ESA WorldCover
 2021 tree cover (© ESA WorldCover project, CC BY 4.0; reprojected to EPSG:25830, reduced
@@ -75,7 +75,8 @@ trail-side points; `scripts/14_bideak.py`) and `topo_osm.pmtiles` (water, roads,
 place names, summits; `scripts/15_topo_osm.py`) are derived from OpenStreetMap via the
 Overpass API: © OpenStreetMap contributors, [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
 They are kept apart from ehmap's CC BY 4.0 archives for that reason, and the page credits
-all of these sources.
+all of these sources. `terrain.pmtiles` (32 MB, zooms 9–12, `scripts/16_terrain_tiles.py`) is the
+same LiDAR mosaic as heights, rounded to whole metres, for the page's 3D view.
 
 `site/data/erliebea.pmtiles` (34 MB, 5 428 WebP tiles, zooms 5–13) is the Erliebea theme's
 shaded-relief raster: the printed atlas's background — NW-weighted hillshade, hypsometric

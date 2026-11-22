@@ -1,3 +1,6 @@
+# Secrets (R2 upload token): never commit — see .env.example
+.env
+
 # Python
 .venv/
 __pycache__/
@@ -9,8 +12,8 @@ data/raw/
 # Scratch output (published maps go to dist/)
 out/
 
-# Tile archives over the 100 MB push limit: assets of the `tiles` release, copied
-# into the site by .github/workflows/pages.yml (see scripts/13_topo_tiles.py)
+# Tile archives over the 100 MB push limit: in the Cloudflare R2 bucket behind
+# tiles.itzune.eus, uploaded by scripts/upload_tiles.sh
 site/data/topo.pmtiles
 
 # Large / binary outputs are published as GitHub Release assets (scripts/release.sh)
